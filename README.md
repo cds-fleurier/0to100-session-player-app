@@ -21,7 +21,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 - Alertes sonores + vocales
 - Option de voix `Femme` / `Homme` (préférence sauvegardée)
 - Mode `Focus` (affichage grand écran centré sur le player)
-- Option `Écran actif` (Wake Lock) pour éviter la mise en veille pendant la séance
+- Option `Écran actif` (Wake Lock) activée par défaut pour éviter la mise en veille pendant la séance
 - Compatibilités mobile renforcées (iOS Safari / Android Chrome)
 - Interface customisée dans l'univers du challenge 0 to 100
 

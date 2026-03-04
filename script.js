@@ -38,7 +38,7 @@ let speechPrimed = false;
 let sharedAudioCtx = null;
 let isFocusMode = false;
 let wakeLockSentinel = null;
-let wakeLockWanted = false;
+let wakeLockWanted = true;
 
 function normalizeText(value) {
   return (value || "").toLowerCase();
@@ -221,7 +221,7 @@ function toggleFocusMode() {
 }
 
 function refreshWakeLockButton() {
-  const state = wakeLockSentinel ? "on" : "off";
+  const state = wakeLockWanted ? "on" : "off";
   els.wakeLockBtn.textContent = `Écran actif: ${state}`;
 }
 
