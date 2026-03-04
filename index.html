@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coach Session Player</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <img
+          class="brand-logo"
+          src="https://0-to-100.gs-paths.fr/wp-content/uploads/2025/02/0-to-100-Logo-Bleu-RVB.png"
+          alt="Logo 0 to 100"
+        />
+      </section>
+
+      <section class="card input-card">
+        <h1>0 to 100 Session Player</h1>
+        <p>Colle ta séance brute. L'app génère automatiquement le player.</p>
+        <textarea id="sessionInput" rows="14" spellcheck="false">Séance de renforcement à poids de corps.
+
+Conseils: Faire cette séance en intérieur ou en extérieur après 5' de marche
+
+EXERCICES  Durée  Récup
+CHAISE 20s 40s
+POMPE SUR CHAISE (OU BANC OU BOX) 20s 40s
+PLANCHE en appuis sur les coudes 20s 40s
+MONTER SUR POINTES DE PIEDS 20s 40s
+3 TOURS</textarea>
+        <div class="row">
+          <button id="parseBtn">Generer la séance</button>
+          <div class="voice-settings">
+            <label class="toggle">
+              <input type="checkbox" id="voiceToggle" checked />
+              <span>Alertes vocales</span>
+            </label>
+            <label class="voice-row" for="voiceMode">
+              <span>Voix</span>
+              <select id="voiceMode" class="voice-picker">
+                <option value="female" selected>Femme</option>
+                <option value="male">Homme</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <p id="parseStatus" class="status"></p>
+      </section>
+
+      <section class="card plan-card">
+        <h2>Plan</h2>
+        <div id="sessionMeta" class="meta"></div>
+        <ol id="exerciseList"></ol>
+      </section>
+
+      <section class="card player-card">
+        <h2>Player</h2>
+        <div class="phase" id="phaseLabel">Pret</div>
+        <div class="countdown" id="countdown">00</div>
+        <div class="now" id="currentLabel">Charge une séance</div>
+        <div class="next" id="nextLabel"></div>
+
+        <div class="controls">
+          <button id="startBtn" disabled>Demarrer</button>
+          <button id="pauseBtn" disabled>Pause</button>
+          <button id="resetBtn" disabled>Reset</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
