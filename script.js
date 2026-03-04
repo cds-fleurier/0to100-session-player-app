@@ -124,28 +124,73 @@ function parseSession(text) {
     if (m) rounds = Number(m[1]);
   }
 
+  const isSessionMetaLine = (line) => {
+    return (
+      /^exercices?/i.test(line) ||
+      /^conseils?/i.test(line) ||
+      /^dur[ée]e?$/i.test(line) ||
+      /^r[ée]cup$/i.test(line) ||
+      /tours?/i.test(line) ||
+      /séance|session/i.test(line)
+    );
+  };
+
+  const isDurationOnlyLine = (line) => {
+    const compact = line.replace(/\s+/g, "").toLowerCase();
+    return /^(\d+)(s|sec|secs|mn|min)?$/.test(compact);
+  };
+
   const exercises = [];
-  for (const line of lines) {
-    if (/^exercices?/i.test(line)) continue;
-    if (/^conseils?/i.test(line)) continue;
-    if (/tours?/i.test(line)) continue;
-    if (/séance|session/i.test(line)) continue;
+  let pendingName = null;
+  let pendingWork = null;
 
-    const matches = [...line.matchAll(/(\d+\s*(?:s|sec|secs|mn|min)?)/gi)];
-    if (matches.length < 2) continue;
-
-    const workToken = matches[0][1];
-    const restToken = matches[1][1];
-
+  const pushExercise = (name, workToken, restToken) => {
     const work = parseDurationToken(workToken);
     const rest = parseDurationToken(restToken);
-    if (!work || !rest) continue;
+    if (!work || !rest || !name) return;
+    exercises.push({ name: name.trim().replace(/[\-:]+$/, ""), work, rest });
+  };
 
-    const firstTokenIndex = line.indexOf(matches[0][0]);
-    const name = line.slice(0, firstTokenIndex).trim().replace(/[\-:]+$/, "");
-    if (!name) continue;
+  for (const line of lines) {
+    if (isSessionMetaLine(line)) continue;
 
-    exercises.push({ name, work, rest });
+    const matches = [...line.matchAll(/(\d+\s*(?:s|sec|secs|mn|min)?)/gi)];
+
+    if (matches.length >= 2) {
+      const firstTokenIndex = line.indexOf(matches[0][0]);
+      const inlineName = line.slice(0, firstTokenIndex).trim();
+      const name = inlineName || pendingName;
+      pushExercise(name, matches[0][1], matches[1][1]);
+      pendingName = null;
+      pendingWork = null;
+      continue;
+    }
+
+    if (matches.length === 1) {
+      const token = matches[0][1];
+      const namePart = line.replace(matches[0][0], "").trim().replace(/[\-:]+$/, "");
+
+      if (namePart) {
+        pendingName = namePart;
+        pendingWork = token;
+        continue;
+      }
+
+      if (isDurationOnlyLine(line) && pendingName) {
+        if (!pendingWork) {
+          pendingWork = token;
+        } else {
+          pushExercise(pendingName, pendingWork, token);
+          pendingName = null;
+          pendingWork = null;
+        }
+      }
+      continue;
+    }
+
+    // Exercise name on one line, durations on following lines.
+    pendingName = line.replace(/[\-:]+$/, "");
+    pendingWork = null;
   }
 
   if (!exercises.length) {

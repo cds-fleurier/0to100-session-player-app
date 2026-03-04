@@ -19,6 +19,7 @@ Toutes les évolutions notables du projet sont documentées ici.
 - Ajustement de la taille du logo pour desktop/mobile.
 
 ### Technique
+- Correction parser: prise en charge des exercices Nolio sur plusieurs lignes (`nom`, puis `durée`, puis `récup`).
 - Fiabilisation audio mobile:
   - initialisation speech au geste utilisateur,
   - gestion `AudioContext` partagée et reprise (`resume()`),
