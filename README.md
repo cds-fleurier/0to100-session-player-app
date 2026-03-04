@@ -13,10 +13,12 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 - Player automatique:
   - enchaînement `exercice -> récupération -> exercice suivant`
   - pré-décompte de démarrage (5 secondes)
-  - annonce "prépare-toi" avant l'exercice suivant
-  - countdown vocal sur les 5 dernières secondes
+  - micro-latence "Top départ" avant le 1er exercice
+  - annonce "prépare-toi" + nom du prochain exercice (à T-11)
+  - countdown vocal sur les 5 dernières secondes (`5,4,3,2,1`)
 - Alertes sonores + vocales
-- Option de voix `Femme` / `Homme`
+- Option de voix `Femme` / `Homme` (préférence sauvegardée)
+- Compatibilités mobile renforcées (iOS Safari / Android Chrome)
 - Interface customisée dans l'univers du challenge 0 to 100
 
 ## Utilisation
@@ -33,6 +35,12 @@ python3 -m http.server 8000
 ```
 
 Puis ouvrir: `http://localhost:8000`
+
+## Version live (participants)
+
+App publique:
+
+- https://cds-fleurier.github.io/0to100-session-player-app/
 
 ## Format de séance attendu (exemple)
 
@@ -62,6 +70,12 @@ et détecte aussi le nombre de tours (`X TOURS`).
 - CSS
 - JavaScript vanilla (sans build)
 - Web Speech API (voix navigateur)
+- Web Audio API (bips)
+
+## Maintenance
+
+- `README.md` est mis à jour à chaque changement fonctionnel visible utilisateur.
+- Historique des changements dans `CHANGELOG.md`.
 
 ## Roadmap
 
