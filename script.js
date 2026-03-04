@@ -1,5 +1,6 @@
 const els = {
   input: document.getElementById("sessionInput"),
+  pasteNolioBtn: document.getElementById("pasteNolioBtn"),
   parseBtn: document.getElementById("parseBtn"),
   parseStatus: document.getElementById("parseStatus"),
   list: document.getElementById("exerciseList"),
@@ -161,6 +162,30 @@ function formatSeconds(value) {
 function setStatus(text, isError = false) {
   els.parseStatus.textContent = text;
   els.parseStatus.style.color = isError ? "#b91c1c" : "#0f766e";
+}
+
+async function pasteFromClipboard() {
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    setStatus("Le collage automatique n'est pas supporté ici. Colle manuellement dans la zone de texte.", true);
+    return;
+  }
+
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text || !text.trim()) {
+      setStatus("Le presse-papiers est vide. Copie ta séance Nolio puis réessaie.", true);
+      return;
+    }
+    stopTimer();
+    els.input.value = text.trim();
+    parseAndLoad();
+    setStatus("Séance collée depuis le presse-papiers.");
+  } catch (err) {
+    setStatus(
+      "Accès au presse-papiers refusé. Autorise le collage puis réessaie, ou colle manuellement.",
+      true
+    );
+  }
 }
 
 function speak(text, interrupt = true) {
@@ -479,6 +504,7 @@ els.parseBtn.addEventListener("click", () => {
   stopTimer();
   parseAndLoad();
 });
+els.pasteNolioBtn.addEventListener("click", pasteFromClipboard);
 els.start.addEventListener("click", startTimer);
 els.pause.addEventListener("click", pauseTimer);
 els.reset.addEventListener("click", resetTimer);

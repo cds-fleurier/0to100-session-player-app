@@ -103,6 +103,12 @@ textarea:focus {
   margin-top: 12px;
 }
 
+.input-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 button {
   border: 0;
   border-radius: 12px;
@@ -124,6 +130,10 @@ button:hover:not(:disabled) {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+.secondary-btn {
+  background: linear-gradient(160deg, #2d3946, #1f2933);
 }
 
 .toggle {
@@ -266,5 +276,9 @@ li {
 
   .voice-settings {
     align-items: flex-start;
+  }
+
+  .input-actions {
+    width: 100%;
   }
 }

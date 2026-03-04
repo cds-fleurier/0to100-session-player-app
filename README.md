@@ -9,6 +9,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 ## Fonctionnalités
 
 - Collage d'une séance en texte libre
+- Bouton `Coller ma séance depuis Nolio` (lecture du presse-papiers)
 - Parsing automatique des exercices, durées, récupérations et nombre de tours
 - Player automatique:
   - enchaînement `exercice -> récupération -> exercice suivant`
