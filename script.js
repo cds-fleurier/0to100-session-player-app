@@ -27,6 +27,12 @@ let preStartRemaining = 5;
 let preStartLaunching = false;
 let preStartLaunchTimeoutId = null;
 const VOICE_PREF_KEY = "sportSessionVoicePreference";
+const IS_IOS =
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+let speechPrimed = false;
+let sharedAudioCtx = null;
 
 function normalizeText(value) {
   return (value || "").toLowerCase();
@@ -66,6 +72,28 @@ function getPreferredVoice() {
 function updateVoiceControlsState() {
   if (!els.voiceMode) return;
   els.voiceMode.disabled = !els.voiceToggle.checked;
+}
+
+function ensureAudioContext() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!sharedAudioCtx) sharedAudioCtx = new AudioCtx();
+  return sharedAudioCtx;
+}
+
+function initMediaEngines() {
+  primeSpeechSynthesis();
+  const ctx = ensureAudioContext();
+  if (ctx && ctx.state === "suspended") ctx.resume();
+}
+
+function primeSpeechSynthesis() {
+  if (!els.voiceToggle.checked || !window.speechSynthesis || speechPrimed) return;
+  const warmup = new SpeechSynthesisUtterance(" ");
+  warmup.lang = "fr-FR";
+  warmup.volume = 0;
+  window.speechSynthesis.speak(warmup);
+  speechPrimed = true;
 }
 
 function parseDurationToken(token) {
@@ -139,19 +167,29 @@ function speak(text, interrupt = true) {
   if (!els.voiceToggle.checked || !window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
   const preferredVoice = getPreferredVoice();
-  if (preferredVoice) {
+  if (preferredVoice && !IS_IOS) {
     utterance.voice = preferredVoice;
     utterance.lang = preferredVoice.lang || "fr-FR";
   } else {
     utterance.lang = "fr-FR";
   }
-  utterance.rate = 1;
-  if (interrupt) window.speechSynthesis.cancel();
+  if (IS_IOS) {
+    const pref = els.voiceMode?.value || "female";
+    utterance.pitch = pref === "male" ? 0.9 : 1.1;
+  }
+  if (IS_ANDROID) utterance.rate = 1.02;
+  utterance.volume = 1;
+  utterance.rate = utterance.rate || 1;
+  if (interrupt && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
+    window.speechSynthesis.cancel();
+  }
   window.speechSynthesis.speak(utterance);
 }
 
 function beep() {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = "sine";
@@ -334,6 +372,7 @@ function tick() {
 
 function startTimer() {
   if (!sessionData) return;
+  initMediaEngines();
   if (!timeline.length) {
     timeline = buildTimeline(sessionData);
     idx = 0;
@@ -453,5 +492,8 @@ if (storedVoicePreference === "male" || storedVoicePreference === "female") {
   els.voiceMode.value = storedVoicePreference;
 }
 updateVoiceControlsState();
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+}
 
 parseAndLoad();
