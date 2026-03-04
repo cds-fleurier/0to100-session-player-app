@@ -12,6 +12,8 @@ const els = {
   start: document.getElementById("startBtn"),
   pause: document.getElementById("pauseBtn"),
   reset: document.getElementById("resetBtn"),
+  focusModeBtn: document.getElementById("focusModeBtn"),
+  wakeLockBtn: document.getElementById("wakeLockBtn"),
   voiceToggle: document.getElementById("voiceToggle"),
   voiceMode: document.getElementById("voiceMode"),
 };
@@ -34,6 +36,9 @@ const IS_IOS =
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
 let speechPrimed = false;
 let sharedAudioCtx = null;
+let isFocusMode = false;
+let wakeLockSentinel = null;
+let wakeLockWanted = false;
 
 function normalizeText(value) {
   return (value || "").toLowerCase();
@@ -207,6 +212,58 @@ function formatSeconds(value) {
 function setStatus(text, isError = false) {
   els.parseStatus.textContent = text;
   els.parseStatus.style.color = isError ? "#b91c1c" : "#0f766e";
+}
+
+function toggleFocusMode() {
+  isFocusMode = !isFocusMode;
+  document.body.classList.toggle("focus-mode", isFocusMode);
+  els.focusModeBtn.textContent = isFocusMode ? "Quitter focus" : "Mode focus";
+}
+
+function refreshWakeLockButton() {
+  const state = wakeLockSentinel ? "on" : "off";
+  els.wakeLockBtn.textContent = `Écran actif: ${state}`;
+}
+
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator) || !navigator.wakeLock?.request) {
+    setStatus("Wake Lock non supporté sur ce navigateur.", true);
+    wakeLockWanted = false;
+    refreshWakeLockButton();
+    return;
+  }
+
+  try {
+    wakeLockSentinel = await navigator.wakeLock.request("screen");
+    wakeLockSentinel.addEventListener("release", () => {
+      wakeLockSentinel = null;
+      refreshWakeLockButton();
+    });
+    wakeLockWanted = true;
+    refreshWakeLockButton();
+  } catch (err) {
+    wakeLockSentinel = null;
+    wakeLockWanted = false;
+    refreshWakeLockButton();
+    setStatus("Impossible d'activer l'écran actif pour le moment.", true);
+  }
+}
+
+async function releaseWakeLock() {
+  wakeLockWanted = false;
+  if (wakeLockSentinel) {
+    await wakeLockSentinel.release();
+    wakeLockSentinel = null;
+  }
+  refreshWakeLockButton();
+}
+
+async function toggleWakeLock() {
+  if (wakeLockSentinel || wakeLockWanted) {
+    await releaseWakeLock();
+    return;
+  }
+  await requestWakeLock();
 }
 
 async function pasteFromClipboard() {
@@ -443,6 +500,7 @@ function tick() {
 function startTimer() {
   if (!sessionData) return;
   initMediaEngines();
+  if (wakeLockWanted && !wakeLockSentinel) requestWakeLock();
   if (!timeline.length) {
     timeline = buildTimeline(sessionData);
     idx = 0;
@@ -553,9 +611,17 @@ els.pasteNolioBtn.addEventListener("click", pasteFromClipboard);
 els.start.addEventListener("click", startTimer);
 els.pause.addEventListener("click", pauseTimer);
 els.reset.addEventListener("click", resetTimer);
+els.focusModeBtn.addEventListener("click", toggleFocusMode);
+els.wakeLockBtn.addEventListener("click", toggleWakeLock);
 els.voiceToggle.addEventListener("change", updateVoiceControlsState);
 els.voiceMode.addEventListener("change", () => {
   localStorage.setItem(VOICE_PREF_KEY, els.voiceMode.value);
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && wakeLockWanted && !wakeLockSentinel) {
+    requestWakeLock();
+  }
 });
 
 const storedVoicePreference = localStorage.getItem(VOICE_PREF_KEY);
@@ -566,5 +632,6 @@ updateVoiceControlsState();
 if (window.speechSynthesis) {
   window.speechSynthesis.getVoices();
 }
+refreshWakeLockButton();
 
 parseAndLoad();

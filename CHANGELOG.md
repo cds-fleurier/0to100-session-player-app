@@ -6,6 +6,8 @@ Toutes les évolutions notables du projet sont documentées ici.
 
 ### Ajouté
 - Bouton `Coller ma séance depuis Nolio` avec lecture automatique du presse-papiers.
+- Bouton `Mode focus` pour passer en affichage grand écran du player.
+- Bouton `Écran actif` (Wake Lock) pour limiter la mise en veille pendant la séance.
 - Option de voix `Femme` / `Homme` sous les alertes vocales.
 - Persistance de la préférence de voix via `localStorage`.
 - Pré-décompte de démarrage 5 secondes avant le premier exercice.

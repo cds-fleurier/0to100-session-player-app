@@ -257,6 +257,29 @@ li {
   margin-top: 16px;
 }
 
+.utility-controls {
+  margin-top: 10px;
+}
+
+body.focus-mode .hero,
+body.focus-mode .input-card,
+body.focus-mode .plan-card {
+  display: none;
+}
+
+body.focus-mode .app {
+  max-width: 900px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.focus-mode .player-card {
+  width: min(900px, 100%);
+  min-height: 88vh;
+}
+
 @media (max-width: 720px) {
   .app {
     margin-top: 14px;
