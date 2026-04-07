@@ -105,11 +105,11 @@ function primeSpeechSynthesis() {
 function parseDurationToken(token) {
   if (!token) return null;
   const clean = token.trim().toLowerCase();
-  const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min|')?/i);
+  const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min|'|’)?/i);
   if (!m) return null;
   const value = Number(m[1]);
   const unit = (m[2] || "s").toLowerCase();
-  if (["mn", "min", "'"].includes(unit)) return value * 60;
+  if (["mn", "min", "'", "’"].includes(unit)) return value * 60;
   return value;
 }
 
@@ -149,7 +149,7 @@ function parseSession(text) {
 
   const isDurationOnlyLine = (line) => {
     const compact = line.replace(/\s+/g, "").toLowerCase();
-    return /^(\d+)(s|sec|secs|mn|min|')?$/.test(compact);
+    return /^(\d+)(s|sec|secs|mn|min|'|’)?$/.test(compact);
   };
 
   const exercises = [];
@@ -256,26 +256,43 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
   const advice = adviceLine.replace(/^note\s*/i, "").trim() || fallbackAdvice;
 
   const findDurationInLine = (line) => {
-    const m = line.match(/(\d+\s*(?:s|sec|secs|mn|min|')?)/i);
+    const m = line.match(/(\d+\s*(?:s|sec|secs|mn|min|'|’))/i);
     return m ? parseDurationToken(m[1]) : null;
   };
 
+  const isZoneLine = (line) => /zone\s*\d/i.test(line);
+
   const getLineIndex = (pattern) => lines.findIndex((l) => pattern.test(l));
+  const findDurationNearIndex = (index) => {
+    const candidates = [lines[index], lines[index - 1], lines[index + 1]].filter(Boolean);
+    for (const candidate of candidates) {
+      if (isZoneLine(candidate)) continue;
+      const duration = findDurationInLine(candidate);
+      if (duration) return duration;
+    }
+    return null;
+  };
 
   const warmupIndex = getLineIndex(/échauffement/i);
   let warmupSeconds = null;
-  if (warmupIndex > 0) {
-    warmupSeconds = findDurationInLine(lines[warmupIndex - 1]) || findDurationInLine(lines[warmupIndex]);
+  if (warmupIndex > -1) {
+    warmupSeconds = findDurationNearIndex(warmupIndex);
   }
 
   const roundsMatch = lines.join(" ").match(/(\d+)\s*x/i);
   const rounds = roundsMatch ? Number(roundsMatch[1]) : 1;
 
-  const workLine = lines.find((l) => /facile/i.test(l) && /(\d+)/.test(l));
-  const workSeconds = workLine ? findDurationInLine(workLine) : null;
+  const workIndex = getLineIndex(/facile/i);
+  let workSeconds = null;
+  if (workIndex > -1) {
+    workSeconds = findDurationNearIndex(workIndex);
+  }
 
-  const recupLine = lines.find((l) => /r[ée]cup[ée]ration/i.test(l) && /(\d+)/.test(l));
-  const recupSeconds = recupLine ? findDurationInLine(recupLine) : null;
+  const recupIndex = getLineIndex(/r[ée]cup[ée]ration/i);
+  let recupSeconds = null;
+  if (recupIndex > -1) {
+    recupSeconds = findDurationNearIndex(recupIndex);
+  }
 
   const splitLine =
     lines.find((l) => /30s\s+de\s+marche/i.test(l) && /30s/i.test(l)) || "";
@@ -294,11 +311,22 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
       .map((s) => s.replace(/\(.*?\)/g, "").trim())
       .filter(Boolean);
   }
+  if (!altNames.length) {
+    const renfoLine = lines.find((l) => /monter\s+sur|chaise/i.test(l)) || "";
+    if (renfoLine) {
+      altNames = renfoLine
+        .split(/ou|\/|,/i)
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((s) => s.replace(/\(.*?\)/g, "").trim())
+        .filter(Boolean);
+    }
+  }
 
   const cooldownIndex = getLineIndex(/r[ée]cup[ée]ration/i);
   let cooldownSeconds = null;
   if (cooldownIndex > 0) {
-    const candidate = findDurationInLine(lines[cooldownIndex - 1]);
+    const candidate = findDurationNearIndex(cooldownIndex);
     if (candidate && candidate >= 120) cooldownSeconds = candidate;
   }
 
