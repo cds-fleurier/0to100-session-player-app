@@ -12,6 +12,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 - Bouton `Coller ma séance depuis Nolio` (lecture du presse-papiers)
 - Parsing automatique des exercices, durées, récupérations et nombre de tours
   - y compris les formats Nolio avec durées sur lignes séparées
+  - prise en charge des minutes avec apostrophe (ex: `10'`)
 - Player automatique:
   - enchaînement `exercice -> récupération -> exercice suivant`
   - pré-décompte de démarrage (5 secondes)

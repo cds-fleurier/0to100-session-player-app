@@ -105,11 +105,11 @@ function primeSpeechSynthesis() {
 function parseDurationToken(token) {
   if (!token) return null;
   const clean = token.trim().toLowerCase();
-  const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min)?/i);
+  const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min|')?/i);
   if (!m) return null;
   const value = Number(m[1]);
   const unit = (m[2] || "s").toLowerCase();
-  if (["mn", "min"].includes(unit)) return value * 60;
+  if (["mn", "min", "'"].includes(unit)) return value * 60;
   return value;
 }
 
@@ -159,12 +159,21 @@ function parseSession(text) {
   for (const line of lines) {
     if (isSessionMetaLine(line)) continue;
 
-    const matches = [...line.matchAll(/(\d+\s*(?:s|sec|secs|mn|min)?)/gi)];
+    const matches = [...line.matchAll(/(\d+\s*(?:s|sec|secs|mn|min|')?)/gi)];
 
     if (matches.length >= 2) {
       const firstTokenIndex = line.indexOf(matches[0][0]);
       const inlineName = line.slice(0, firstTokenIndex).trim();
-      const name = inlineName || pendingName;
+      let name = inlineName || pendingName;
+
+      if (!name) {
+        const secondTokenIndex = line.indexOf(matches[1][0]);
+        if (secondTokenIndex > -1) {
+          name = line.slice(firstTokenIndex + matches[0][0].length, secondTokenIndex).trim();
+        }
+      }
+
+      name = name?.replace(/^de\s+/i, "").trim();
       pushExercise(name, matches[0][1], matches[1][1]);
       pendingName = null;
       pendingWork = null;
