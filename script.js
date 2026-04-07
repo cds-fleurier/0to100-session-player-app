@@ -123,6 +123,9 @@ function parseSession(text) {
   const adviceLine = lines.find((l) => /conseils?/i.test(l)) || "";
   const advice = adviceLine.replace(/conseils?\s*:\s*/i, "").trim();
 
+  const runRenfo = parseRunRenfo(lines, title, advice);
+  if (runRenfo) return runRenfo;
+
   let rounds = 1;
   let roundsLocked = false;
   for (const line of lines) {
@@ -146,7 +149,7 @@ function parseSession(text) {
 
   const isDurationOnlyLine = (line) => {
     const compact = line.replace(/\s+/g, "").toLowerCase();
-    return /^(\d+)(s|sec|secs|mn|min)?$/.test(compact);
+    return /^(\d+)(s|sec|secs|mn|min|')?$/.test(compact);
   };
 
   const exercises = [];
@@ -242,6 +245,94 @@ function parseSession(text) {
   }
 
   return { title, advice, rounds, exercises };
+}
+
+function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
+  const hasRunRenfo = lines.some((l) => /run/i.test(l) && /renfo/i.test(l));
+  if (!hasRunRenfo) return null;
+
+  const title = lines.find((l) => /run/i.test(l) && /renfo/i.test(l)) || fallbackTitle;
+  const adviceLine = lines.find((l) => /^note\b/i.test(l)) || "";
+  const advice = adviceLine.replace(/^note\s*/i, "").trim() || fallbackAdvice;
+
+  const findDurationInLine = (line) => {
+    const m = line.match(/(\d+\s*(?:s|sec|secs|mn|min|')?)/i);
+    return m ? parseDurationToken(m[1]) : null;
+  };
+
+  const getLineIndex = (pattern) => lines.findIndex((l) => pattern.test(l));
+
+  const warmupIndex = getLineIndex(/échauffement/i);
+  let warmupSeconds = null;
+  if (warmupIndex > 0) {
+    warmupSeconds = findDurationInLine(lines[warmupIndex - 1]) || findDurationInLine(lines[warmupIndex]);
+  }
+
+  const roundsMatch = lines.join(" ").match(/(\d+)\s*x/i);
+  const rounds = roundsMatch ? Number(roundsMatch[1]) : 1;
+
+  const workLine = lines.find((l) => /facile/i.test(l) && /(\d+)/.test(l));
+  const workSeconds = workLine ? findDurationInLine(workLine) : null;
+
+  const recupLine = lines.find((l) => /r[ée]cup[ée]ration/i.test(l) && /(\d+)/.test(l));
+  const recupSeconds = recupLine ? findDurationInLine(recupLine) : null;
+
+  const splitLine =
+    lines.find((l) => /30s\s+de\s+marche/i.test(l) && /30s/i.test(l)) || "";
+  const splitDurations = [...splitLine.matchAll(/(\d+\s*(?:s|sec|secs|mn|min|')?)/gi)].map(
+    (m) => parseDurationToken(m[1])
+  );
+  const splitWork = splitDurations[0] || null;
+  const splitRenfo = splitDurations[1] || null;
+  let altNames = [];
+  if (splitLine) {
+    const afterDur = splitLine.replace(/.*30s\s+de\s+marche\s+puis\s+30s\s+de/i, "").trim();
+    altNames = afterDur
+      .split(/ou|\/|,/i)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => s.replace(/\(.*?\)/g, "").trim())
+      .filter(Boolean);
+  }
+
+  const cooldownIndex = getLineIndex(/r[ée]cup[ée]ration/i);
+  let cooldownSeconds = null;
+  if (cooldownIndex > 0) {
+    const candidate = findDurationInLine(lines[cooldownIndex - 1]);
+    if (candidate && candidate >= 120) cooldownSeconds = candidate;
+  }
+
+  if (!workSeconds && !warmupSeconds && !recupSeconds) return null;
+
+  const exercises = [];
+  if (warmupSeconds) {
+    exercises.push({ name: "Échauffement (marche rapide)", work: warmupSeconds, rest: 0 });
+  }
+
+  const renfoAlternates = altNames.length ? altNames : ["Renforcement musculaire"];
+
+  for (let i = 0; i < rounds; i += 1) {
+    if (workSeconds) {
+      exercises.push({ name: "Course facile (3/10)", work: workSeconds, rest: 0 });
+    }
+
+    if (splitWork) {
+      exercises.push({ name: "Marche", work: splitWork, rest: 0 });
+    } else if (recupSeconds) {
+      exercises.push({ name: "Récupération", work: recupSeconds, rest: 0 });
+    }
+
+    if (splitRenfo) {
+      const altName = renfoAlternates[i % renfoAlternates.length];
+      exercises.push({ name: altName, work: splitRenfo, rest: 0 });
+    }
+  }
+
+  if (cooldownSeconds) {
+    exercises.push({ name: "Récupération (marche rapide)", work: cooldownSeconds, rest: 0 });
+  }
+
+  return { title, advice, rounds: 1, exercises };
 }
 
 function formatSeconds(value) {
@@ -380,7 +471,7 @@ function buildTimeline(data) {
       });
 
       const isFinalStep = r === data.rounds && exIndex === data.exercises.length - 1;
-      if (!isFinalStep) {
+      if (!isFinalStep && ex.rest && ex.rest > 0) {
         steps.push({
           type: "rest",
           name: "Récupération",
@@ -404,7 +495,10 @@ function renderPlan(data) {
   els.list.innerHTML = "";
   data.exercises.forEach((ex) => {
     const li = document.createElement("li");
-    li.textContent = `${ex.name} - ${ex.work}s effort / ${ex.rest}s récup`;
+    li.textContent =
+      ex.rest && ex.rest > 0
+        ? `${ex.name} - ${ex.work}s effort / ${ex.rest}s récup`
+        : `${ex.name} - ${ex.work}s effort`;
     els.list.appendChild(li);
   });
 }
