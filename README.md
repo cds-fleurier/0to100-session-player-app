@@ -17,6 +17,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
   - prise en charge des blocs `RUN & RENFO` (échauffement, séries, récupération)
   - affichage du plan RUN & RENFO en blocs (Bloc 1 / Bloc 2 / Bloc 3)
   - détection RUN & RENFO même sans le libellé explicite (course + renfo)
+  - renfo détecté sur d'autres exercices (planche, ponts, gainage, etc.)
 - Player automatique:
   - enchaînement `exercice -> récupération -> exercice suivant`
   - pré-décompte de démarrage (5 secondes)

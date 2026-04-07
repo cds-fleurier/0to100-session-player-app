@@ -312,8 +312,8 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
     recupSeconds = findDurationNearIndex(recupIndex);
   }
 
-  const splitLine =
-    lines.find((l) => /30s\s+de\s+marche/i.test(l) && /30s/i.test(l)) || "";
+  const splitLineIndex = lines.findIndex((l) => /30s\s+de\s+marche/i.test(l) && /30s/i.test(l));
+  const splitLine = splitLineIndex > -1 ? lines[splitLineIndex] : "";
   const splitDurations = [...splitLine.matchAll(/(\d+\s*(?:s|sec|secs|mn|min|')?)/gi)].map(
     (m) => parseDurationToken(m[1])
   );
@@ -330,15 +330,36 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
       .filter(Boolean);
   }
   if (!altNames.length) {
-    const renfoLine = lines.find((l) => /monter\s+sur|chaise/i.test(l)) || "";
-    if (renfoLine) {
-      altNames = renfoLine
-        .split(/ou|\/|,/i)
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .map((s) => s.replace(/\(.*?\)/g, "").trim())
-        .filter(Boolean);
+    const isRenfoCandidate = (line) => {
+      if (!line) return false;
+      if (isZoneLine(line) || isIntensityLine(line)) return false;
+      if (/r[ée]cup[ée]ration|échauffement|note|corps de séance/i.test(line)) return false;
+      if (/^\d/.test(line)) return false;
+      return /planche|pont|pompe|gainage|fente|squat|burpee|chaise|pointe|mountain|abdo|tronc/i.test(
+        line
+      );
+    };
+
+    const candidatePool = [];
+    if (splitLineIndex > -1) {
+      for (let i = splitLineIndex + 1; i < Math.min(lines.length, splitLineIndex + 6); i += 1) {
+        if (isRenfoCandidate(lines[i])) candidatePool.push(lines[i]);
+      }
     }
+    if (!candidatePool.length) {
+      lines.forEach((line) => {
+        if (isRenfoCandidate(line)) candidatePool.push(line);
+      });
+    }
+
+    const sanitized = candidatePool
+      .flatMap((line) => line.split(/ou|\/|,/i))
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => s.replace(/\(.*?\)/g, "").trim())
+      .filter(Boolean);
+
+    if (sanitized.length) altNames = sanitized.slice(0, 2);
   }
 
   const cooldownIndex = getLastLineIndex(/r[ée]cup[ée]ration/i);
