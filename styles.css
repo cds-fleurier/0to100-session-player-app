@@ -136,6 +136,17 @@ button:disabled {
   background: linear-gradient(160deg, #2d3946, #1f2933);
 }
 
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
 .toggle {
   display: inline-flex;
   align-items: center;
@@ -256,6 +267,7 @@ li {
   gap: 8px;
   margin-top: 16px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .utility-controls {
