@@ -360,11 +360,45 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
     exercises.push({ name: "Récupération (marche rapide)", work: cooldownSeconds, rest: 0 });
   }
 
-  return { title, advice, rounds: 1, exercises };
+  const blocks = [];
+  if (warmupSeconds) {
+    blocks.push(`Bloc 1: Échauffement ${formatDurationForPlan(warmupSeconds)} marche rapide`);
+  }
+
+  if (rounds > 1 || workSeconds || splitWork || splitRenfo || recupSeconds) {
+    const intervalParts = [];
+    if (workSeconds) intervalParts.push(`${formatDurationForPlan(workSeconds)} course facile`);
+    if (splitWork) intervalParts.push(`${formatDurationForPlan(splitWork)} marche`);
+    if (splitRenfo) intervalParts.push(`${formatDurationForPlan(splitRenfo)} renfo`);
+    if (!splitWork && !splitRenfo && recupSeconds) {
+      intervalParts.push(`${formatDurationForPlan(recupSeconds)} récupération`);
+    }
+
+    const alternance =
+      renfoAlternates.length >= 2
+        ? ` (alternance ${renfoAlternates[0]} / ${renfoAlternates[1]})`
+        : "";
+    blocks.push(`Bloc 2: ${rounds} tours de ${intervalParts.join(" + ")}${alternance}`);
+  }
+
+  if (cooldownSeconds) {
+    blocks.push(`Bloc 3: Récupération ${formatDurationForPlan(cooldownSeconds)} marche rapide`);
+  }
+
+  return { title, advice, rounds: 1, exercises, blocks };
 }
 
 function formatSeconds(value) {
   return String(Math.max(0, value)).padStart(2, "0");
+}
+
+function formatDurationForPlan(seconds) {
+  if (!seconds) return "0s";
+  if (seconds % 60 === 0) {
+    const minutes = Math.round(seconds / 60);
+    return `${minutes} min`;
+  }
+  return `${seconds}s`;
 }
 
 function setStatus(text, isError = false) {
@@ -517,18 +551,26 @@ function renderPlan(data) {
   els.meta.innerHTML = `
     <strong>${data.title}</strong><br>
     ${data.advice ? `Conseils: ${data.advice}<br>` : ""}
-    ${data.exercises.length} exercices - ${data.rounds} tours
+    ${data.blocks ? `${data.blocks.length} blocs` : `${data.exercises.length} exercices - ${data.rounds} tours`}
   `;
 
   els.list.innerHTML = "";
-  data.exercises.forEach((ex) => {
-    const li = document.createElement("li");
-    li.textContent =
-      ex.rest && ex.rest > 0
-        ? `${ex.name} - ${ex.work}s effort / ${ex.rest}s récup`
-        : `${ex.name} - ${ex.work}s effort`;
-    els.list.appendChild(li);
-  });
+  if (data.blocks && data.blocks.length) {
+    data.blocks.forEach((block) => {
+      const li = document.createElement("li");
+      li.textContent = block;
+      els.list.appendChild(li);
+    });
+  } else {
+    data.exercises.forEach((ex) => {
+      const li = document.createElement("li");
+      li.textContent =
+        ex.rest && ex.rest > 0
+          ? `${ex.name} - ${ex.work}s effort / ${ex.rest}s récup`
+          : `${ex.name} - ${ex.work}s effort`;
+      els.list.appendChild(li);
+    });
+  }
 }
 
 function currentStep() {

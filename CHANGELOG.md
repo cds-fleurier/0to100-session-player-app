@@ -28,6 +28,7 @@ Toutes les évolutions notables du projet sont documentées ici.
 - Correction parser: support des minutes au format `10'` et extraction du nom au milieu d'une phrase.
 - Correction parser: calcul automatique des tours quand la consigne est `X' ... en réalisant 30s / 30s`.
 - Correction parser: prise en charge des séances `RUN & RENFO` avec alternance marche + renfo.
+- Affichage du plan `RUN & RENFO` par blocs (échauffement, séries, récupération).
 - Fiabilisation audio mobile:
   - initialisation speech au geste utilisateur,
   - gestion `AudioContext` partagée et reprise (`resume()`),
