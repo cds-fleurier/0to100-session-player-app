@@ -124,9 +124,13 @@ function parseSession(text) {
   const advice = adviceLine.replace(/conseils?\s*:\s*/i, "").trim();
 
   let rounds = 1;
+  let roundsLocked = false;
   for (const line of lines) {
     const m = line.match(/(\d+)\s*tours?/i);
-    if (m) rounds = Number(m[1]);
+    if (m) {
+      rounds = Number(m[1]);
+      roundsLocked = true;
+    }
   }
 
   const isSessionMetaLine = (line) => {
@@ -165,6 +169,32 @@ function parseSession(text) {
       const firstTokenIndex = line.indexOf(matches[0][0]);
       const inlineName = line.slice(0, firstTokenIndex).trim();
       let name = inlineName || pendingName;
+
+      if (
+        matches.length >= 3 &&
+        /en\s+r[ée]alisant|en\s+faisant|en\s+alternant/i.test(line) &&
+        !roundsLocked
+      ) {
+        const total = parseDurationToken(matches[0][1]);
+        const work = parseDurationToken(matches[1][1]);
+        const rest = parseDurationToken(matches[2][1]);
+        if (total && work && rest && work + rest > 0) {
+          rounds = Math.floor(total / (work + rest)) || 1;
+          roundsLocked = true;
+          const enIndex = line.search(/en\s+r[ée]alisant|en\s+faisant|en\s+alternant/i);
+          if (enIndex > -1) {
+            name = line
+              .slice(firstTokenIndex + matches[0][0].length, enIndex)
+              .trim()
+              .replace(/^de\s+/i, "")
+              .replace(/[.,:;-]+$/, "");
+          }
+          pushExercise(name, matches[1][1], matches[2][1]);
+          pendingName = null;
+          pendingWork = null;
+          continue;
+        }
+      }
 
       if (!name) {
         const secondTokenIndex = line.indexOf(matches[1][0]);
