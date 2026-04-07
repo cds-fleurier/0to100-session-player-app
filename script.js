@@ -42,6 +42,7 @@ let wakeLockSentinel = null;
 let wakeLockWanted = true;
 let endTransitionDelay = false;
 let endTransitionTimeoutId = null;
+let endTransitionArmed = false;
 
 function normalizeText(value) {
   return (value || "").toLowerCase();
@@ -773,11 +774,13 @@ function tick() {
   renderPlayer();
 
   if (remaining === 0) {
-    if (!endTransitionDelay && lastCountdownCall === 1) {
+    if (!endTransitionDelay && lastCountdownCall === 1 && !endTransitionArmed) {
       endTransitionDelay = true;
+      endTransitionArmed = true;
       endTransitionTimeoutId = setTimeout(() => {
         endTransitionDelay = false;
       }, 600);
+      lastCountdownCall = null;
       return;
     }
     idx += 1;
@@ -792,6 +795,7 @@ function tick() {
     remaining = nextStep.seconds;
     prepareAnnounced = false;
     lastCountdownCall = null;
+    endTransitionArmed = false;
     announceStepStart(nextStep);
     renderPlayer();
     return;
@@ -836,6 +840,7 @@ function stopTimer() {
     endTransitionTimeoutId = null;
   }
   endTransitionDelay = false;
+  endTransitionArmed = false;
   preStartLaunching = false;
 }
 
