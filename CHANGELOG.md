@@ -29,6 +29,8 @@ Toutes les évolutions notables du projet sont documentées ici.
 - Correction parser: calcul automatique des tours quand la consigne est `X' ... en réalisant 30s / 30s`.
 - Correction parser: prise en charge des séances `RUN & RENFO` avec alternance marche + renfo.
 - Affichage du plan `RUN & RENFO` par blocs (échauffement, séries, récupération).
+- Correctifs RUN & RENFO: échauffement/récup détectés même avec “Zone”/intensité, alternance renfo stable, tours correctement incrémentés.
+- Ajout d’un countdown vocal de fin d’exercice (5,4,3,2,1) avec micro-pause avant la transition.
 - Fiabilisation audio mobile:
   - initialisation speech au geste utilisateur,
   - gestion `AudioContext` partagée et reprise (`resume()`),

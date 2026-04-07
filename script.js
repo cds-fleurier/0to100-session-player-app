@@ -39,6 +39,8 @@ let sharedAudioCtx = null;
 let isFocusMode = false;
 let wakeLockSentinel = null;
 let wakeLockWanted = true;
+let endTransitionDelay = false;
+let endTransitionTimeoutId = null;
 
 function normalizeText(value) {
   return (value || "").toLowerCase();
@@ -248,7 +250,10 @@ function parseSession(text) {
 }
 
 function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
-  const hasRunRenfo = lines.some((l) => /run/i.test(l) && /renfo/i.test(l));
+  const hasRunRenfo =
+    lines.some((l) => /run/i.test(l) && /renfo/i.test(l)) ||
+    (lines.some((l) => /course|footing|marche/i.test(l)) &&
+      lines.some((l) => /renfo|chaise|pointe/i.test(l)));
   if (!hasRunRenfo) return null;
 
   const title = lines.find((l) => /run/i.test(l) && /renfo/i.test(l)) || fallbackTitle;
@@ -261,12 +266,25 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
   };
 
   const isZoneLine = (line) => /zone\s*\d/i.test(line);
+  const isIntensityLine = (line) => /\d+\s*\/\s*\d+/.test(line);
 
   const getLineIndex = (pattern) => lines.findIndex((l) => pattern.test(l));
+  const getLastLineIndex = (pattern) => {
+    for (let i = lines.length - 1; i >= 0; i -= 1) {
+      if (pattern.test(lines[i])) return i;
+    }
+    return -1;
+  };
   const findDurationNearIndex = (index) => {
-    const candidates = [lines[index], lines[index - 1], lines[index + 1]].filter(Boolean);
+    const candidates = [
+      lines[index],
+      lines[index - 1],
+      lines[index - 2],
+      lines[index + 1],
+      lines[index + 2],
+    ].filter(Boolean);
     for (const candidate of candidates) {
-      if (isZoneLine(candidate)) continue;
+      if (isZoneLine(candidate) || isIntensityLine(candidate)) continue;
       const duration = findDurationInLine(candidate);
       if (duration) return duration;
     }
@@ -323,7 +341,7 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
     }
   }
 
-  const cooldownIndex = getLineIndex(/r[ée]cup[ée]ration/i);
+  const cooldownIndex = getLastLineIndex(/r[ée]cup[ée]ration/i);
   let cooldownSeconds = null;
   if (cooldownIndex > 0) {
     const candidate = findDurationNearIndex(cooldownIndex);
@@ -332,32 +350,32 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
 
   if (!workSeconds && !warmupSeconds && !recupSeconds) return null;
 
+  const renfoAlternates = altNames.length ? altNames : ["Renforcement musculaire"];
   const exercises = [];
+  const preSteps = [];
+  const postSteps = [];
+
   if (warmupSeconds) {
-    exercises.push({ name: "Échauffement (marche rapide)", work: warmupSeconds, rest: 0 });
+    preSteps.push({ name: "Échauffement (marche rapide)", seconds: warmupSeconds });
   }
 
-  const renfoAlternates = altNames.length ? altNames : ["Renforcement musculaire"];
-
-  for (let i = 0; i < rounds; i += 1) {
-    if (workSeconds) {
-      exercises.push({ name: "Course facile (3/10)", work: workSeconds, rest: 0 });
-    }
-
-    if (splitWork) {
-      exercises.push({ name: "Marche", work: splitWork, rest: 0 });
-    } else if (recupSeconds) {
-      exercises.push({ name: "Récupération", work: recupSeconds, rest: 0 });
-    }
-
-    if (splitRenfo) {
-      const altName = renfoAlternates[i % renfoAlternates.length];
-      exercises.push({ name: altName, work: splitRenfo, rest: 0 });
-    }
+  if (workSeconds) exercises.push({ name: "Course facile (3/10)", work: workSeconds, rest: 0 });
+  if (splitWork) {
+    exercises.push({ name: "Marche", work: splitWork, rest: 0 });
+  } else if (recupSeconds) {
+    exercises.push({ name: "Récupération", work: recupSeconds, rest: 0 });
+  }
+  if (splitRenfo) {
+    exercises.push({
+      name: "Renfo alterné",
+      alternates: renfoAlternates,
+      work: splitRenfo,
+      rest: 0,
+    });
   }
 
   if (cooldownSeconds) {
-    exercises.push({ name: "Récupération (marche rapide)", work: cooldownSeconds, rest: 0 });
+    postSteps.push({ name: "Récupération (marche rapide)", seconds: cooldownSeconds });
   }
 
   const blocks = [];
@@ -385,7 +403,7 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
     blocks.push(`Bloc 3: Récupération ${formatDurationForPlan(cooldownSeconds)} marche rapide`);
   }
 
-  return { title, advice, rounds: 1, exercises, blocks };
+  return { title, advice, rounds, exercises, blocks, preSteps, postSteps };
 }
 
 function formatSeconds(value) {
@@ -522,11 +540,25 @@ function beep() {
 
 function buildTimeline(data) {
   const steps = [];
-  for (let r = 1; r <= data.rounds; r += 1) {
-    data.exercises.forEach((ex, exIndex) => {
+  if (data.preSteps && data.preSteps.length) {
+    data.preSteps.forEach((pre) => {
       steps.push({
         type: "work",
-        name: ex.name,
+        name: pre.name,
+        seconds: pre.seconds,
+        round: 0,
+        exIndex: -1,
+      });
+    });
+  }
+  for (let r = 1; r <= data.rounds; r += 1) {
+    data.exercises.forEach((ex, exIndex) => {
+      const stepName = ex.alternates && ex.alternates.length
+        ? ex.alternates[(r - 1) % ex.alternates.length]
+        : ex.name;
+      steps.push({
+        type: "work",
+        name: stepName,
         seconds: ex.work,
         round: r,
         exIndex,
@@ -542,6 +574,17 @@ function buildTimeline(data) {
           exIndex,
         });
       }
+    });
+  }
+  if (data.postSteps && data.postSteps.length) {
+    data.postSteps.forEach((post) => {
+      steps.push({
+        type: "work",
+        name: post.name,
+        seconds: post.seconds,
+        round: 0,
+        exIndex: data.exercises.length,
+      });
     });
   }
   return steps;
@@ -612,9 +655,13 @@ function renderPlayer() {
   els.phase.textContent = inPrepareWindow ? "Prépare-toi" : isRest ? "Récup" : "Exercice";
   els.phase.className = `phase ${inPrepareWindow ? "prepare" : isRest ? "rest" : ""}`.trim();
   els.countdown.textContent = formatSeconds(remaining);
-  els.current.textContent = isRest
-    ? `Tour ${step.round}: récupération`
-    : `Tour ${step.round}: ${step.name}`;
+  if (step.round && step.round > 0) {
+    els.current.textContent = isRest
+      ? `Tour ${step.round}: récupération`
+      : `Tour ${step.round}: ${step.name}`;
+  } else {
+    els.current.textContent = step.name;
+  }
   els.next.textContent = `Ensuite: ${nextExerciseName()}`;
 }
 
@@ -672,6 +719,11 @@ function tick() {
     beep();
   }
 
+  if (step.type === "work" && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
+    lastCountdownCall = remaining;
+    speak(String(remaining));
+  }
+
   if (step.type === "rest" && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
     speak(String(remaining));
@@ -680,6 +732,13 @@ function tick() {
   renderPlayer();
 
   if (remaining === 0) {
+    if (!endTransitionDelay && lastCountdownCall === 1) {
+      endTransitionDelay = true;
+      endTransitionTimeoutId = setTimeout(() => {
+        endTransitionDelay = false;
+      }, 600);
+      return;
+    }
     idx += 1;
     const nextStep = currentStep();
     if (!nextStep) {
@@ -731,6 +790,11 @@ function stopTimer() {
     clearTimeout(preStartLaunchTimeoutId);
     preStartLaunchTimeoutId = null;
   }
+  if (endTransitionTimeoutId) {
+    clearTimeout(endTransitionTimeoutId);
+    endTransitionTimeoutId = null;
+  }
+  endTransitionDelay = false;
   preStartLaunching = false;
 }
 
