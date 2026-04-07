@@ -32,6 +32,7 @@ Toutes les évolutions notables du projet sont documentées ici.
 - Correctifs RUN & RENFO: échauffement/récup détectés même avec “Zone”/intensité, alternance renfo stable, tours correctement incrémentés.
 - Ajout d’un countdown vocal de fin d’exercice (5,4,3,2,1) avec micro-pause avant la transition.
 - Amélioration détection renfo: support d’exercices variés (planche, ponts, gainage, etc.).
+- Ajout bouton `FWD bloc` pour sauter au bloc suivant (échauffement -> séries -> récup).
 - Fiabilisation audio mobile:
   - initialisation speech au geste utilisateur,
   - gestion `AudioContext` partagée et reprise (`resume()`),

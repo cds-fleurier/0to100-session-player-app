@@ -14,6 +14,7 @@ const els = {
   reset: document.getElementById("resetBtn"),
   focusModeBtn: document.getElementById("focusModeBtn"),
   wakeLockBtn: document.getElementById("wakeLockBtn"),
+  skipBlockBtn: document.getElementById("skipBlockBtn"),
   voiceToggle: document.getElementById("voiceToggle"),
   voiceMode: document.getElementById("voiceMode"),
 };
@@ -569,6 +570,7 @@ function buildTimeline(data) {
         seconds: pre.seconds,
         round: 0,
         exIndex: -1,
+        blockId: 1,
       });
     });
   }
@@ -583,6 +585,7 @@ function buildTimeline(data) {
         seconds: ex.work,
         round: r,
         exIndex,
+        blockId: 2,
       });
 
       const isFinalStep = r === data.rounds && exIndex === data.exercises.length - 1;
@@ -593,6 +596,7 @@ function buildTimeline(data) {
           seconds: ex.rest,
           round: r,
           exIndex,
+          blockId: 2,
         });
       }
     });
@@ -605,6 +609,7 @@ function buildTimeline(data) {
         seconds: post.seconds,
         round: 0,
         exIndex: data.exercises.length,
+        blockId: 3,
       });
     });
   }
@@ -646,6 +651,21 @@ function nextExerciseName() {
     if (timeline[i].type === "work") return timeline[i].name;
   }
   return "Fin de séance";
+}
+
+function skipToNextBlock() {
+  const step = currentStep();
+  if (!step || !step.blockId) return;
+  const currentBlock = step.blockId;
+  const nextIndex = timeline.findIndex((s, i) => i > idx && s.blockId && s.blockId > currentBlock);
+  if (nextIndex === -1) return;
+  idx = nextIndex;
+  remaining = timeline[idx].seconds;
+  lastCountdownCall = null;
+  prepareAnnounced = false;
+  preStartLaunching = false;
+  renderPlayer();
+  announceStepStart(timeline[idx]);
 }
 
 function renderPlayer() {
@@ -901,6 +921,7 @@ els.pause.addEventListener("click", pauseTimer);
 els.reset.addEventListener("click", resetTimer);
 els.focusModeBtn.addEventListener("click", toggleFocusMode);
 els.wakeLockBtn.addEventListener("click", toggleWakeLock);
+els.skipBlockBtn.addEventListener("click", skipToNextBlock);
 els.voiceToggle.addEventListener("change", updateVoiceControlsState);
 els.voiceMode.addEventListener("change", () => {
   localStorage.setItem(VOICE_PREF_KEY, els.voiceMode.value);

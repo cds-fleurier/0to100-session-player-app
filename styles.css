@@ -255,6 +255,7 @@ li {
   display: flex;
   gap: 8px;
   margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 .utility-controls {
