@@ -57,18 +57,18 @@ MONTER SUR POINTES DE PIEDS 20s 40s
         <ol id="exerciseList"></ol>
       </section>
 
-      <section class="card player-card">
+      <section class="card player-card" aria-label="Lecteur de séance">
         <h2>Player</h2>
-        <div class="phase" id="phaseLabel">Pret</div>
-        <div class="countdown" id="countdown">00</div>
-        <div class="now" id="currentLabel">Charge une séance</div>
-        <div class="next" id="nextLabel"></div>
+        <div class="phase" id="phaseLabel" aria-live="polite">Pret</div>
+        <div class="countdown" id="countdown" role="timer" aria-live="assertive" aria-atomic="true">00</div>
+        <div class="now" id="currentLabel" aria-live="polite">Charge une séance</div>
+        <div class="next" id="nextLabel" aria-live="polite"></div>
 
         <div class="controls">
-          <button id="startBtn" class="action-btn" disabled><span class="btn-icon">&#9654;</span>Demarrer</button>
-          <button id="pauseBtn" class="action-btn" disabled><span class="btn-icon">&#9208;</span>Pause</button>
-          <button id="resetBtn" class="action-btn" disabled><span class="btn-icon">&#9209;</span>Reset</button>
-          <button id="skipBlockBtn" class="action-btn"><span class="btn-icon">&#9193;</span>FWD</button>
+          <button id="startBtn" class="action-btn" aria-label="Démarrer la séance" disabled><span class="btn-icon" aria-hidden="true">&#9654;</span>Demarrer</button>
+          <button id="pauseBtn" class="action-btn" aria-label="Mettre en pause" disabled><span class="btn-icon" aria-hidden="true">&#9208;</span>Pause</button>
+          <button id="resetBtn" class="action-btn" aria-label="Réinitialiser le timer" disabled><span class="btn-icon" aria-hidden="true">&#9209;</span>Reset</button>
+          <button id="skipBlockBtn" class="action-btn" aria-label="Passer au bloc suivant"><span class="btn-icon" aria-hidden="true">&#9193;</span>FWD</button>
         </div>
         <div class="controls utility-controls">
           <button id="focusModeBtn" class="secondary-btn">Mode focus</button>

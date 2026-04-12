@@ -43,6 +43,62 @@ let wakeLockWanted = true;
 let endTransitionDelay = false;
 let endTransitionTimeoutId = null;
 let endTransitionArmed = false;
+let lastTickAt = 0;
+
+// iOS Safari "Shake to Undo": clones the textarea on playback start to wipe
+// the system undo history, then locks it as readonly so it can no longer
+// become first responder while the user is moving with the phone in hand.
+function lockSessionInput() {
+  if (!els.input || els.input.dataset.locked === "1") return;
+  els.input.blur();
+  const clone = els.input.cloneNode(false);
+  clone.value = els.input.value;
+  clone.readOnly = true;
+  clone.dataset.locked = "1";
+  els.input.parentNode.replaceChild(clone, els.input);
+  els.input = clone;
+}
+
+function unlockSessionInput() {
+  if (!els.input || els.input.dataset.locked !== "1") return;
+  els.input.readOnly = false;
+  delete els.input.dataset.locked;
+}
+
+// Silently advance the timer state by `secs` seconds, without speaking or
+// beeping. Used to catch up after the tab was suspended (iOS background).
+function silentAdvance(secs) {
+  while (secs > 0 && timerId) {
+    const step = currentStep();
+    if (!step) return;
+    if (idx === 0 && preStartRemaining > 0) {
+      const consume = Math.min(preStartRemaining, secs);
+      preStartRemaining -= consume;
+      secs -= consume;
+      if (preStartRemaining === 0) {
+        preStartRemaining = -1;
+        lastCountdownCall = null;
+      }
+      continue;
+    }
+    if (remaining > 0) {
+      const consume = Math.min(remaining, secs);
+      remaining -= consume;
+      secs -= consume;
+      continue;
+    }
+    idx += 1;
+    const nextStep = currentStep();
+    if (!nextStep) {
+      stopTimer();
+      return;
+    }
+    remaining = nextStep.seconds;
+    prepareAnnounced = false;
+    lastCountdownCall = null;
+    endTransitionArmed = false;
+  }
+}
 
 function normalizeText(value) {
   return (value || "").toLowerCase();
@@ -618,13 +674,25 @@ function buildTimeline(data) {
 }
 
 function renderPlan(data) {
-  els.meta.innerHTML = `
-    <strong>${data.title}</strong><br>
-    ${data.advice ? `Conseils: ${data.advice}<br>` : ""}
-    ${data.blocks ? `${data.blocks.length} blocs` : `${data.exercises.length} exercices - ${data.rounds} tours`}
-  `;
+  // Build meta via DOM nodes to avoid XSS from user-pasted content.
+  els.meta.textContent = "";
+  const titleEl = document.createElement("strong");
+  titleEl.textContent = data.title;
+  els.meta.appendChild(titleEl);
+  els.meta.appendChild(document.createElement("br"));
+  if (data.advice) {
+    els.meta.appendChild(document.createTextNode(`Conseils: ${data.advice}`));
+    els.meta.appendChild(document.createElement("br"));
+  }
+  els.meta.appendChild(
+    document.createTextNode(
+      data.blocks
+        ? `${data.blocks.length} blocs`
+        : `${data.exercises.length} exercices - ${data.rounds} tours`,
+    ),
+  );
 
-  els.list.innerHTML = "";
+  els.list.textContent = "";
   if (data.blocks && data.blocks.length) {
     data.blocks.forEach((block) => {
       const li = document.createElement("li");
@@ -719,6 +787,18 @@ function announceStepStart(step) {
 }
 
 function tick() {
+  // Drift correction: if the tab was suspended (iOS background, throttled
+  // intervals), recover the seconds that were missed before continuing.
+  const tickNow = (typeof performance !== "undefined" ? performance.now() : Date.now());
+  if (lastTickAt) {
+    const elapsedMs = tickNow - lastTickAt;
+    if (elapsedMs > 1500) {
+      const extraSeconds = Math.floor(elapsedMs / 1000) - 1;
+      if (extraSeconds > 0) silentAdvance(extraSeconds);
+    }
+  }
+  lastTickAt = tickNow;
+
   const step = currentStep();
   if (!step) return;
 
@@ -821,8 +901,10 @@ function startTimer() {
 
   if (timerId) return;
   paused = false;
+  lockSessionInput();
   els.start.disabled = true;
   els.pause.disabled = false;
+  lastTickAt = (typeof performance !== "undefined" ? performance.now() : Date.now());
   timerId = setInterval(tick, 1000);
 }
 
@@ -842,6 +924,7 @@ function stopTimer() {
   endTransitionDelay = false;
   endTransitionArmed = false;
   preStartLaunching = false;
+  lastTickAt = 0;
 }
 
 function pauseTimer() {
@@ -854,6 +937,7 @@ function pauseTimer() {
 
 function resetTimer() {
   stopTimer();
+  unlockSessionInput();
   paused = false;
   timeline = sessionData ? buildTimeline(sessionData) : [];
   idx = 0;
@@ -881,6 +965,9 @@ function parseAndLoad() {
     sessionData = parseSession(els.input.value);
     renderPlan(sessionData);
     timeline = buildTimeline(sessionData);
+    if (!timeline.length) {
+      throw new Error("Aucune étape exploitable n'a été trouvée dans la séance.");
+    }
     idx = 0;
     remaining = timeline[0].seconds;
     prepareAnnounced = false;
@@ -918,6 +1005,7 @@ function parseAndLoad() {
 
 els.parseBtn.addEventListener("click", () => {
   stopTimer();
+  unlockSessionInput();
   parseAndLoad();
 });
 els.pasteNolioBtn.addEventListener("click", pasteFromClipboard);
@@ -933,8 +1021,13 @@ els.voiceMode.addEventListener("change", () => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && wakeLockWanted && !wakeLockSentinel) {
+  if (document.visibilityState !== "visible") return;
+  if (wakeLockWanted && !wakeLockSentinel) {
     requestWakeLock();
+  }
+  // Catch up immediately if the timer was running while the tab was hidden.
+  if (timerId && !paused) {
+    tick();
   }
 });
 
