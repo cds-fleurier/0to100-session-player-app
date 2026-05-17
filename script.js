@@ -15,9 +15,11 @@ const els = {
   focusModeBtn: document.getElementById("focusModeBtn"),
   wakeLockBtn: document.getElementById("wakeLockBtn"),
   skipBlockBtn: document.getElementById("skipBlockBtn"),
+  appVersion: document.getElementById("appVersion"),
   voiceToggle: document.getElementById("voiceToggle"),
   voiceMode: document.getElementById("voiceMode"),
 };
+const APP_VERSION = "v1.5.0";
 
 let sessionData = null;
 let timeline = [];
@@ -947,5 +949,6 @@ if (window.speechSynthesis) {
   window.speechSynthesis.getVoices();
 }
 refreshWakeLockButton();
+if (els.appVersion) els.appVersion.textContent = APP_VERSION;
 
 parseAndLoad();

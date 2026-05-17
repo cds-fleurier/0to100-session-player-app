@@ -274,6 +274,15 @@ li {
   margin-top: 10px;
 }
 
+.app-version {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #596271;
+  text-transform: uppercase;
+}
+
 body.focus-mode .hero,
 body.focus-mode .input-card,
 body.focus-mode .plan-card {
