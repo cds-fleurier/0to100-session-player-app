@@ -34,6 +34,7 @@ Toutes les évolutions notables du projet sont documentées ici.
 - Amélioration détection renfo: support d’exercices variés (planche, ponts, gainage, etc.).
 - Ajout bouton `FWD bloc` pour sauter au bloc suivant (échauffement -> séries -> récup).
 - Parsing: support des durées en format `30"` et des répétitions en format `4 rounds`.
+- Voix: suppression des précisions d'exercice à l'oral (parenthèses/suffixes explicatifs).
 - Fiabilisation audio mobile:
   - initialisation speech au geste utilisateur,
   - gestion `AudioContext` partagée et reprise (`resume()`),

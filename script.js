@@ -656,6 +656,25 @@ function nextExerciseName() {
   return "Fin de séance";
 }
 
+function spokenExerciseName(rawName) {
+  let name = (rawName || "").trim();
+  if (!name) return "";
+
+  // Remove any parenthetical precision for voice prompts.
+  name = name.replace(/\s*\([^)]*\)/g, "").trim();
+
+  // If the exercise starts with an uppercase block and then explanatory text,
+  // keep only that uppercase exercise block (ex: "CRUNCH Pieds au sol..." -> "CRUNCH").
+  const upperBlock = name.match(/^([A-ZÀ-ÖØ-Ý0-9'’\-]+(?:\s+[A-ZÀ-ÖØ-Ý0-9'’\-]+)*)\b/);
+  if (upperBlock) {
+    const matched = upperBlock[1].trim();
+    const tail = name.slice(matched.length).trim();
+    if (tail && /[a-zà-öø-ÿ]/.test(tail)) return matched;
+  }
+
+  return name;
+}
+
 function skipToNextBlock() {
   const step = currentStep();
   if (!step || !step.blockId) return;
@@ -711,10 +730,12 @@ function renderPlayer() {
 
 function announceStepStart(step) {
   if (!step) return;
+  const spokenName = spokenExerciseName(step.name);
   if (step.type === "work") {
-    speak(`Tour ${step.round}. ${step.name}. ${step.seconds} secondes.`);
+    const prefix = step.round && step.round > 0 ? `Tour ${step.round}. ` : "";
+    speak(`${prefix}${spokenName}. ${step.seconds} secondes.`);
   } else {
-    const nextName = nextExerciseName();
+    const nextName = spokenExerciseName(nextExerciseName());
     speak(`Récupération. ${step.seconds} secondes. Ensuite ${nextName}.`);
   }
   beep();
@@ -759,7 +780,7 @@ function tick() {
 
   if (step.type === "rest" && remaining === 11 && !prepareAnnounced) {
     prepareAnnounced = true;
-    speak(`Prépare-toi. Prochain exercice: ${nextExerciseName()}.`);
+    speak(`Prépare-toi. Prochain exercice: ${spokenExerciseName(nextExerciseName())}.`);
     beep();
   }
 
@@ -879,8 +900,28 @@ function resetTimer() {
 }
 
 function parseAndLoad() {
+  const rawText = (els.input.value || "").trim();
+  if (!rawText) {
+    sessionData = null;
+    timeline = [];
+    idx = 0;
+    remaining = 0;
+    stopTimer();
+    renderPlan({ title: "-", advice: "", rounds: 0, exercises: [] });
+    els.start.disabled = true;
+    els.pause.disabled = true;
+    els.reset.disabled = true;
+    els.phase.textContent = "Pret";
+    els.phase.className = "phase";
+    els.countdown.textContent = "00";
+    els.current.textContent = "Charge une séance";
+    els.next.textContent = "";
+    setStatus("");
+    return;
+  }
+
   try {
-    sessionData = parseSession(els.input.value);
+    sessionData = parseSession(rawText);
     renderPlan(sessionData);
     timeline = buildTimeline(sessionData);
     idx = 0;

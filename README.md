@@ -21,6 +21,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
   - bouton `FWD bloc` pour sauter directement au bloc suivant
   - formats secondes avec guillemets acceptés (ex: `30"`)
   - `rounds` en anglais accepté (ex: `4 rounds`)
+  - la voix annonce uniquement le nom d'exercice (sans précisions techniques)
 - Player automatique:
   - enchaînement `exercice -> récupération -> exercice suivant`
   - pré-décompte de démarrage (5 secondes)
