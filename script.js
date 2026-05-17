@@ -677,9 +677,20 @@ function spokenExerciseName(rawName) {
 
 function skipToNextBlock() {
   const step = currentStep();
-  if (!step || !step.blockId) return;
-  const currentBlock = step.blockId;
-  const nextIndex = timeline.findIndex((s, i) => i > idx && s.blockId && s.blockId > currentBlock);
+  if (!step) return;
+
+  let nextIndex = -1;
+  if (step.blockId) {
+    const currentBlock = step.blockId;
+    nextIndex = timeline.findIndex((s, i) => i > idx && s.blockId && s.blockId > currentBlock);
+  }
+
+  // Fallback for classic sessions with no distinct block transitions:
+  // jump to the next work step (next exercise).
+  if (nextIndex === -1) {
+    nextIndex = timeline.findIndex((s, i) => i > idx && s.type === "work");
+  }
+
   if (nextIndex === -1) return;
   idx = nextIndex;
   remaining = timeline[idx].seconds;
