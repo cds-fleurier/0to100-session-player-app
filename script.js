@@ -109,7 +109,7 @@ function primeSpeechSynthesis() {
 function parseDurationToken(token) {
   if (!token) return null;
   const clean = token.trim().toLowerCase();
-  const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min|'|’)?/i);
+  const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min|'|’|"|″)?/i);
   if (!m) return null;
   const value = Number(m[1]);
   const unit = (m[2] || "s").toLowerCase();
@@ -133,7 +133,7 @@ function parseSession(text) {
   let rounds = 1;
   let roundsLocked = false;
   for (const line of lines) {
-    const m = line.match(/(\d+)\s*tours?/i);
+    const m = line.match(/(\d+)\s*(tours?|rounds?)/i);
     if (m) {
       rounds = Number(m[1]);
       roundsLocked = true;
@@ -153,7 +153,7 @@ function parseSession(text) {
 
   const isDurationOnlyLine = (line) => {
     const compact = line.replace(/\s+/g, "").toLowerCase();
-    return /^(\d+)(s|sec|secs|mn|min|'|’)?$/.test(compact);
+    return /^(\d+)(s|sec|secs|mn|min|'|’|"|″)?$/.test(compact);
   };
 
   const exercises = [];
@@ -170,7 +170,7 @@ function parseSession(text) {
   for (const line of lines) {
     if (isSessionMetaLine(line)) continue;
 
-    const matches = [...line.matchAll(/(\d+\s*(?:s|sec|secs|mn|min|')?)/gi)];
+    const matches = [...line.matchAll(/(\d+\s*(?:s|sec|secs|mn|min|'|’|"|″)?)/gi)];
 
     if (matches.length >= 2) {
       const firstTokenIndex = line.indexOf(matches[0][0]);
