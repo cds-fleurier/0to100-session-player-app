@@ -2,6 +2,16 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.5.1] - 2026-05-17
+
+### Ajouté
+- Badge de version visible dans le player (`v1.5.1`) pour valider rapidement la version testée.
+
+### Modifié
+- Champ de saisie vide par défaut avec placeholder `Colle ta session ici`.
+- Voix: lecture simplifiée du nom d'exercice (sans précisions entre parenthèses / suffixes descriptifs).
+- Règle de maintenance documentée: incrément obligatoire de `APP_VERSION` à chaque livraison.
+
 ## [0.3.0] - 2026-03-04
 
 ### Ajouté

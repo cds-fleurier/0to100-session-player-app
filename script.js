@@ -19,7 +19,7 @@ const els = {
   voiceToggle: document.getElementById("voiceToggle"),
   voiceMode: document.getElementById("voiceMode"),
 };
-const APP_VERSION = "v1.5.0";
+const APP_VERSION = "v1.5.1";
 
 let sessionData = null;
 let timeline = [];

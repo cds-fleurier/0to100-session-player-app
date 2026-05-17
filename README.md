@@ -90,6 +90,7 @@ et détecte aussi le nombre de tours (`X TOURS`).
 
 - `README.md` est mis à jour à chaque changement fonctionnel visible utilisateur.
 - Historique des changements dans `CHANGELOG.md`.
+- À chaque modification livrée, incrémenter `APP_VERSION` dans `script.js` (SemVer: `major.minor.patch`).
 
 ## Roadmap
 
