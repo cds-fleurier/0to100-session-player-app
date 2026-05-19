@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.8.0] - 2026-05-19
+
+### Modifié
+- Bibliothèque de 88 titres curatés (Motown/Soul, Hip-hop, Électro, Rock, Lo-fi) avec BPMs vérifiés et durées en secondes.
+- Algorithme de sélection : filtre par genre + plage BPM adaptée au type de séance (Run & Renfo vs Renfo), puis remplit la durée totale de la séance.
+- Affichage d'une playlist de titres spécifiques avec liens directs Spotify / Apple Music / YouTube / Deezer par titre.
+- En-tête playlist : nombre de titres, durée totale vs durée de séance.
+- Easter egg : option "🔥 Spécial Myriam" (180+ BPM) — pour ceux qui courent comme si leur vie en dépendait.
+
 ## [1.7.0] - 2026-05-19
 
 ### Ajouté

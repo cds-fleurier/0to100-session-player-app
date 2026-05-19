@@ -20,41 +20,20 @@ const els = {
   voiceMode: document.getElementById("voiceMode"),
   musicCard: document.getElementById("musicCard"),
   musicGenre: document.getElementById("musicGenre"),
-  musicLinks: document.getElementById("musicLinks"),
+  musicTracklist: document.getElementById("musicTracklist"),
 };
-const APP_VERSION = "v1.7.0";
+const APP_VERSION = "v1.8.0";
 
 const MUSIC_PREF_KEY = "sportSessionMusicGenre";
 
-const MUSIC_QUERIES = {
-  motown: {
-    run:   "motown soul groove running 85 bpm",
-    renfo: "soul funk workout energique 130 bpm",
-  },
-  hiphop: {
-    run:   "hip hop running trail 90 bpm",
-    renfo: "hip hop workout trap 135 bpm",
-  },
-  electro: {
-    run:   "electro running progressive 145 bpm",
-    renfo: "electro edm workout 135 bpm",
-  },
-  rock: {
-    run:   "rock running energy trail",
-    renfo: "rock workout power hard",
-  },
-  lofi: {
-    run:   "lofi hip hop running easy chill",
-    renfo: "lofi workout chill ambient",
-  },
+const BPM_RANGES = {
+  motown:  { run: { min:  80, max: 145 }, renfo: { min: 100, max: 170 } },
+  hiphop:  { run: { min:  80, max: 175 }, renfo: { min:  90, max: 175 } },
+  electro: { run: { min: 110, max: 160 }, renfo: { min: 110, max: 160 } },
+  rock:    { run: { min:  90, max: 180 }, renfo: { min:  90, max: 180 } },
+  lofi:    { run: { min:  75, max: 100 }, renfo: { min:  75, max: 100 } },
+  myriam:  { run: { min: 175, max: 999 }, renfo: { min: 175, max: 999 } },
 };
-
-const MUSIC_PLATFORMS = [
-  { label: "Spotify",      url: (q) => `https://open.spotify.com/search/${encodeURIComponent(q)}` },
-  { label: "Apple Music",  url: (q) => `https://music.apple.com/search?term=${encodeURIComponent(q)}` },
-  { label: "YouTube",      url: (q) => `https://music.youtube.com/search?q=${encodeURIComponent(q)}` },
-  { label: "Deezer",       url: (q) => `https://www.deezer.com/search/${encodeURIComponent(q)}` },
-];
 
 let sessionData = null;
 let timeline = [];
@@ -641,24 +620,78 @@ function buildTimeline(data) {
   return steps;
 }
 
+function calcSessionDuration(data) {
+  if (!data) return 0;
+  return buildTimeline(data).reduce((sum, s) => sum + s.seconds, 0);
+}
+
+function buildPlaylist(genre, sessionType, totalSeconds) {
+  const range = (BPM_RANGES[genre] || BPM_RANGES.motown)[sessionType] || { min: 80, max: 180 };
+  const lib = typeof MUSIC_LIBRARY !== "undefined" ? MUSIC_LIBRARY : [];
+  let pool = lib.filter((t) => t.genres.includes(genre));
+  let candidates = pool.filter((t) => t.bpm >= range.min && t.bpm <= range.max);
+  if (candidates.length < 4) candidates = pool;
+  candidates = [...candidates].sort(() => Math.random() - 0.5);
+
+  const playlist = [];
+  let filled = 0;
+  const target = totalSeconds || 1800;
+  for (const track of candidates) {
+    playlist.push(track);
+    filled += track.duration;
+    if (filled >= target || playlist.length >= 8) break;
+  }
+  return playlist;
+}
+
 function renderMusicLinks(data) {
   if (!data || !data.exercises || !data.exercises.length) {
     els.musicCard.style.display = "none";
     return;
   }
+  els.musicCard.style.display = "";
   const genre = els.musicGenre.value;
+
   if (genre === "none") {
-    els.musicLinks.innerHTML = "";
-    els.musicCard.style.display = "";
+    els.musicTracklist.innerHTML = "";
     return;
   }
+
   const isRunRenfo = !!(data.blocks && data.blocks.length);
-  const queries = MUSIC_QUERIES[genre] || MUSIC_QUERIES.motown;
-  const query = queries[isRunRenfo ? "run" : "renfo"];
-  els.musicLinks.innerHTML = MUSIC_PLATFORMS
-    .map((p) => `<a href="${p.url(query)}" target="_blank" rel="noopener" class="music-btn">${p.label}</a>`)
-    .join("");
-  els.musicCard.style.display = "";
+  const totalSeconds = calcSessionDuration(data);
+  const playlist = buildPlaylist(genre, isRunRenfo ? "run" : "renfo", totalSeconds);
+
+  if (!playlist.length) {
+    els.musicTracklist.innerHTML = `<p class="music-hint">Aucun titre disponible pour ce genre.</p>`;
+    return;
+  }
+
+  const playlistMin = Math.round(playlist.reduce((s, t) => s + t.duration, 0) / 60);
+  const sessionMin  = Math.round(totalSeconds / 60);
+
+  const header = `<div class="music-tracklist-header">${playlist.length} titres · ~${playlistMin} min <span class="music-session-duration">(séance : ${sessionMin} min)</span></div>`;
+
+  const tracks = playlist.map((t) => {
+    const q = encodeURIComponent(`${t.artist} ${t.title}`);
+    const links = [
+      ["Spotify",     `https://open.spotify.com/search/${q}`],
+      ["Apple Music", `https://music.apple.com/search?term=${q}`],
+      ["YouTube",     `https://music.youtube.com/search?q=${q}`],
+      ["Deezer",      `https://www.deezer.com/search/${q}`],
+    ].map(([label, url]) =>
+      `<a href="${url}" target="_blank" rel="noopener" class="music-btn-sm">${label}</a>`
+    ).join("");
+
+    return `<div class="music-track">
+      <div class="music-track-info">
+        <span class="music-track-name">${t.title} <span class="music-track-artist">— ${t.artist}</span></span>
+        <span class="music-track-bpm">${t.bpm} BPM</span>
+      </div>
+      <div class="music-track-links">${links}</div>
+    </div>`;
+  }).join("");
+
+  els.musicTracklist.innerHTML = header + tracks;
 }
 
 function renderPlan(data) {
