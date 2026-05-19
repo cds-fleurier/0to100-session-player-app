@@ -53,6 +53,23 @@
         <ol id="exerciseList"></ol>
       </section>
 
+      <section class="card music-card" id="musicCard" style="display:none">
+        <h2>Musique</h2>
+        <div class="music-genre-row">
+          <label for="musicGenre">Genre</label>
+          <select id="musicGenre" class="voice-picker">
+            <option value="motown">Motown / Soul</option>
+            <option value="hiphop">Hip-hop</option>
+            <option value="electro">Électro</option>
+            <option value="rock">Rock</option>
+            <option value="lofi">Lo-fi / Ambiant</option>
+            <option value="none">Sans musique</option>
+          </select>
+        </div>
+        <div id="musicLinks" class="music-links"></div>
+        <p class="music-hint">Lance ta musique d'abord, puis appuie sur Démarrer.</p>
+      </section>
+
       <section class="card player-card">
         <h2>Player</h2>
         <div class="phase" id="phaseLabel">Pret</div>

@@ -18,8 +18,43 @@ const els = {
   appVersion: document.getElementById("appVersion"),
   voiceToggle: document.getElementById("voiceToggle"),
   voiceMode: document.getElementById("voiceMode"),
+  musicCard: document.getElementById("musicCard"),
+  musicGenre: document.getElementById("musicGenre"),
+  musicLinks: document.getElementById("musicLinks"),
 };
-const APP_VERSION = "v1.6.0";
+const APP_VERSION = "v1.7.0";
+
+const MUSIC_PREF_KEY = "sportSessionMusicGenre";
+
+const MUSIC_QUERIES = {
+  motown: {
+    run:   "motown soul groove running 85 bpm",
+    renfo: "soul funk workout energique 130 bpm",
+  },
+  hiphop: {
+    run:   "hip hop running trail 90 bpm",
+    renfo: "hip hop workout trap 135 bpm",
+  },
+  electro: {
+    run:   "electro running progressive 145 bpm",
+    renfo: "electro edm workout 135 bpm",
+  },
+  rock: {
+    run:   "rock running energy trail",
+    renfo: "rock workout power hard",
+  },
+  lofi: {
+    run:   "lofi hip hop running easy chill",
+    renfo: "lofi workout chill ambient",
+  },
+};
+
+const MUSIC_PLATFORMS = [
+  { label: "Spotify",      url: (q) => `https://open.spotify.com/search/${encodeURIComponent(q)}` },
+  { label: "Apple Music",  url: (q) => `https://music.apple.com/search?term=${encodeURIComponent(q)}` },
+  { label: "YouTube",      url: (q) => `https://music.youtube.com/search?q=${encodeURIComponent(q)}` },
+  { label: "Deezer",       url: (q) => `https://www.deezer.com/search/${encodeURIComponent(q)}` },
+];
 
 let sessionData = null;
 let timeline = [];
@@ -606,6 +641,26 @@ function buildTimeline(data) {
   return steps;
 }
 
+function renderMusicLinks(data) {
+  if (!data || !data.exercises || !data.exercises.length) {
+    els.musicCard.style.display = "none";
+    return;
+  }
+  const genre = els.musicGenre.value;
+  if (genre === "none") {
+    els.musicLinks.innerHTML = "";
+    els.musicCard.style.display = "";
+    return;
+  }
+  const isRunRenfo = !!(data.blocks && data.blocks.length);
+  const queries = MUSIC_QUERIES[genre] || MUSIC_QUERIES.motown;
+  const query = queries[isRunRenfo ? "run" : "renfo"];
+  els.musicLinks.innerHTML = MUSIC_PLATFORMS
+    .map((p) => `<a href="${p.url(query)}" target="_blank" rel="noopener" class="music-btn">${p.label}</a>`)
+    .join("");
+  els.musicCard.style.display = "";
+}
+
 function renderPlan(data) {
   els.meta.innerHTML = `
     <strong>${data.title}</strong><br>
@@ -898,6 +953,7 @@ function parseAndLoad() {
     remaining = 0;
     stopTimer();
     renderPlan({ title: "-", advice: "", rounds: 0, exercises: [] });
+    renderMusicLinks(null);
     els.start.disabled = true;
     els.pause.disabled = true;
     els.reset.disabled = true;
@@ -913,6 +969,7 @@ function parseAndLoad() {
   try {
     sessionData = parseSession(rawText);
     renderPlan(sessionData);
+    renderMusicLinks(sessionData);
     timeline = buildTimeline(sessionData);
     idx = 0;
     remaining = timeline[0].seconds;
@@ -938,6 +995,7 @@ function parseAndLoad() {
     idx = 0;
     remaining = 0;
     renderPlan({ title: "-", advice: "", rounds: 0, exercises: [] });
+    renderMusicLinks(null);
     els.start.disabled = true;
     els.pause.disabled = true;
     els.reset.disabled = true;
@@ -964,6 +1022,10 @@ els.voiceToggle.addEventListener("change", updateVoiceControlsState);
 els.voiceMode.addEventListener("change", () => {
   localStorage.setItem(VOICE_PREF_KEY, els.voiceMode.value);
 });
+els.musicGenre.addEventListener("change", () => {
+  localStorage.setItem(MUSIC_PREF_KEY, els.musicGenre.value);
+  renderMusicLinks(sessionData);
+});
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && wakeLockWanted && !wakeLockSentinel) {
@@ -975,6 +1037,8 @@ const storedVoicePreference = localStorage.getItem(VOICE_PREF_KEY);
 if (storedVoicePreference === "male" || storedVoicePreference === "female") {
   els.voiceMode.value = storedVoicePreference;
 }
+const storedMusicPref = localStorage.getItem(MUSIC_PREF_KEY);
+if (storedMusicPref && els.musicGenre) els.musicGenre.value = storedMusicPref;
 updateVoiceControlsState();
 if (window.speechSynthesis) {
   window.speechSynthesis.getVoices();

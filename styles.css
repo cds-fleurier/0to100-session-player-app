@@ -283,9 +283,53 @@ li {
   text-transform: uppercase;
 }
 
+.music-genre-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.music-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.music-btn {
+  display: inline-block;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-weight: 800;
+  font-size: 13px;
+  font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+  background: linear-gradient(160deg, #2d3946, #1f2933);
+  color: #fff;
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+.music-btn:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.06);
+}
+
+.music-hint {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+  margin: 0;
+}
+
 body.focus-mode .hero,
 body.focus-mode .input-card,
-body.focus-mode .plan-card {
+body.focus-mode .plan-card,
+body.focus-mode .music-card {
   display: none;
 }
 

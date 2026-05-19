@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.7.0] - 2026-05-19
+
+### Ajouté
+- Section Musique : sélecteur de genre (Motown/Soul, Hip-hop, Électro, Rock, Lo-fi, Sans musique).
+- Suggestion musicale adaptée au type de séance (Run & Renfo vs Renfo classique) avec BPM calibré.
+- 4 boutons de liens directs vers Spotify, Apple Music, YouTube Music et Deezer.
+- Préférence de genre sauvegardée via `localStorage`.
+- Section cachée en mode Focus.
+
 ## [1.6.0] - 2026-05-19
 
 ### Modifié
