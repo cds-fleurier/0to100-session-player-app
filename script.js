@@ -650,11 +650,24 @@ function buildPlaylist(genre, sessionType, totalSeconds) {
   const playlist = [];
   let filled = 0;
   const target = totalSeconds || 1800;
+
+  // Premier passage : couvre la durée cible
   for (const track of candidates) {
     playlist.push(track);
     filled += track.duration;
-    if (filled >= target || playlist.length >= 8) break;
+    if (filled >= target) break;
   }
+
+  // Si la bibliothèque est épuisée avant la cible, boucle sur les candidats
+  if (filled < target && candidates.length > 0) {
+    let i = 0;
+    while (filled < target && playlist.length < 30) {
+      playlist.push(candidates[i % candidates.length]);
+      filled += candidates[i % candidates.length].duration;
+      i++;
+    }
+  }
+
   return playlist;
 }
 
