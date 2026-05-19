@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.9.0] - 2026-05-19
+
+### Modifié
+- Sélecteur de plateforme unique (Spotify / Apple Music / YouTube / Deezer) sauvegardé en localStorage.
+- Un seul bouton par titre au lieu de 4 — UI plus lisible, même expérience.
+
 ## [1.8.0] - 2026-05-19
 
 ### Modifié

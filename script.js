@@ -21,10 +21,24 @@ const els = {
   musicCard: document.getElementById("musicCard"),
   musicGenre: document.getElementById("musicGenre"),
   musicTracklist: document.getElementById("musicTracklist"),
+  musicPlatform: document.getElementById("musicPlatform"),
 };
-const APP_VERSION = "v1.8.0";
+const APP_VERSION = "v1.9.0";
 
-const MUSIC_PREF_KEY = "sportSessionMusicGenre";
+const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
+const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
+
+const PLATFORM_LABELS = { spotify: "Spotify", apple: "Apple Music", youtube: "YouTube", deezer: "Deezer" };
+
+function platformUrl(platform, artist, title) {
+  const q = encodeURIComponent(`${artist} ${title}`);
+  switch (platform) {
+    case "apple":   return `https://music.apple.com/search?term=${q}`;
+    case "youtube": return `https://music.youtube.com/search?q=${q}`;
+    case "deezer":  return `https://www.deezer.com/search/${q}`;
+    default:        return `https://open.spotify.com/search/${q}`;
+  }
+}
 
 const BPM_RANGES = {
   motown:  { run: { min:  80, max: 145 }, renfo: { min: 100, max: 170 } },
@@ -666,28 +680,20 @@ function renderMusicLinks(data) {
     return;
   }
 
+  const platform    = els.musicPlatform.value;
   const playlistMin = Math.round(playlist.reduce((s, t) => s + t.duration, 0) / 60);
   const sessionMin  = Math.round(totalSeconds / 60);
 
   const header = `<div class="music-tracklist-header">${playlist.length} titres · ~${playlistMin} min <span class="music-session-duration">(séance : ${sessionMin} min)</span></div>`;
 
   const tracks = playlist.map((t) => {
-    const q = encodeURIComponent(`${t.artist} ${t.title}`);
-    const links = [
-      ["Spotify",     `https://open.spotify.com/search/${q}`],
-      ["Apple Music", `https://music.apple.com/search?term=${q}`],
-      ["YouTube",     `https://music.youtube.com/search?q=${q}`],
-      ["Deezer",      `https://www.deezer.com/search/${q}`],
-    ].map(([label, url]) =>
-      `<a href="${url}" target="_blank" rel="noopener" class="music-btn-sm">${label}</a>`
-    ).join("");
-
+    const url = platformUrl(platform, t.artist, t.title);
     return `<div class="music-track">
       <div class="music-track-info">
         <span class="music-track-name">${t.title} <span class="music-track-artist">— ${t.artist}</span></span>
         <span class="music-track-bpm">${t.bpm} BPM</span>
       </div>
-      <div class="music-track-links">${links}</div>
+      <a href="${url}" target="_blank" rel="noopener" class="music-btn-sm">${PLATFORM_LABELS[platform]}</a>
     </div>`;
   }).join("");
 
@@ -1059,6 +1065,10 @@ els.musicGenre.addEventListener("change", () => {
   localStorage.setItem(MUSIC_PREF_KEY, els.musicGenre.value);
   renderMusicLinks(sessionData);
 });
+els.musicPlatform.addEventListener("change", () => {
+  localStorage.setItem(PLATFORM_PREF_KEY, els.musicPlatform.value);
+  renderMusicLinks(sessionData);
+});
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && wakeLockWanted && !wakeLockSentinel) {
@@ -1072,6 +1082,8 @@ if (storedVoicePreference === "male" || storedVoicePreference === "female") {
 }
 const storedMusicPref = localStorage.getItem(MUSIC_PREF_KEY);
 if (storedMusicPref && els.musicGenre) els.musicGenre.value = storedMusicPref;
+const storedPlatformPref = localStorage.getItem(PLATFORM_PREF_KEY);
+if (storedPlatformPref && els.musicPlatform) els.musicPlatform.value = storedPlatformPref;
 updateVoiceControlsState();
 if (window.speechSynthesis) {
   window.speechSynthesis.getVoices();

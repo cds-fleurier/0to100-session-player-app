@@ -342,8 +342,11 @@ li {
 }
 
 .music-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border-bottom: 1px solid var(--border);
-  padding: 8px 0;
+  padding: 7px 0;
 }
 
 .music-track:last-child {
@@ -352,10 +355,10 @@ li {
 
 .music-track-info {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 5px;
+  flex: 1;
+  min-width: 0;
 }
 
 .music-track-name {
