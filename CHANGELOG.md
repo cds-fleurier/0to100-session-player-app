@@ -2,6 +2,14 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.6.0] - 2026-05-19
+
+### Modifié
+- Parser Run & Renfo réécrit : détection de la durée par scan arrière (`findDurationBefore`) jusqu'à 6 lignes, en sautant les lignes meta Nolio (Zone X, bpm, intensité X/10).
+- Corrige l'échauffement mal détecté (7s au lieu de 10 min) quand Zone + bpm sont intercalés entre la durée et le label `Échauffement`.
+- Corrige le cooldown non détecté quand `5'` est à plus de 2 lignes du label `Récupération` final.
+- Détection de `Corps de séance` comme label du bloc travail (en plus de `Facile`).
+
 ## [1.5.1] - 2026-05-17
 
 ### Ajouté

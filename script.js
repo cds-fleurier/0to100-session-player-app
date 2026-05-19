@@ -19,7 +19,7 @@ const els = {
   voiceToggle: document.getElementById("voiceToggle"),
   voiceMode: document.getElementById("voiceMode"),
 };
-const APP_VERSION = "v1.5.1";
+const APP_VERSION = "v1.6.0";
 
 let sessionData = null;
 let timeline = [];
@@ -110,12 +110,16 @@ function primeSpeechSynthesis() {
 
 function parseDurationToken(token) {
   if (!token) return null;
-  const clean = token.trim().toLowerCase();
-  const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min|'|’|"|″)?/i);
+  // Normalize apostrophe/prime variants using explicit Unicode escapes (avoids encoding issues):
+  // U+2018 ‘ U+2019 ‘ U+02BC ʼ U+2032 ′ U+02B9 ʹ U+00B4 ´ U+0060 `
+  const normalized = token.trim()
+    .replace(/[‘’ʼ′ʹ´`]/g, "’");
+  const clean = normalized.toLowerCase();
+  const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min|’|"|″)?/i);
   if (!m) return null;
   const value = Number(m[1]);
   const unit = (m[2] || "s").toLowerCase();
-  if (["mn", "min", "'", "’"].includes(unit)) return value * 60;
+  if (["mn", "min", "’"].includes(unit)) return value * 60;
   return value;
 }
 
@@ -264,113 +268,102 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
   const adviceLine = lines.find((l) => /^note\b/i.test(l)) || "";
   const advice = adviceLine.replace(/^note\s*/i, "").trim() || fallbackAdvice;
 
-  const findDurationInLine = (line) => {
-    const m = line.match(/(\d+\s*(?:s|sec|secs|mn|min|'|’))/i);
-    return m ? parseDurationToken(m[1]) : null;
+  // Lines to skip when scanning backwards for a duration.
+  // Nolio inserts Zone / bpm / intensity lines between the duration and the phase label.
+  const isMetaLine = (line) => {
+    if (!line) return true;
+    if (/zone\s*\d/i.test(line)) return true;
+    if (/^\d+\s*-\s*\d+\s*bpm/i.test(line)) return true;
+    if (/\d+\s*\/\s*\d+/.test(line)) return true;
+    if (/^\d+\s*x\s*$/i.test(line.trim())) return true;
+    if (/^(échauffement|corps de séance|r[ée]cup[ée]ration|run|renfo|note)/i.test(line)) return true;
+    return false;
   };
 
-  const isZoneLine = (line) => /zone\s*\d/i.test(line);
-  const isIntensityLine = (line) => /\d+\s*\/\s*\d+/.test(line);
+  // Scan backwards from `labelIdx`, skipping meta lines, up to `maxLookback` steps.
+  const findDurationBefore = (labelIdx, maxLookback = 6) => {
+    for (let i = labelIdx - 1; i >= Math.max(0, labelIdx - maxLookback); i -= 1) {
+      const line = lines[i];
+      if (isMetaLine(line)) continue;
+      const trimmed = (line || "").trim();
 
-  const getLineIndex = (pattern) => lines.findIndex((l) => pattern.test(l));
-  const getLastLineIndex = (pattern) => {
-    for (let i = lines.length - 1; i >= 0; i -= 1) {
-      if (pattern.test(lines[i])) return i;
-    }
-    return -1;
-  };
-  const findDurationNearIndex = (index) => {
-    const candidates = [
-      lines[index],
-      lines[index - 1],
-      lines[index - 2],
-      lines[index + 1],
-      lines[index + 2],
-    ].filter(Boolean);
-    for (const candidate of candidates) {
-      if (isZoneLine(candidate) || isIntensityLine(candidate)) continue;
-      const duration = findDurationInLine(candidate);
-      if (duration) return duration;
+      // Explicit alphabetic unit: "30s", "2min", "10mn"
+      const explicitMatch = trimmed.match(/^(\d+)\s*(s|sec|secs|mn|min)\b/i);
+      if (explicitMatch) return parseDurationToken(trimmed);
+
+      // "N<symbol>" — number followed by exactly one non-alphanumeric, non-space character.
+      // Handles all apostrophe/prime variants (‘, ′, ‘, etc.) without depending on encoding.
+      // "7x" is already excluded upstream by isMetaLine.
+      const minuteMatch = trimmed.match(/^(\d+)\s*[^\d\s\w]\s*$/);
+      if (minuteMatch) return Number(minuteMatch[1]) * 60;
     }
     return null;
   };
 
-  const warmupIndex = getLineIndex(/échauffement/i);
-  let warmupSeconds = null;
-  if (warmupIndex > -1) {
-    warmupSeconds = findDurationNearIndex(warmupIndex);
-  }
-
-  const roundsMatch = lines.join(" ").match(/(\d+)\s*x/i);
+  // Rounds: "7x" or "7 tours"
+  const roundsMatch =
+    lines.join(" ").match(/(\d+)\s*x\b/i) ||
+    lines.join(" ").match(/(\d+)\s*(tours?|rounds?)/i);
   const rounds = roundsMatch ? Number(roundsMatch[1]) : 1;
 
-  const workIndex = getLineIndex(/facile/i);
+  // Warmup: duration before "Échauffement"
+  const warmupIdx = lines.findIndex((l) => /échauffement/i.test(l));
+  const warmupSeconds = warmupIdx > -1 ? findDurationBefore(warmupIdx) : null;
+
+  // Work block: duration before "Corps de séance" (or "Facile" as fallback)
+  const corpsIdx = lines.findIndex((l) => /corps de s[ée]ance/i.test(l));
   let workSeconds = null;
-  if (workIndex > -1) {
-    workSeconds = findDurationNearIndex(workIndex);
+  if (corpsIdx > -1) {
+    workSeconds = findDurationBefore(corpsIdx);
+  } else {
+    const facileIdx = lines.findIndex((l) => /facile/i.test(l));
+    if (facileIdx > -1) workSeconds = findDurationBefore(facileIdx);
   }
 
-  const recupIndex = getLineIndex(/r[ée]cup[ée]ration/i);
+  // All "Récupération" indices
+  const recupIndices = lines.reduce((acc, l, i) => {
+    if (/r[ée]cup[ée]ration/i.test(l)) acc.push(i);
+    return acc;
+  }, []);
+
+  // Interval recovery: first "Récupération" (mid-session)
   let recupSeconds = null;
-  if (recupIndex > -1) {
-    recupSeconds = findDurationNearIndex(recupIndex);
-  }
-
-  const splitLineIndex = lines.findIndex((l) => /30s\s+de\s+marche/i.test(l) && /30s/i.test(l));
-  const splitLine = splitLineIndex > -1 ? lines[splitLineIndex] : "";
-  const splitDurations = [...splitLine.matchAll(/(\d+\s*(?:s|sec|secs|mn|min|')?)/gi)].map(
-    (m) => parseDurationToken(m[1])
-  );
-  const splitWork = splitDurations[0] || null;
-  const splitRenfo = splitDurations[1] || null;
+  let splitWork = null;
+  let splitRenfo = null;
   let altNames = [];
-  if (splitLine) {
-    const afterDur = splitLine.replace(/.*30s\s+de\s+marche\s+puis\s+30s\s+de/i, "").trim();
-    altNames = afterDur
-      .split(/ou|\/|,/i)
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((s) => s.replace(/\(.*?\)/g, "").trim())
-      .filter(Boolean);
-  }
-  if (!altNames.length) {
-    const isRenfoCandidate = (line) => {
-      if (!line) return false;
-      if (isZoneLine(line) || isIntensityLine(line)) return false;
-      if (/r[ée]cup[ée]ration|échauffement|note|corps de séance/i.test(line)) return false;
-      if (/^\d/.test(line)) return false;
-      return /planche|pont|pompe|gainage|fente|squat|burpee|chaise|pointe|mountain|abdo|tronc/i.test(
-        line
-      );
-    };
 
-    const candidatePool = [];
-    if (splitLineIndex > -1) {
-      for (let i = splitLineIndex + 1; i < Math.min(lines.length, splitLineIndex + 6); i += 1) {
-        if (isRenfoCandidate(lines[i])) candidatePool.push(lines[i]);
+  if (recupIndices.length > 0) {
+    recupSeconds = findDurationBefore(recupIndices[0]);
+
+    // Split description: "Xs de marche puis Xs de <exercise> ou <exercise>"
+    const splitIdx = lines.findIndex(
+      (l, i) => i > recupIndices[0] && /\d+s.*marche.*\d+s/i.test(l)
+    );
+    if (splitIdx > -1) {
+      const splitLine = lines[splitIdx];
+      const splitDurs = [...splitLine.matchAll(/(\d+\s*(?:s|sec|secs|mn|min|’)?)/gi)]
+        .map((m) => parseDurationToken(m[1]))
+        .filter(Boolean);
+      splitWork = splitDurs[0] || null;
+      splitRenfo = splitDurs[1] || null;
+
+      const afterMarche = splitLine
+        .replace(/.*\d+s\s+de\s+marche\s+puis\s+\d+s\s+de\s+/i, "")
+        .trim();
+      if (afterMarche) {
+        altNames = afterMarche
+          .split(/\bou\b|\/|,/i)
+          .map((s) => s.replace(/\(.*?\)/g, "").trim())
+          .filter(Boolean);
       }
     }
-    if (!candidatePool.length) {
-      lines.forEach((line) => {
-        if (isRenfoCandidate(line)) candidatePool.push(line);
-      });
-    }
-
-    const sanitized = candidatePool
-      .flatMap((line) => line.split(/ou|\/|,/i))
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((s) => s.replace(/\(.*?\)/g, "").trim())
-      .filter(Boolean);
-
-    if (sanitized.length) altNames = sanitized.slice(0, 2);
   }
 
-  const cooldownIndex = getLastLineIndex(/r[ée]cup[ée]ration/i);
+  // Cooldown: last "Récupération" (distinct from the interval one), duration >= 60s
   let cooldownSeconds = null;
-  if (cooldownIndex > 0) {
-    const candidate = findDurationNearIndex(cooldownIndex);
-    if (candidate && candidate >= 120) cooldownSeconds = candidate;
+  if (recupIndices.length > 1) {
+    const dur = findDurationBefore(recupIndices[recupIndices.length - 1]);
+    if (dur && dur >= 60) cooldownSeconds = dur;
   }
 
   if (!workSeconds && !warmupSeconds && !recupSeconds) return null;
@@ -391,12 +384,7 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
     exercises.push({ name: "Récupération", work: recupSeconds, rest: 0 });
   }
   if (splitRenfo) {
-    exercises.push({
-      name: "Renfo alterné",
-      alternates: renfoAlternates,
-      work: splitRenfo,
-      rest: 0,
-    });
+    exercises.push({ name: "Renfo alterné", alternates: renfoAlternates, work: splitRenfo, rest: 0 });
   }
 
   if (cooldownSeconds) {
@@ -416,7 +404,6 @@ function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
     if (!splitWork && !splitRenfo && recupSeconds) {
       intervalParts.push(`${formatDurationForPlan(recupSeconds)} récupération`);
     }
-
     const alternance =
       renfoAlternates.length >= 2
         ? ` (alternance ${renfoAlternates[0]} / ${renfoAlternates[1]})`
@@ -679,19 +666,11 @@ function skipToNextBlock() {
   const step = currentStep();
   if (!step) return;
 
-  let nextIndex = -1;
-  if (step.blockId) {
-    const currentBlock = step.blockId;
-    nextIndex = timeline.findIndex((s, i) => i > idx && s.blockId && s.blockId > currentBlock);
-  }
-
-  // Fallback for classic sessions with no distinct block transitions:
-  // jump to the next work step (next exercise).
-  if (nextIndex === -1) {
-    nextIndex = timeline.findIndex((s, i) => i > idx && s.type === "work");
-  }
-
+  // Always jump to the next work step — skips rest periods and moves
+  // to the next exercise regardless of block boundaries.
+  const nextIndex = timeline.findIndex((s, i) => i > idx && s.type === "work");
   if (nextIndex === -1) return;
+
   idx = nextIndex;
   remaining = timeline[idx].seconds;
   lastCountdownCall = null;
