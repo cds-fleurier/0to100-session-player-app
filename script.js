@@ -23,7 +23,7 @@ const els = {
   musicTracklist: document.getElementById("musicTracklist"),
   musicPlatform: document.getElementById("musicPlatform"),
 };
-const APP_VERSION = "v1.9.0";
+const APP_VERSION = "v1.10.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
@@ -166,11 +166,17 @@ function parseSession(text) {
 
   let rounds = 1;
   let roundsLocked = false;
+  let interRoundRest = 0;
   for (const line of lines) {
     const m = line.match(/(\d+)\s*(tours?|rounds?)/i);
     if (m) {
       rounds = Number(m[1]);
       roundsLocked = true;
+    }
+    const interMatch = line.match(/(\d+\s*\S*)\s+(?:entre\s+les?\s+tours?)/i);
+    if (interMatch) {
+      const dur = parseDurationToken(interMatch[1]);
+      if (dur) interRoundRest = dur;
     }
   }
 
@@ -196,9 +202,9 @@ function parseSession(text) {
 
   const pushExercise = (name, workToken, restToken) => {
     const work = parseDurationToken(workToken);
-    const rest = parseDurationToken(restToken);
-    if (!work || !rest || !name) return;
-    exercises.push({ name: name.trim().replace(/[\-:]+$/, ""), work, rest });
+    const rest = restToken != null ? parseDurationToken(restToken) : 0;
+    if (!work || !name) return;
+    exercises.push({ name: name.trim().replace(/[\-:]+$/, ""), work, rest: rest ?? 0 });
   };
 
   for (const line of lines) {
@@ -256,8 +262,15 @@ function parseSession(text) {
       const namePart = line.replace(matches[0][0], "").trim().replace(/[\-:]+$/, "");
 
       if (namePart) {
-        pendingName = namePart;
-        pendingWork = token;
+        // "30s récup" / "30s corde à sauté" — duration + description label → treat as rest for the pending exercise
+        if (pendingName && pendingWork) {
+          pushExercise(pendingName, pendingWork, token);
+          pendingName = null;
+          pendingWork = null;
+        } else {
+          pendingName = namePart;
+          pendingWork = token;
+        }
         continue;
       }
 
@@ -274,6 +287,10 @@ function parseSession(text) {
     }
 
     // Exercise name on one line, durations on following lines.
+    // Flush any pending exercise that has a work duration but no rest yet (rest = 0).
+    if (pendingName && pendingWork) {
+      pushExercise(pendingName, pendingWork, null);
+    }
     pendingName = line.replace(/[\-:]+$/, "");
     pendingWork = null;
   }
@@ -282,7 +299,7 @@ function parseSession(text) {
     throw new Error("Aucun exercice détecté. Vérifie le format (nom + durée + récup).");
   }
 
-  return { title, advice, rounds, exercises };
+  return { title, advice, rounds, exercises, interRoundRest };
 }
 
 function parseRunRenfo(lines, fallbackTitle, fallbackAdvice) {
@@ -618,6 +635,17 @@ function buildTimeline(data) {
         });
       }
     });
+    // Inter-round rest between tours (not after the last round)
+    if (r < data.rounds && data.interRoundRest) {
+      steps.push({
+        type: "rest",
+        name: "Récup inter-tours",
+        seconds: data.interRoundRest,
+        round: r,
+        exIndex: -1,
+        blockId: 2,
+      });
+    }
   }
   if (data.postSteps && data.postSteps.length) {
     data.postSteps.forEach((post) => {
@@ -717,7 +745,7 @@ function renderPlan(data) {
   els.meta.innerHTML = `
     <strong>${data.title}</strong><br>
     ${data.advice ? `Conseils: ${data.advice}<br>` : ""}
-    ${data.blocks ? `${data.blocks.length} blocs` : `${data.exercises.length} exercices - ${data.rounds} tours`}
+    ${data.blocks ? `${data.blocks.length} blocs` : `${data.exercises.length} exercices · ${data.rounds} tour${data.rounds > 1 ? "s" : ""}${data.interRoundRest ? ` · ${formatDurationForPlan(data.interRoundRest)} entre les tours` : ""}`}
   `;
 
   els.list.innerHTML = "";
