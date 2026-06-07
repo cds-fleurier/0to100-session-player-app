@@ -2,6 +2,13 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.10.0] - 2026-06-07
+
+### Ajouté
+- Support du format Nolio "RÉCUP OU CORDE" : `30s récup` et `30s corde à sauté` reconnus comme durée de repos (et non comme nom d'exercice).
+- Récupération inter-tours : `1' ENTRE LES TOURS` parsé et injecté comme step dédié dans la timeline entre chaque tour.
+- Exercice sans repos explicite (ex : SQUAT ÉLASTIQUE enchaîné sur SQUAT LATÉRAL) géré correctement (rest=0).
+
 ## [1.9.0] - 2026-05-19
 
 ### Modifié
