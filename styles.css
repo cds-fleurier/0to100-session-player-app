@@ -239,6 +239,12 @@ li {
   color: #0f7a4a;
 }
 
+/* Transition matériel (élastique <-> corde) : ni effort, ni repos. */
+.phase.transition {
+  background: #f0ebfa;
+  color: #5b3fa8;
+}
+
 .phase.prepare {
   background: #fff0e3;
   color: var(--warn);

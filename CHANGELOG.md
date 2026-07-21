@@ -2,6 +2,18 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.12.0] - 2026-07-21
+
+### Ajouté
+- **Steps de transition autour des récups actives** (8 s) : changer de matériel entre un exercice à l'élastique et la corde à sauter prend du temps, il est désormais réservé au lieu d'être pris sur la récup. Pastille violette « Transition », écran `Transition → Corde à sauter`.
+- Consigne parlée au début de la transition — « Enlève ton élastique et attrape ta corde à sauter. » à l'aller, « Repose ta corde et reprends ton élastique. » au retour — puis décompte 3-2-1 et « Go ! » au lancement du step suivant.
+- L'élastique n'est mentionné que si les exercices de la séance en utilisent réellement (détecté sur les noms d'exercices) ; sinon la consigne se limite à la corde.
+- Pas de transition de sortie quand une récup suit immédiatement (fin de tour) : la récup inter-tours laisse déjà le temps. C'est elle qui porte alors la consigne « Repose ta corde et reprends ton élastique ».
+- Le plan indique « 8s de transition autour des récups actives ».
+
+### Note
+- Durée de transition fixée à 8 s et non 5 : la consigne parlée dure ~3 s et le décompte 3-2-1 la couperait (`speak()` interrompt l'énoncé en cours). Constante `TRANSITION_SECONDS`.
+
 ## [1.11.0] - 2026-07-21
 
 ### Corrigé

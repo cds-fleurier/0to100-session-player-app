@@ -23,7 +23,7 @@ const els = {
   musicTracklist: document.getElementById("musicTracklist"),
   musicPlatform: document.getElementById("musicPlatform"),
 };
-const APP_VERSION = "v1.11.0";
+const APP_VERSION = "v1.12.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
@@ -619,8 +619,25 @@ function beep() {
   osc.stop(ctx.currentTime + 0.18);
 }
 
+// Une récup active (corde à sauter) impose un changement de matériel : poser
+// l'élastique et prendre la corde, puis l'inverse. On réserve ce temps plutôt
+// que de le prendre sur la récup.
+// 8s et non 5 : la consigne parlée ("Enlève ton élastique et attrape ta corde
+// à sauter") dure ~3s, et le décompte 3-2-1 la couperait (speak interrompt
+// l'énoncé en cours). 8s laisse la consigne finir avant le décompte.
+const TRANSITION_SECONDS = 8;
+
+function exerciseDisplayName(ex, round) {
+  return ex.alternates && ex.alternates.length
+    ? ex.alternates[(round - 1) % ex.alternates.length]
+    : ex.name;
+}
+
 function buildTimeline(data) {
   const steps = [];
+  // Le matériel à reposer dépend de la séance : on ne parle d'élastique
+  // que si les exercices en utilisent vraiment.
+  const usesElastic = (data.exercises || []).some((ex) => /[ée]lastique/i.test(ex.name));
   if (data.preSteps && data.preSteps.length) {
     data.preSteps.forEach((pre) => {
       steps.push({
@@ -635,12 +652,9 @@ function buildTimeline(data) {
   }
   for (let r = 1; r <= data.rounds; r += 1) {
     data.exercises.forEach((ex, exIndex) => {
-      const stepName = ex.alternates && ex.alternates.length
-        ? ex.alternates[(r - 1) % ex.alternates.length]
-        : ex.name;
       steps.push({
         type: "work",
-        name: stepName,
+        name: exerciseDisplayName(ex, r),
         seconds: ex.work,
         round: r,
         exIndex,
@@ -649,15 +663,45 @@ function buildTimeline(data) {
 
       const isFinalStep = r === data.rounds && exIndex === data.exercises.length - 1;
       if (!isFinalStep && ex.rest && ex.rest > 0) {
-        steps.push({
+        const restStep = {
           type: "rest",
           name: ex.restLabel || "Récupération",
           active: Boolean(ex.restLabel),
+          rope: /corde/i.test(ex.restLabel || ""),
+          elastic: usesElastic,
           seconds: ex.rest,
           round: r,
           exIndex,
           blockId: 2,
-        });
+        };
+
+        const pushTransition = (target, targetType) => {
+          steps.push({
+            type: "transition",
+            name: "Transition",
+            target,
+            targetType,
+            rope: /corde/i.test(restStep.name),
+            elastic: usesElastic,
+            seconds: TRANSITION_SECONDS,
+            round: r,
+            exIndex,
+            blockId: 2,
+          });
+        };
+
+        if (restStep.active) pushTransition(restStep.name, "rest");
+        steps.push(restStep);
+
+        // Transition de sortie seulement si on repart directement sur un exercice.
+        // Si une récup inter-tours suit, elle laisse déjà le temps de reprendre l'élastique.
+        const isLastOfRound = exIndex === data.exercises.length - 1;
+        const restFollows = isLastOfRound && Boolean(data.interRoundRest);
+        if (restStep.active && !restFollows) {
+          const nextEx = isLastOfRound ? data.exercises[0] : data.exercises[exIndex + 1];
+          const nextRound = isLastOfRound ? r + 1 : r;
+          pushTransition(exerciseDisplayName(nextEx, nextRound), "work");
+        }
       }
     });
     // Inter-round rest between tours (not after the last round)
@@ -666,6 +710,7 @@ function buildTimeline(data) {
         type: "rest",
         name: "Récup inter-tours",
         interRound: true,
+        elastic: usesElastic,
         seconds: data.interRoundRest,
         round: r,
         exIndex: -1,
@@ -768,10 +813,14 @@ function renderMusicLinks(data) {
 }
 
 function renderPlan(data) {
+  const hasActiveRest = (data.exercises || []).some((ex) => ex.restLabel);
+  const transitionNote = hasActiveRest
+    ? ` · ${TRANSITION_SECONDS}s de transition autour des récups actives`
+    : "";
   els.meta.innerHTML = `
     <strong>${data.title}</strong><br>
     ${data.advice ? `Conseils: ${data.advice}<br>` : ""}
-    ${data.blocks ? `${data.blocks.length} blocs` : `${data.exercises.length} exercices · ${data.rounds} tour${data.rounds > 1 ? "s" : ""}${data.interRoundRest ? ` · ${formatDurationForPlan(data.interRoundRest)} entre les tours` : ""}`}
+    ${data.blocks ? `${data.blocks.length} blocs` : `${data.exercises.length} exercices · ${data.rounds} tour${data.rounds > 1 ? "s" : ""}${data.interRoundRest ? ` · ${formatDurationForPlan(data.interRoundRest)} entre les tours` : ""}${transitionNote}`}
   `;
 
   els.list.innerHTML = "";
@@ -812,8 +861,28 @@ function nextIsWork() {
 
 function stepDisplayName(step) {
   if (!step) return "Fin de séance";
+  if (step.type === "transition") return `Transition → ${step.target}`;
   if (step.type === "rest") return `${step.name} (${formatDurationForPlan(step.seconds)})`;
   return step.name;
+}
+
+function spokenTargetName(step) {
+  return step.targetType === "work" ? spokenExerciseName(step.target) : step.target;
+}
+
+// Consigne matériel énoncée au début d'une transition. Doit tenir dans la
+// fenêtre avant le décompte 3-2-1, sinon elle se fait couper.
+function transitionInstruction(step) {
+  const versCorde = step.targetType === "rest";
+  if (step.rope) {
+    if (step.elastic) {
+      return versCorde
+        ? "Enlève ton élastique et attrape ta corde à sauter."
+        : "Repose ta corde et reprends ton élastique.";
+    }
+    return versCorde ? "Attrape ta corde à sauter." : "Repose ta corde.";
+  }
+  return `Transition. Ensuite ${spokenTargetName(step)}.`;
 }
 
 function spokenDuration(seconds) {
@@ -894,15 +963,32 @@ function renderPlayer() {
   }
 
   const isRest = step.type === "rest";
+  const isTransition = step.type === "transition";
   // Le rituel "Prépare-toi" ne vaut que si un exercice suit vraiment.
   const inPrepareWindow = isRest && nextIsWork() && remaining <= 5 && remaining > 0;
   const restPhase = step.active ? "Actif" : "Récup";
-  els.phase.textContent = inPrepareWindow ? "Prépare-toi" : isRest ? restPhase : "Exercice";
+  els.phase.textContent = inPrepareWindow
+    ? "Prépare-toi"
+    : isTransition
+    ? "Transition"
+    : isRest
+    ? restPhase
+    : "Exercice";
   els.phase.className = `phase ${
-    inPrepareWindow ? "prepare" : isRest ? (step.active ? "active-rest" : "rest") : ""
+    inPrepareWindow
+      ? "prepare"
+      : isTransition
+      ? "transition"
+      : isRest
+      ? step.active
+        ? "active-rest"
+        : "rest"
+      : ""
   }`.trim();
   els.countdown.textContent = formatSeconds(remaining);
-  if (isRest && step.interRound) {
+  if (isTransition) {
+    els.current.textContent = `Transition → ${step.target}`;
+  } else if (isRest && step.interRound) {
     els.current.textContent = `${step.name} — avant tour ${step.round + 1}`;
   } else if (step.round && step.round > 0) {
     els.current.textContent = `Tour ${step.round}: ${step.name}`;
@@ -914,14 +1000,40 @@ function renderPlayer() {
 
 function announceStepStart(step) {
   if (!step) return;
+  if (step.type === "transition") {
+    // La consigne, puis le décompte 3-2-1 géré par tick(), puis "Go" au step suivant.
+    speak(transitionInstruction(step));
+    beep();
+    return;
+  }
+  // Sortie de transition : on a déjà décompté, on lance sur un "Go" sans redire le tour.
+  const sortieDeTransition = timeline[idx - 1] && timeline[idx - 1].type === "transition";
   const spokenName = spokenStepName(step);
   if (step.type === "work") {
-    const prefix = step.round && step.round > 0 ? `Tour ${step.round}. ` : "";
+    const prefix = sortieDeTransition
+      ? "Go ! "
+      : step.round && step.round > 0
+      ? `Tour ${step.round}. `
+      : "";
     speak(`${prefix}${spokenName}. ${spokenDuration(step.seconds)}.`);
   } else {
     const next = upcomingStep();
-    const suite = next ? ` Ensuite ${spokenStepName(next)}.` : " Dernière ligne droite.";
-    speak(`${spokenName}. ${spokenDuration(step.seconds)}.${suite}`);
+    // Annoncer "Ensuite transition" n'apprend rien : on nomme ce qui vient après elle.
+    const suite = next
+      ? ` Ensuite ${next.type === "transition" ? spokenTargetName(next) : spokenStepName(next)}.`
+      : " Dernière ligne droite.";
+    // Récup qui suit directement la corde (fin de tour) : pas de step de transition
+    // dédié, donc c'est ici qu'on rappelle de reprendre le matériel.
+    const prev = timeline[idx - 1];
+    const sortieDeCorde = prev && prev.type === "rest" && prev.rope;
+    const consigne = sortieDeCorde
+      ? step.elastic
+        ? " Repose ta corde et reprends ton élastique."
+        : " Repose ta corde."
+      : "";
+    speak(
+      `${sortieDeTransition ? "Go ! " : ""}${spokenName}. ${spokenDuration(step.seconds)}.${consigne}${suite}`
+    );
   }
   beep();
 }
@@ -979,6 +1091,12 @@ function tick() {
   }
 
   if (restBeforeWork && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
+    lastCountdownCall = remaining;
+    speak(String(remaining));
+  }
+
+  // Transition : décompte court, la consigne matériel a été énoncée au départ.
+  if (step.type === "transition" && remaining <= 3 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
     speak(String(remaining));
   }
