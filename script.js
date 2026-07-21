@@ -23,7 +23,7 @@ const els = {
   musicTracklist: document.getElementById("musicTracklist"),
   musicPlatform: document.getElementById("musicPlatform"),
 };
-const APP_VERSION = "v1.10.0";
+const APP_VERSION = "v1.11.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
@@ -139,9 +139,11 @@ function primeSpeechSynthesis() {
 function parseDurationToken(token) {
   if (!token) return null;
   // Normalize apostrophe/prime variants using explicit Unicode escapes (avoids encoding issues):
-  // U+2018 ‘ U+2019 ‘ U+02BC ʼ U+2032 ′ U+02B9 ʹ U+00B4 ´ U+0060 `
+  // U+0027 ' U+2018 ‘ U+2019 ‘ U+02BC ʼ U+2032 ′ U+02B9 ʹ U+00B4 ´ U+0060 `
+  // U+0027 (clavier standard) doit être inclus : sans lui "1'" tombe sur l'unité par défaut
+  // et vaut 1 seconde au lieu de 1 minute.
   const normalized = token.trim()
-    .replace(/[‘’ʼ′ʹ´`]/g, "’");
+    .replace(/['‘’ʼ′ʹ´`]/g, "’");
   const clean = normalized.toLowerCase();
   const m = clean.match(/(\d+)\s*(s|sec|secs|mn|min|’|"|″)?/i);
   if (!m) return null;
@@ -149,6 +151,16 @@ function parseDurationToken(token) {
   const unit = (m[2] || "s").toLowerCase();
   if (["mn", "min", "’"].includes(unit)) return value * 60;
   return value;
+}
+
+// Une récup peut être passive ("30s récup") ou active ("30s corde à sauté").
+// Retourne null pour une récup passive, sinon le libellé à afficher/annoncer.
+function normalizeRestLabel(raw) {
+  const label = String(raw || "").replace(/^[\s\-:–—]+/, "").replace(/[\s\-:–—]+$/, "").trim();
+  if (!label) return null;
+  if (/^r[ée]cup(?:[ée]ration)?s?$/i.test(label)) return null;
+  if (/corde/i.test(label)) return "Corde à sauter";
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 function parseSession(text) {
@@ -200,11 +212,16 @@ function parseSession(text) {
   let pendingName = null;
   let pendingWork = null;
 
-  const pushExercise = (name, workToken, restToken) => {
+  const pushExercise = (name, workToken, restToken, restLabel) => {
     const work = parseDurationToken(workToken);
     const rest = restToken != null ? parseDurationToken(restToken) : 0;
     if (!work || !name) return;
-    exercises.push({ name: name.trim().replace(/[\-:]+$/, ""), work, rest: rest ?? 0 });
+    exercises.push({
+      name: name.trim().replace(/[\-:]+$/, ""),
+      work,
+      rest: rest ?? 0,
+      restLabel: normalizeRestLabel(restLabel),
+    });
   };
 
   for (const line of lines) {
@@ -213,8 +230,15 @@ function parseSession(text) {
     const matches = [...line.matchAll(/(\d+\s*(?:s|sec|secs|mn|min|'|’|"|″)?)/gi)];
 
     if (matches.length >= 2) {
-      const firstTokenIndex = line.indexOf(matches[0][0]);
+      const firstTokenIndex = matches[0].index;
       const inlineName = line.slice(0, firstTokenIndex).trim();
+      // Format tabulé : la ligne porte son propre nom, donc l'exercice en attente
+      // (nom + durée, sans récup) doit être flushé avant, pas écrasé.
+      if (inlineName && pendingName && pendingWork) {
+        pushExercise(pendingName, pendingWork, null);
+        pendingName = null;
+        pendingWork = null;
+      }
       let name = inlineName || pendingName;
 
       if (
@@ -244,14 +268,14 @@ function parseSession(text) {
       }
 
       if (!name) {
-        const secondTokenIndex = line.indexOf(matches[1][0]);
-        if (secondTokenIndex > -1) {
-          name = line.slice(firstTokenIndex + matches[0][0].length, secondTokenIndex).trim();
-        }
+        // matches[1].index, pas indexOf : les deux tokens sont souvent identiques ("30s ... 30s")
+        // et indexOf renverrait la position du premier.
+        name = line.slice(firstTokenIndex + matches[0][0].length, matches[1].index).trim();
       }
 
       name = name?.replace(/^de\s+/i, "").trim();
-      pushExercise(name, matches[0][1], matches[1][1]);
+      const restLabel = line.slice(matches[1].index + matches[1][0].length);
+      pushExercise(name, matches[0][1], matches[1][1], restLabel);
       pendingName = null;
       pendingWork = null;
       continue;
@@ -264,7 +288,7 @@ function parseSession(text) {
       if (namePart) {
         // "30s récup" / "30s corde à sauté" — duration + description label → treat as rest for the pending exercise
         if (pendingName && pendingWork) {
-          pushExercise(pendingName, pendingWork, token);
+          pushExercise(pendingName, pendingWork, token, namePart);
           pendingName = null;
           pendingWork = null;
         } else {
@@ -627,7 +651,8 @@ function buildTimeline(data) {
       if (!isFinalStep && ex.rest && ex.rest > 0) {
         steps.push({
           type: "rest",
-          name: "Récupération",
+          name: ex.restLabel || "Récupération",
+          active: Boolean(ex.restLabel),
           seconds: ex.rest,
           round: r,
           exIndex,
@@ -640,6 +665,7 @@ function buildTimeline(data) {
       steps.push({
         type: "rest",
         name: "Récup inter-tours",
+        interRound: true,
         seconds: data.interRoundRest,
         round: r,
         exIndex: -1,
@@ -758,10 +784,11 @@ function renderPlan(data) {
   } else {
     data.exercises.forEach((ex) => {
       const li = document.createElement("li");
-      li.textContent =
+      const restText =
         ex.rest && ex.rest > 0
-          ? `${ex.name} - ${ex.work}s effort / ${ex.rest}s récup`
-          : `${ex.name} - ${ex.work}s effort`;
+          ? ` / ${ex.rest}s ${ex.restLabel ? ex.restLabel.toLowerCase() : "récup"}`
+          : "";
+      li.textContent = `${ex.name} - ${ex.work}s effort${restText}`;
       els.list.appendChild(li);
     });
   }
@@ -771,11 +798,39 @@ function currentStep() {
   return timeline[idx] || null;
 }
 
-function nextExerciseName() {
-  for (let i = idx + 1; i < timeline.length; i += 1) {
-    if (timeline[i].type === "work") return timeline[i].name;
-  }
-  return "Fin de séance";
+// Le step qui suit réellement, récup comprise. Ne pas sauter les récups ici :
+// sinon on annonce/décompte le prochain exercice alors qu'une récup inter-tours
+// s'intercale, et l'écran affiche le mauvais step.
+function upcomingStep() {
+  return timeline[idx + 1] || null;
+}
+
+function nextIsWork() {
+  const next = upcomingStep();
+  return Boolean(next && next.type === "work");
+}
+
+function stepDisplayName(step) {
+  if (!step) return "Fin de séance";
+  if (step.type === "rest") return `${step.name} (${formatDurationForPlan(step.seconds)})`;
+  return step.name;
+}
+
+function spokenDuration(seconds) {
+  if (!seconds) return "";
+  if (seconds < 60) return `${seconds} secondes`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  const minutePart = minutes === 1 ? "une minute" : `${minutes} minutes`;
+  return rest ? `${minutePart} ${rest}` : minutePart;
+}
+
+// Les libellés de récup ("Corde à sauter", "Récup inter-tours") ne passent pas
+// par spokenExerciseName : celui-ci taille dans les blocs majuscules et les réduirait
+// à leur première lettre.
+function spokenStepName(step) {
+  if (!step) return "";
+  return step.type === "rest" ? step.name : spokenExerciseName(step.name);
 }
 
 function spokenExerciseName(rawName) {
@@ -839,29 +894,34 @@ function renderPlayer() {
   }
 
   const isRest = step.type === "rest";
-  const inPrepareWindow = isRest && remaining <= 5 && remaining > 0;
-  els.phase.textContent = inPrepareWindow ? "Prépare-toi" : isRest ? "Récup" : "Exercice";
-  els.phase.className = `phase ${inPrepareWindow ? "prepare" : isRest ? "rest" : ""}`.trim();
+  // Le rituel "Prépare-toi" ne vaut que si un exercice suit vraiment.
+  const inPrepareWindow = isRest && nextIsWork() && remaining <= 5 && remaining > 0;
+  const restPhase = step.active ? "Actif" : "Récup";
+  els.phase.textContent = inPrepareWindow ? "Prépare-toi" : isRest ? restPhase : "Exercice";
+  els.phase.className = `phase ${
+    inPrepareWindow ? "prepare" : isRest ? (step.active ? "active-rest" : "rest") : ""
+  }`.trim();
   els.countdown.textContent = formatSeconds(remaining);
-  if (step.round && step.round > 0) {
-    els.current.textContent = isRest
-      ? `Tour ${step.round}: récupération`
-      : `Tour ${step.round}: ${step.name}`;
+  if (isRest && step.interRound) {
+    els.current.textContent = `${step.name} — avant tour ${step.round + 1}`;
+  } else if (step.round && step.round > 0) {
+    els.current.textContent = `Tour ${step.round}: ${step.name}`;
   } else {
     els.current.textContent = step.name;
   }
-  els.next.textContent = `Ensuite: ${nextExerciseName()}`;
+  els.next.textContent = `Ensuite: ${stepDisplayName(upcomingStep())}`;
 }
 
 function announceStepStart(step) {
   if (!step) return;
-  const spokenName = spokenExerciseName(step.name);
+  const spokenName = spokenStepName(step);
   if (step.type === "work") {
     const prefix = step.round && step.round > 0 ? `Tour ${step.round}. ` : "";
-    speak(`${prefix}${spokenName}. ${step.seconds} secondes.`);
+    speak(`${prefix}${spokenName}. ${spokenDuration(step.seconds)}.`);
   } else {
-    const nextName = spokenExerciseName(nextExerciseName());
-    speak(`Récupération. ${step.seconds} secondes. Ensuite ${nextName}.`);
+    const next = upcomingStep();
+    const suite = next ? ` Ensuite ${spokenStepName(next)}.` : " Dernière ligne droite.";
+    speak(`${spokenName}. ${spokenDuration(step.seconds)}.${suite}`);
   }
   beep();
 }
@@ -903,9 +963,13 @@ function tick() {
     return;
   }
 
-  if (step.type === "rest" && remaining === 11 && !prepareAnnounced) {
+  // T-11 et décompte de lancement : uniquement quand un exercice suit immédiatement.
+  // Si une récup inter-tours s'intercale, on ne déclenche rien.
+  const restBeforeWork = step.type === "rest" && nextIsWork();
+
+  if (restBeforeWork && remaining === 11 && !prepareAnnounced) {
     prepareAnnounced = true;
-    speak(`Prépare-toi. Prochain exercice: ${spokenExerciseName(nextExerciseName())}.`);
+    speak(`Prépare-toi. Prochain exercice: ${spokenExerciseName(upcomingStep().name)}.`);
     beep();
   }
 
@@ -914,7 +978,7 @@ function tick() {
     speak(String(remaining));
   }
 
-  if (step.type === "rest" && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
+  if (restBeforeWork && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
     speak(String(remaining));
   }

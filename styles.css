@@ -233,6 +233,12 @@ li {
   color: var(--rest);
 }
 
+/* Récup active (corde à sauter…) : ce n'est pas du repos, on le distingue du bleu récup. */
+.phase.active-rest {
+  background: #e6f7ee;
+  color: #0f7a4a;
+}
+
 .phase.prepare {
   background: #fff0e3;
   color: var(--warn);

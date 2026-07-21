@@ -2,6 +2,19 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.11.0] - 2026-07-21
+
+### Corrigé
+- `1'` (apostrophe droite du clavier, U+0027) était interprété comme 1 **seconde** au lieu de 1 minute : la normalisation des apostrophes couvrait les variantes typographiques mais pas l'ASCII. La récup inter-tours `1' ENTRE LES TOURS` durait donc 1 seconde.
+- Le player annonçait et décomptait le prochain **exercice** pendant la récup précédant la récup inter-tours : `nextExerciseName()` sautait les steps de repos. Résultat : « Prépare-toi, prochain exercice… », phase orange et décompte 5-4-3-2-1, puis c'est une minute de repos qui démarrait. Le player lit désormais le step réellement suivant (`upcomingStep()`) ; le rituel de lancement ne se déclenche que si un exercice suit vraiment.
+- Format tabulé (exercice + durée + récup sur une même ligne) : l'exercice en attente sans récup était écrasé au lieu d'être enregistré, et la position du 2e token était cherchée avec `indexOf` — donc fausse quand les deux durées sont identiques (`30s … 30s`).
+
+### Ajouté
+- Récups actives : `30s corde à sauté` est distingué de `30s récup`. Le step s'affiche « Corde à sauter » avec une pastille verte « Actif » (au lieu du bleu « Récup »), est annoncé par la voix sous son nom, et apparaît dans le plan de séance.
+- L'écran « Ensuite » affiche le step réel avec sa durée, récup comprise (ex : « Ensuite: Récup inter-tours (1 min) »).
+- La récup inter-tours s'affiche « Récup inter-tours — avant tour N+1 ».
+- Durées annoncées en minutes quand c'est plus naturel (« une minute » au lieu de « 60 secondes »).
+
 ## [1.10.0] - 2026-06-07
 
 ### Ajouté
