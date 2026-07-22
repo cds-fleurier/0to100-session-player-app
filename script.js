@@ -23,7 +23,7 @@ const els = {
   musicTracklist: document.getElementById("musicTracklist"),
   musicPlatform: document.getElementById("musicPlatform"),
 };
-const APP_VERSION = "v1.12.0";
+const APP_VERSION = "v1.12.1";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
@@ -620,9 +620,9 @@ function beep() {
 }
 
 // Une récup active (corde à sauter) impose un changement de matériel : poser
-// l'élastique et prendre la corde, puis l'inverse. On réserve ce temps plutôt
+// son matériel et prendre la corde, puis l'inverse. On réserve ce temps plutôt
 // que de le prendre sur la récup.
-// 8s et non 5 : la consigne parlée ("Enlève ton élastique et attrape ta corde
+// 8s et non 5 : la consigne parlée ("Pose ton matériel et attrape ta corde
 // à sauter") dure ~3s, et le décompte 3-2-1 la couperait (speak interrompt
 // l'énoncé en cours). 8s laisse la consigne finir avant le décompte.
 const TRANSITION_SECONDS = 8;
@@ -635,9 +635,10 @@ function exerciseDisplayName(ex, round) {
 
 function buildTimeline(data) {
   const steps = [];
-  // Le matériel à reposer dépend de la séance : on ne parle d'élastique
-  // que si les exercices en utilisent vraiment.
-  const usesElastic = (data.exercises || []).some((ex) => /[ée]lastique/i.test(ex.name));
+  // Le matériel n'est pas déductible du nom de l'exercice : "BEAR TAPE MAIN"
+  // demande un élastique sans le dire, "MONTER SUR POINTE DE PIED" n'en demande
+  // pas. Le texte Nolio ne porte pas l'info — d'où une consigne générique
+  // ("ton matériel"), toujours juste et sans réglage à faire.
   if (data.preSteps && data.preSteps.length) {
     data.preSteps.forEach((pre) => {
       steps.push({
@@ -662,13 +663,15 @@ function buildTimeline(data) {
       });
 
       const isFinalStep = r === data.rounds && exIndex === data.exercises.length - 1;
-      if (!isFinalStep && ex.rest && ex.rest > 0) {
+      // On supprime la récup qui clôt la séance — sauf si elle est active :
+      // une corde à sauter est du travail, pas du repos, elle fait partie de la séance.
+      const keepRest = ex.rest > 0 && (!isFinalStep || Boolean(ex.restLabel));
+      if (keepRest) {
         const restStep = {
           type: "rest",
           name: ex.restLabel || "Récupération",
           active: Boolean(ex.restLabel),
           rope: /corde/i.test(ex.restLabel || ""),
-          elastic: usesElastic,
           seconds: ex.rest,
           round: r,
           exIndex,
@@ -682,7 +685,6 @@ function buildTimeline(data) {
             target,
             targetType,
             rope: /corde/i.test(restStep.name),
-            elastic: usesElastic,
             seconds: TRANSITION_SECONDS,
             round: r,
             exIndex,
@@ -694,10 +696,11 @@ function buildTimeline(data) {
         steps.push(restStep);
 
         // Transition de sortie seulement si on repart directement sur un exercice.
-        // Si une récup inter-tours suit, elle laisse déjà le temps de reprendre l'élastique.
+        // Si une récup inter-tours suit, elle laisse déjà le temps de reprendre le matériel.
+        // Et rien ne suit la dernière récup de la séance.
         const isLastOfRound = exIndex === data.exercises.length - 1;
         const restFollows = isLastOfRound && Boolean(data.interRoundRest);
-        if (restStep.active && !restFollows) {
+        if (restStep.active && !restFollows && !isFinalStep) {
           const nextEx = isLastOfRound ? data.exercises[0] : data.exercises[exIndex + 1];
           const nextRound = isLastOfRound ? r + 1 : r;
           pushTransition(exerciseDisplayName(nextEx, nextRound), "work");
@@ -710,7 +713,6 @@ function buildTimeline(data) {
         type: "rest",
         name: "Récup inter-tours",
         interRound: true,
-        elastic: usesElastic,
         seconds: data.interRoundRest,
         round: r,
         exIndex: -1,
@@ -875,12 +877,9 @@ function spokenTargetName(step) {
 function transitionInstruction(step) {
   const versCorde = step.targetType === "rest";
   if (step.rope) {
-    if (step.elastic) {
-      return versCorde
-        ? "Enlève ton élastique et attrape ta corde à sauter."
-        : "Repose ta corde et reprends ton élastique.";
-    }
-    return versCorde ? "Attrape ta corde à sauter." : "Repose ta corde.";
+    return versCorde
+      ? "Pose ton matériel et attrape ta corde à sauter."
+      : "Repose ta corde et reprends ton matériel.";
   }
   return `Transition. Ensuite ${spokenTargetName(step)}.`;
 }
@@ -1026,11 +1025,7 @@ function announceStepStart(step) {
     // dédié, donc c'est ici qu'on rappelle de reprendre le matériel.
     const prev = timeline[idx - 1];
     const sortieDeCorde = prev && prev.type === "rest" && prev.rope;
-    const consigne = sortieDeCorde
-      ? step.elastic
-        ? " Repose ta corde et reprends ton élastique."
-        : " Repose ta corde."
-      : "";
+    const consigne = sortieDeCorde ? " Repose ta corde et reprends ton matériel." : "";
     speak(
       `${sortieDeTransition ? "Go ! " : ""}${spokenName}. ${spokenDuration(step.seconds)}.${consigne}${suite}`
     );

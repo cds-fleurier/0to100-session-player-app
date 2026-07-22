@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.12.1] - 2026-07-22
+
+### Corrigé
+- La récup du tout dernier exercice de la séance était systématiquement supprimée. C'est le comportement voulu pour une récup passive (inutile de se reposer une fois la séance finie), mais pas pour une récup **active** : la corde à sauter est du travail et fait partie de la séance. Elle est désormais conservée, avec sa transition d'entrée — sans transition de sortie puisque rien ne suit.
+- Garde-fou associé : sur le dernier step, la transition de sortie visait `data.exercises[0]` du tour `rounds + 1`, qui n'existe pas.
+
+### Modifié
+- Consigne de transition rendue générique : « Pose ton matériel et attrape ta corde à sauter » / « Repose ta corde et reprends ton matériel ». La version 1.12.0 mentionnait l'élastique en le déduisant du nom de l'exercice — heuristique intenable : « BEAR TAPE MAIN » en demande un sans le dire, « MONTER SUR POINTE DE PIED SUR MARCHE » n'en demande pas. Le texte Nolio ne porte pas l'information matériel ; la formulation générique est toujours juste et ne demande aucun réglage.
+
 ## [1.12.0] - 2026-07-21
 
 ### Ajouté
