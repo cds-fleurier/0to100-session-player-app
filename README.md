@@ -85,6 +85,27 @@ et détecte aussi le nombre de tours (`X TOURS`).
 - JavaScript vanilla (sans build)
 - Web Speech API (voix navigateur)
 - Web Audio API (bips)
+- AudioSession API (catégorie audio `playback` sur iOS)
+
+## Son sur iPhone
+
+WebKit range le Web Audio dans la catégorie audio « ambient », que l'interrupteur
+Sonnerie/Silencieux de l'iPhone coupe. Depuis la v1.13.0 le player réclame la
+catégorie `playback` (celle de YouTube/Spotify, qui ignore l'interrupteur) et
+maintient en secours un `<audio>` quasi silencieux en boucle pour les versions
+d'iOS sans l'AudioSession API.
+
+Deux points à connaître :
+
+- **La voix n'est pas garantie en mode silence.** Elle passe par le TTS système
+  (`speechSynthesis`) et aucune API web ne permet de forcer sa catégorie audio.
+  Les **bips**, eux, doivent sonner.
+- Ces mécanismes exigent un geste utilisateur : ils sont armés au clic sur
+  **Démarrer**, pas au chargement de la page.
+
+Si le son disparaît en pleine séance après un passage en arrière-plan, c'est un
+autre mécanisme : iOS interrompt l'`AudioContext` et ne le relance pas seul. Le
+player le reprend sur `visibilitychange` depuis la v1.13.0.
 
 ## Maintenance
 
