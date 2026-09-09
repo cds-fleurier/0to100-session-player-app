@@ -2,6 +2,16 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.13.0] - 2026-09-09
+
+### Corrigé
+- **Plus aucun son sur iPhone en mode silencieux.** Le player joue ses bips en WebAudio, que WebKit range dans la catégorie audio « ambient » — celle que l'interrupteur Sonnerie/Silencieux coupe. Le comportement a changé côté iOS : la même séance sonnait auparavant téléphone en mode silence. Constaté sur Safari **et** Chrome iOS, qui partagent le moteur WebKit.
+  - La page se déclare désormais en session audio `playback` via l'**AudioSession API** (`navigator.audioSession.type`), la catégorie de YouTube/Spotify, qui ignore l'interrupteur. Seul Safari l'implémente à ce jour.
+  - Fallback pour les versions d'iOS sans cette API : un `<audio>` quasi silencieux joué en boucle (WAV mono 8 kHz d'amplitude 1/32767, généré à la volée — aucun fichier ajouté au repo), qui force la sortie WebAudio sur le canal média. Amplitude non nulle volontairement : iOS relâche la session audio quand le flux ne porte rien.
+  - ⚠️ Les deux leviers traitent les **bips**. La **voix** passe par le TTS système (`speechSynthesis`) et rien côté web ne permet de forcer sa catégorie : à vérifier à l'usage en mode silence.
+- **Le son ne revenait jamais après une mise en veille de l'écran.** iOS suspend (voire « interrompt ») l'`AudioContext` dès que la page passe en arrière-plan et ne le relance pas seul ; `visibilitychange` ne rétablissait que le Wake Lock. Un simple verrouillage d'écran en pleine séance coupait donc le son jusqu'à la fin. L'audio est désormais repris au retour au premier plan, quand une séance tourne ou est en pause.
+- **Bips muets sur contexte suspendu.** `ctx.resume()` est asynchrone : `beep()` montait son oscillateur sans attendre la reprise. Le resume est maintenant attendu avant de produire le bip.
+
 ## [1.12.1] - 2026-07-22
 
 ### Corrigé

@@ -23,7 +23,7 @@ const els = {
   musicTracklist: document.getElementById("musicTracklist"),
   musicPlatform: document.getElementById("musicPlatform"),
 };
-const APP_VERSION = "v1.12.1";
+const APP_VERSION = "v1.13.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
@@ -67,6 +67,8 @@ const IS_IOS =
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
 let speechPrimed = false;
 let sharedAudioCtx = null;
+let keepAliveAudio = null;
+let keepAliveSrc = null;
 let isFocusMode = false;
 let wakeLockSentinel = null;
 let wakeLockWanted = true;
@@ -121,10 +123,84 @@ function ensureAudioContext() {
   return sharedAudioCtx;
 }
 
+// --- iOS : sonner malgre l'interrupteur silencieux -------------------------
+// WebKit range WebAudio dans la categorie audio "ambient", celle que le switch
+// Sonnerie/Silencieux de l'iPhone coupe. Le player etait donc muet en mode
+// silence (constate sur Safari ET Chrome iOS : meme moteur). Deux leviers,
+// cumules parce qu'ils ne couvrent pas les memes versions d'iOS :
+//   1. AudioSession API (Safari uniquement a ce jour) : declarer la page en
+//      "playback", la categorie de YouTube/Spotify, qui ignore le switch.
+//   2. Fallback historique : garder un <audio> quasi silencieux en boucle,
+//      ce qui force la sortie WebAudio sur le canal media.
+// Les deux exigent un geste utilisateur, d'ou l'appel depuis startTimer().
+function claimPlaybackAudioSession() {
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
+  } catch (err) {
+    // API absente ou type refuse : le keep-alive ci-dessous prend le relais.
+  }
+}
+
+// WAV mono 8 kHz d'amplitude 1/32767 : inaudible, mais pas un silence
+// numerique pur -- iOS relache la session audio quand le flux ne porte rien.
+function buildKeepAliveSrc() {
+  const sampleRate = 8000;
+  const samples = sampleRate; // 1 s, joue en boucle
+  const buffer = new ArrayBuffer(44 + samples * 2);
+  const view = new DataView(buffer);
+  const ascii = (offset, text) => {
+    for (let i = 0; i < text.length; i += 1) view.setUint8(offset + i, text.charCodeAt(i));
+  };
+  ascii(0, "RIFF");
+  view.setUint32(4, 36 + samples * 2, true);
+  ascii(8, "WAVEfmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  ascii(36, "data");
+  view.setUint32(40, samples * 2, true);
+  for (let i = 0; i < samples; i += 1) view.setInt16(44 + i * 2, i % 2 ? 1 : -1, true);
+  return URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+}
+
+function ensureSilentKeepAlive() {
+  if (!IS_IOS) return;
+  if (!keepAliveAudio) {
+    keepAliveSrc = buildKeepAliveSrc();
+    keepAliveAudio = new Audio(keepAliveSrc);
+    keepAliveAudio.loop = true;
+    keepAliveAudio.volume = 1;
+    keepAliveAudio.setAttribute("playsinline", "");
+  }
+  const played = keepAliveAudio.play();
+  if (played && played.catch) played.catch(() => {});
+}
+
+// iOS suspend -- voire "interrompt" -- l'AudioContext des que la page passe en
+// arriere-plan, et ne le relance jamais de lui-meme. Sans cette reprise, un
+// simple verrouillage d'ecran en pleine seance coupait le son jusqu'a la fin.
+async function resumeAudioEngines() {
+  claimPlaybackAudioSession();
+  ensureSilentKeepAlive();
+  if (sharedAudioCtx && sharedAudioCtx.state !== "running") {
+    try {
+      await sharedAudioCtx.resume();
+    } catch (err) {
+      // Rien a faire de plus : le prochain geste utilisateur retentera.
+    }
+  }
+}
+
 function initMediaEngines() {
+  claimPlaybackAudioSession();
+  ensureSilentKeepAlive();
   primeSpeechSynthesis();
   const ctx = ensureAudioContext();
-  if (ctx && ctx.state === "suspended") ctx.resume();
+  if (ctx && ctx.state !== "running") ctx.resume();
 }
 
 function primeSpeechSynthesis() {
@@ -604,10 +680,18 @@ function speak(text, interrupt = true) {
   window.speechSynthesis.speak(utterance);
 }
 
-function beep() {
+async function beep() {
   const ctx = ensureAudioContext();
   if (!ctx) return;
-  if (ctx.state === "suspended") ctx.resume();
+  // resume() est asynchrone : monter l'oscillateur sans l'attendre produisait
+  // un bip muet a chaque fois que le contexte etait encore suspendu.
+  if (ctx.state !== "running") {
+    try {
+      await ctx.resume();
+    } catch (err) {
+      return;
+    }
+  }
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = "sine";
@@ -1289,9 +1373,9 @@ els.musicPlatform.addEventListener("change", () => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && wakeLockWanted && !wakeLockSentinel) {
-    requestWakeLock();
-  }
+  if (document.visibilityState !== "visible") return;
+  if (wakeLockWanted && !wakeLockSentinel) requestWakeLock();
+  if (timerId || paused) resumeAudioEngines();
 });
 
 const storedVoicePreference = localStorage.getItem(VOICE_PREF_KEY);
