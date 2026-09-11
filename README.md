@@ -97,15 +97,33 @@ d'iOS sans l'AudioSession API.
 
 Deux points à connaître :
 
-- **La voix n'est pas garantie en mode silence.** Elle passe par le TTS système
-  (`speechSynthesis`) et aucune API web ne permet de forcer sa catégorie audio.
-  Les **bips**, eux, doivent sonner.
+- **La voix est muette en mode silence** (constaté sur iPhone, v1.13.0,
+  septembre 2026). Elle passe par le TTS système (`speechSynthesis`) qui a sa
+  propre session audio, hors de portée du web. Les **bips**, eux, sonnent.
+  État assumé pour l'instant — voir « Voix en mode silence : options » ci-dessous.
 - Ces mécanismes exigent un geste utilisateur : ils sont armés au clic sur
   **Démarrer**, pas au chargement de la page.
 
 Si le son disparaît en pleine séance après un passage en arrière-plan, c'est un
 autre mécanisme : iOS interrompt l'`AudioContext` et ne le relance pas seul. Le
 player le reprend sur `visibilitychange` depuis la v1.13.0.
+
+### Voix en mode silence : options (non retenues à ce jour)
+
+Décision du 11/09/2026 : on reste sur `speechSynthesis`. Si le besoin devient
+pressant, trois pistes étudiées, du plus simple au plus complet :
+
+| | Principe | Noms d'exercices en silence | Infra | Effort |
+|---|---|---|---|---|
+| **A. Phrases fixes pré-enregistrées** | ~25 fichiers audio générés sur Mac (`say -v Thomas`, même voix Apple que sur iPhone) : décomptes, « Prépare-toi », « Go », consignes matériel, « Séance terminée ». Joués en WebAudio → canal `playback`. Les noms d'exercices restent en `speechSynthesis`. | ❌ muets (on entend « Prépare-toi, prochain exercice… » puis rien) | aucune | ~1-2 h |
+| **B. TTS dans le navigateur (Piper WASM)** | Synthèse neuronale hors-ligne, voix FR, rendue en WebAudio. | ✅ | aucune, mais ~60 Mo de modèle à télécharger la 1re fois, perf incertaine sur iPhone | ½ journée + risque |
+| **C. TTS cloud via mini-backend** | Cloudflare Worker (~50 lignes) → Google Cloud TTS ou OpenAI TTS, cache KV par phrase. Au clic **Démarrer**, le player pré-synthétise toute la timeline (~30 phrases distinctes, quasi toutes en cache dès la 2e séance) puis joue en WebAudio. `speechSynthesis` reste en fallback sans réseau. | ✅ | compte Cloudflare (gratuit) + clé TTS (Google : 1 M car./mois gratuits) | ~2-3 h |
+
+Reco si on y va : **C** — seule option qui garde l'intérêt réel de la voix
+(savoir quel exercice arrive sans regarder l'écran) sans embarquer 60 Mo sur le
+téléphone ; le Worker est aussi la brique backend envisagée pour le sync
+multi-devices du calendrier. A est un socle réutilisable pour C (les phrases
+fixes n'auraient plus besoin du réseau).
 
 ## Maintenance
 
