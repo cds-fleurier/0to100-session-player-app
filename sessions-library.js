@@ -246,7 +246,7 @@ function compileLibrarySession(def, optionOverrides = {}) {
           blockSeconds += dur;
           push(blockId, {
             name: pick(item.name, r),
-            spoken: item.spoken ? pick(item.spoken, r) : undefined,
+            spoken: item.spoken ? pick(item.spoken, r) : pick(item.name, r),
             seconds: dur,
             round: r,
             sayRound: i === 0,
@@ -312,7 +312,7 @@ function compileLibrarySession(def, optionOverrides = {}) {
         item.items.forEach((it, k) => {
           push(blockId, {
             name: it.name,
-            spoken: it.spoken,
+            spoken: it.spoken || it.name,
             seconds: it.seconds,
             cadence: Boolean(it.cadence),
             intro: k === 0 ? introFor(item.intro) : undefined,
@@ -334,7 +334,7 @@ function compileLibrarySession(def, optionOverrides = {}) {
       blockSeconds += dur;
       push(blockId, {
         name: item.name,
-        spoken: item.spoken,
+        spoken: item.spoken || item.name,
         seconds: dur,
         cadence: Boolean(item.cadence),
         announceNext: Boolean(item.announceNext),

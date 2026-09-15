@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.15.1] - 2026-09-15
+
+### Corrigé
+- **« Étirements actifs : mollets » était annoncé « É, 1 minute 40 ».** La voix ne garde que le bloc en majuscules d'un nom d'exercice (« CRUNCH Pieds au sol » → « CRUNCH ») ; sans le flag `u`, `\b` ne considère pas « É » comme une lettre et coupait après la majuscule accentuée. Le bloc doit désormais être suivi d'une espace, d'une ponctuation ou de la fin du nom. Par sécurité, tous les steps des séances intégrées portent leur libellé parlé explicite (`spoken` = nom par défaut) et ne passent plus par ce découpage.
+
 ## [1.15.0] - 2026-09-15
 
 ### Ajouté

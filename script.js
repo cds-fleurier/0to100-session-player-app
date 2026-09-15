@@ -26,7 +26,7 @@ const els = {
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.15.0";
+const APP_VERSION = "v1.15.1";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -1075,7 +1075,9 @@ function spokenExerciseName(rawName) {
 
   // If the exercise starts with an uppercase block and then explanatory text,
   // keep only that uppercase exercise block (ex: "CRUNCH Pieds au sol..." -> "CRUNCH").
-  const upperBlock = name.match(/^([A-ZÀ-ÖØ-Ý0-9'’\-]+(?:\s+[A-ZÀ-ÖØ-Ý0-9'’\-]+)*)\b/);
+  // Le bloc doit être suivi d'une espace, d'une ponctuation ou de la fin : sans
+  // le flag u, \b ne voit pas "É" comme une lettre et "Étirements" devenait "É".
+  const upperBlock = name.match(/^([A-ZÀ-ÖØ-Ý0-9'’\-]+(?:\s+[A-ZÀ-ÖØ-Ý0-9'’\-]+)*)(?=$|[\s:,.;(])/);
   if (upperBlock) {
     const matched = upperBlock[1].trim();
     const tail = name.slice(matched.length).trim();
