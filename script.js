@@ -26,7 +26,7 @@ const els = {
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.15.3";
+const APP_VERSION = "v1.15.4";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -1500,7 +1500,11 @@ function populateSessionPicker() {
   SESSION_LIBRARY.forEach((def) => {
     const o = document.createElement("option");
     o.value = def.id;
-    o.textContent = `${def.title} (${def.subtitle.split("·")[0].trim()})`;
+    // "C1S1 du 15/09/26 — Run + renfo isométrique (≈ 60 min)"
+    const [code, ...rest] = def.title.split(" — ");
+    const name = rest.join(" — ");
+    const datePart = def.date ? ` du ${def.date}` : "";
+    o.textContent = `${code}${datePart} — ${name} (${def.subtitle.split("·")[0].trim()})`;
     els.sessionPicker.appendChild(o);
   });
   const stored = localStorage.getItem(LIBRARY_PREF_KEY);

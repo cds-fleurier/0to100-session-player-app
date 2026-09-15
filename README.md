@@ -64,10 +64,10 @@ Certaines séances (course + renfo en enchaînements imbriqués) ne se laissent 
 
 Séances disponibles :
 
-| Id | Séance | Durée |
-|----|--------|-------|
-| `C1S1` | Run + renfo isométrique — préparation à la maison (cadence, étirements actifs, équilibre), course libre 10/12/15 min, 13 tours de 20 s renfo + 30 s course en cadence + 1 min 30 libre, retour au calme 5 min | ≈ 58-61 min |
-| `C1S2` | Course + renfo isométrique — 9 tours de 4 min course + 30 s + 30 s renfo (demi-squat statique / planche ventrale), I1 sur les tours impairs, I2 sur les pairs. Pas d'échauffement. | 45 min |
+| Id | Date | Séance | Durée |
+|----|------|--------|-------|
+| `C1S1` | 15/09/26 | Run + renfo isométrique — préparation à la maison (cadence, étirements actifs, équilibre), course libre 10/12/15 min, 13 tours de 20 s renfo + 30 s course en cadence + 1 min 30 libre, retour au calme 5 min | ≈ 58-61 min |
+| `C1S2` | 19/09/26 | Course + renfo isométrique — 9 tours de 4 min course + 30 s + 30 s renfo (demi-squat statique / planche ventrale), I1 sur les tours impairs, I2 sur les pairs. Pas d'échauffement. | 45 min |
 
 Notions propres à ces séances :
 

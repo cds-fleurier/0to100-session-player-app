@@ -13,6 +13,7 @@
 //   - rounds + round : les steps de `round` sont répétés `rounds` fois
 //
 // Kinds :
+// Chaque séance porte `date` (jour du plan d'entraînement, affiché dans le sélecteur).
 //   - step       : { name, seconds | secondsFrom: <clé d'option>, cadence?, spoken?, announceNext? }
 //   - cycle      : { name, total, slot, items: [nom | {name, cadence}] }
 //                  → enchaîne les items par slots de `slot` s jusqu'à `total`
@@ -32,6 +33,7 @@
 const SESSION_LIBRARY = [
   {
     id: "C1S1",
+    date: "15/09/26",
     title: "C1S1 — Run + renfo isométrique",
     subtitle: "≈ 60 min · préparation à la maison, corps de séance en course",
     advice:
@@ -145,6 +147,7 @@ const SESSION_LIBRARY = [
   {
     // Séance complète telle que fournie : pas d'échauffement, on part sur 4' de course.
     id: "C1S2",
+    date: "19/09/26",
     title: "C1S2 — Course + renfo isométrique",
     subtitle: "45 min · 9 tours de 4 min course + 1 min renfo, intensité I1 / I2 en alternance",
     advice:

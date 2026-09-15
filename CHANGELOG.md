@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.15.4] - 2026-09-15
+
+### Modifié
+- Le sélecteur affiche la date de chaque séance du plan : « C1S1 du 15/09/26 — … », « C1S2 du 19/09/26 — … » (champ `date` dans la bibliothèque).
+
 ## [1.15.3] - 2026-09-15
 
 ### Corrigé
