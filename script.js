@@ -26,7 +26,7 @@ const els = {
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.16.0";
+const APP_VERSION = "v1.17.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -1042,6 +1042,9 @@ function spokenTargetName(step) {
 // Consigne matériel énoncée au début d'une transition. Doit tenir dans la
 // fenêtre avant le décompte 3-2-1, sinon elle se fait couper.
 function transitionInstruction(step) {
+  // Consigne explicite (séances bibliothèque, ex. « Changement de jambe ») :
+  // courte, pour tenir avant le décompte 3-2-1 d'une transition de 5 s.
+  if (step.instruction) return step.instruction;
   const versCorde = step.targetType === "rest";
   if (step.rope) {
     return versCorde
@@ -1180,7 +1183,7 @@ function renderPlayer() {
   } else if (isRest && step.interRound) {
     els.current.textContent = `${step.name} — avant tour ${step.round + 1}`;
   } else if (step.round && step.round > 0) {
-    els.current.textContent = `Tour ${step.round}: ${step.name}`;
+    els.current.textContent = `${step.roundLabel || "Tour"} ${step.round}: ${step.name}`;
   } else {
     els.current.textContent = step.name;
   }
@@ -1204,7 +1207,7 @@ function announceStepStart(step) {
     const prefix = sortieDeTransition
       ? "Go ! "
       : step.round && step.round > 0 && step.sayRound !== false
-      ? `Tour ${step.round}. `
+      ? `${step.roundLabel || "Tour"} ${step.round}. `
       : "";
     // L'intro (rappel d'allure, consigne de bloc) a normalement été dite pendant
     // la fin du step précédent (voir tick). Sinon, l'action d'abord, l'intro

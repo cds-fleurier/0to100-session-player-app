@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.17.0] - 2026-09-15
+
+### Ajouté
+- **Séance intégrée C1S4 du 27/09/26 — Course I2/I3 + renfo isométrique (42 min).** Sans échauffement. 3 blocs de 14 min : 4 min 15 course I2 → 45 s chaise → 4 min 15 course I2 → 45 s planche → 3 min 15 course I3 → 45 s fentes statiques (20 s G, 5 s changement, 20 s D).
+- Moteur : **mini-transition dans un groupe** (`transition: true`, ex. « Changement de jambe » 5 s : consigne courte, 3-2-1, « Go ! » sur le step suivant) et **`roundLabel`** pour annoncer « Bloc 2 » plutôt que « Tour 2 » quand le coach parle de blocs.
+
 ## [1.16.0] - 2026-09-15
 
 ### Ajouté

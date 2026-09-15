@@ -68,6 +68,7 @@ Séances disponibles :
 |----|------|--------|-------|
 | `C1S1` | 15/09/26 | Run + renfo isométrique — préparation à la maison (cadence, étirements actifs, équilibre), course libre 10/12/15 min, 13 tours de 20 s renfo + 30 s course en cadence + 1 min 30 libre, retour au calme 5 min | ≈ 58-61 min |
 | `C1S3` | 23/09/26 | Run + renfo isométrique, modération d'impact — préparation 14 min (+ mobilité hanches/tronc), course libre 10/12/15 min, 12 tours de renfo en rotation (fentes D+G 40 s / planche 30 s / mollets G+D 40 s) + 2 min course I2 (cadence → libre → sans bruit → libre), retour au calme 5 min | ≈ 60-63 min |
+| `C1S4` | 27/09/26 | Course I2/I3 + renfo isométrique — 3 blocs de 14 min (4'15 I2 → 45 s chaise → 4'15 I2 → 45 s planche → 3'15 I3 → 45 s fentes statiques G/D). Pas d'échauffement. | 42 min |
 | `C1S2` | 19/09/26 | Course + renfo isométrique — 9 tours de 4 min course + 30 s + 30 s renfo (demi-squat statique / planche ventrale), I1 sur les tours impairs, I2 sur les pairs. Pas d'échauffement. | 45 min |
 
 Notions propres à ces séances :

@@ -28,6 +28,9 @@
 // Un item de `round` peut aussi être un groupe : `steps: [...]` (fixe) ou
 // `variants: [[...], [...]]` (le groupe change à chaque tour, modulo) — pour un
 // renfo dont la durée dépend du tour. `label` obligatoire pour un libellé propre.
+// Dans un groupe, `{ transition: true, name, seconds }` = mini-transition
+// (consigne courte + 3-2-1 + « Go ! » sur le step suivant).
+// `roundLabel` sur un bloc à tours : mot annoncé à la place de « Tour » (ex. « Bloc »).
 //
 // `cadence: true` : le métronome (si activé) tourne pendant ce step.
 // `intro` (sur un bloc, ou sur le premier step d'un cycle/sequence) : phrase
@@ -310,6 +313,39 @@ const SESSION_LIBRARY = [
       },
     ],
   },
+  {
+    // Séance complète telle que fournie : pas d'échauffement, on part sur 4'15 de course.
+    id: "C1S4",
+    date: "27/09/26",
+    title: "C1S4 — Course I2/I3 + renfo isométrique",
+    subtitle: "42 min · 3 blocs de 14 min : 3 courses (I2, I2, I3) coupées de 45 s de renfo",
+    advice:
+      "3 fois le bloc : 4 min 15 course I2 → 45 s chaise → 4 min 15 course I2 → 45 s planche → 3 min 15 course I3 → 45 s fentes statiques (20 s G, 5 s changement, 20 s D).",
+    blocks: [
+      {
+        name: "Corps de séance",
+        rounds: 3,
+        roundLabel: "Bloc",
+        intro:
+          "Corps de séance, 3 blocs de 14 minutes. Deux courses en intensité 2, puis une en intensité 3, avec 45 secondes de renfo après chaque course.",
+        round: [
+          { name: "Course, intensité I2", spoken: "Course, intensité 2", seconds: 255, announceNext: true },
+          { name: "Chaise", spoken: "Chaise", seconds: 45 },
+          { name: "Course, intensité I2", spoken: "Course, intensité 2", seconds: 255, announceNext: true },
+          { name: "Planche ventrale", seconds: 45 },
+          { name: "Course, intensité I3", spoken: "Course, intensité 3", seconds: 195, announceNext: true },
+          {
+            label: "45 s fentes statiques (20 s G, 5 s changement, 20 s D)",
+            steps: [
+              { name: "Fentes statiques, jambe gauche", seconds: 20 },
+              { transition: true, name: "Changement de jambe", seconds: 5 },
+              { name: "Fentes statiques, jambe droite", seconds: 20 },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 function librarySessionById(id) {
@@ -383,14 +419,33 @@ function compileLibrarySession(def, optionOverrides = {}) {
       };
       for (let r = 1; r <= block.rounds; r += 1) {
         block.round.forEach((item, i) => {
-          groupFor(item, r).forEach((sub, j) => {
+          const group = groupFor(item, r);
+          group.forEach((sub, j) => {
             const dur = seconds(sub);
             blockSeconds += dur;
+            // Mini-transition dans un groupe (« 5 s changement de jambe ») : consigne
+            // courte, décompte 3-2-1, puis « Go ! » sur le step suivant.
+            if (sub.transition) {
+              const nextSub = group[j + 1];
+              push(blockId, {
+                type: "transition",
+                name: sub.name || "Transition",
+                instruction: sub.instruction || sub.name,
+                target: nextSub ? pick(nextSub.name, r) : "",
+                targetType: "work",
+                seconds: dur,
+                round: r,
+                roundLabel: block.roundLabel,
+                blockName: block.name,
+              });
+              return;
+            }
             push(blockId, {
               name: pick(sub.name, r),
               spoken: sub.spoken ? pick(sub.spoken, r) : pick(sub.name, r),
               seconds: dur,
               round: r,
+              roundLabel: block.roundLabel,
               sayRound: i === 0 && j === 0,
               cadence: Boolean(sub.cadence),
               announceNext: Boolean(sub.announceNext),
@@ -413,7 +468,7 @@ function compileLibrarySession(def, optionOverrides = {}) {
           return `${libraryFormatDuration(seconds(item))} ${label}`;
         })
         .join(" + ");
-      detail.push(`${block.rounds} tours de ${roundDesc}`);
+      detail.push(`${block.rounds} ${(block.roundLabel || "tour").toLowerCase()}s de ${roundDesc}`);
     }
 
     (block.steps || []).forEach((item) => {
