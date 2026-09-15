@@ -112,7 +112,7 @@ const SESSION_LIBRARY = [
         name: "Corps de séance",
         rounds: 13,
         intro:
-          "Corps de séance, 13 tours. Commence facile en intensité 1, et monte progressivement vers intensité 2 au fil des tours.",
+          "Corps de séance, 13 tours. Allure facile en intensité 1 au début, jusqu'à intensité 2 sur les derniers tours.",
         round: [
           {
             name: [
@@ -154,7 +154,7 @@ const SESSION_LIBRARY = [
         name: "Corps de séance",
         rounds: 9,
         intro:
-          "Corps de séance, 9 tours de 5 minutes. 4 minutes de course, puis 1 minute de renfo. Intensité 1 sur les tours impairs, intensité 2 sur les tours pairs.",
+          "Corps de séance, 9 tours. 4 minutes de course puis 1 minute de renfo. Intensité 1 sur les tours impairs, intensité 2 sur les tours pairs.",
         round: [
           {
             name: ["Course, intensité I1", "Course, intensité I2"],

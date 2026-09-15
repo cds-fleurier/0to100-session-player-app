@@ -26,7 +26,7 @@ const els = {
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.15.2";
+const APP_VERSION = "v1.15.3";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -785,6 +785,10 @@ function syncMetronome() {
 // l'énoncé en cours). 8s laisse la consigne finir avant le décompte.
 const TRANSITION_SECONDS = 8;
 
+// Avance (en s avant la fin du step courant) à laquelle on énonce l'intro du
+// bloc suivant. Doit laisser l'intro finir avant le « Prépare-toi » de T-11.
+const INTRO_LEAD = 26;
+
 function exerciseDisplayName(ex, round) {
   return ex.alternates && ex.alternates.length
     ? ex.alternates[(round - 1) % ex.alternates.length]
@@ -1202,10 +1206,12 @@ function announceStepStart(step) {
       : step.round && step.round > 0 && step.sayRound !== false
       ? `Tour ${step.round}. `
       : "";
-    // L'intro (rappel d'allure, consigne de bloc) est dite une fois, puis
-    // l'annonce du step est mise à la suite sans l'interrompre.
-    if (step.intro) speak(step.intro);
-    speak(`${prefix}${spokenName}. ${spokenDuration(step.seconds)}.`, !step.intro);
+    // L'intro (rappel d'allure, consigne de bloc) a normalement été dite pendant
+    // la fin du step précédent (voir tick). Sinon, l'action d'abord, l'intro
+    // ensuite : une intro de 9 s avant « Chaise à 90 degrés » mangeait la moitié
+    // d'un step de 20 s.
+    speak(`${prefix}${spokenName}. ${spokenDuration(step.seconds)}.`);
+    if (step.intro && !step.introSpoken) speak(step.intro, false);
   } else {
     const next = upcomingStep();
     // Annoncer "Ensuite transition" n'apprend rien : on nomme ce qui vient après elle.
@@ -1270,6 +1276,22 @@ function tick() {
     prepareAnnounced = true;
     speak(`Prépare-toi. Prochain exercice: ${spokenStepName(upcomingStep())}.`);
     beep();
+  }
+
+  // Intro du bloc suivant dite en avance, pendant un step assez long : avant le
+  // « Prépare-toi » de T-11 et le décompte, pour ne pas empiéter sur le step
+  // qu'elle introduit. INTRO_LEAD laisse ~15 s de parole avant T-11.
+  const next = upcomingStep();
+  if (
+    next &&
+    next.intro &&
+    !next.introSpoken &&
+    step.type !== "transition" &&
+    step.seconds >= INTRO_LEAD + 20 &&
+    remaining === INTRO_LEAD
+  ) {
+    next.introSpoken = true;
+    speak(next.intro);
   }
 
   // Séances bibliothèque : un step de course long (annonceNext) prévient de ce

@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.15.3] - 2026-09-15
+
+### Corrigé
+- **L'intro du corps de séance mangeait la moitié de la première chaise.** Le rappel d'allure (~9 s de parole) était dit avant « Tour 1. Chaise à 90 degrés » sur un step de 20 s. Désormais l'intro d'un bloc est énoncée **en avance, pendant la fin du step précédent** quand il est assez long (à T-26, avant le « Prépare-toi » de T-11 et le décompte). Si le step précédent est trop court, on annonce d'abord l'action, l'intro vient après.
+- Intros C1S1 / C1S2 raccourcies.
+
 ## [1.15.2] - 2026-09-15
 
 ### Modifié
