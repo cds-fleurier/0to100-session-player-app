@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.21.0] - 2026-09-15
+
+### Ajouté
+- **Séance intégrée C1S8 du 09/10/26 — Course I2/I3, fentes arrière et climbers.** Sans échauffement à la maison : 5 min I1, puis **6 / 7 tours** (option) de 1 min renfo (30 s fentes arrière gauche-droite 1-0-1-0 + 30 s climbers) → 3 min I2 → 1 min renfo → 3 min I3, puis 5 min I1. 58 ou 66 min.
+
 ## [1.20.0] - 2026-09-15
 
 ### Ajouté

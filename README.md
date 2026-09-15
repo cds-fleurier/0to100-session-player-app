@@ -72,6 +72,7 @@ Séances disponibles :
 | `C1S5` | 30/09/26 | Gammes, fentes marchées et cadence — préparation 14 min, course libre 10/12/15 min, gammes simples (3 passages), 2 blocs de ~12 min de boucles (chaise, 30 m gammes, 30 fentes marchées, 30 m cadence, retour trotté) avec 2 min de récup, retour au calme 5/7/10 min. Option Rythme. | ≈ 60 min |
 | `C1S6` | 03/10/26 | Course I2/I3, fentes arrière et équilibre — 5 min I1 puis 4/5/6 tours (option) de 3 min I2 → fentes arrière G/D → 3 min I3 → équilibre G/D. Pas d'échauffement. | 37-53 min |
 | `C1S7` | 06/10/26 | Renfo + EPIC 15-15 — préparation 17 min (+ mobilité pied-cheville), course libre, gammes simples, 2/3/4 blocs de renfo à ton rythme (squats, mountain climbers, mollets × 2) + 4 min EPIC 15-15, 1 min de récup entre, retour au calme 5 min. Options Rythme et nombre de blocs. | ≈ 54-70 min |
+| `C1S8` | 09/10/26 | Course I2/I3, fentes arrière et climbers — 5 min I1, 6/7 tours (option) de renfo 1 min → 3 min I2 → renfo 1 min → 3 min I3, 5 min I1. Pas d'échauffement. | 58-66 min |
 | `C1S2` | 19/09/26 | Course + renfo isométrique — 9 tours de 4 min course + 30 s + 30 s renfo (demi-squat statique / planche ventrale), I1 sur les tours impairs, I2 sur les pairs. Pas d'échauffement. | 45 min |
 
 Notions propres à ces séances :

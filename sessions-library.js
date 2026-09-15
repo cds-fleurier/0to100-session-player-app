@@ -797,6 +797,64 @@ const SESSION_LIBRARY = [
       },
     ],
   },
+  {
+    // Séance complète telle que fournie : pas d'échauffement à la maison.
+    id: "C1S8",
+    date: "09/10/26",
+    title: "C1S8 — Course I2/I3, fentes arrière et climbers",
+    subtitle: "≈ 60 min · 5 min I1, 6 à 7 tours de 8 min (renfo 1 min, 3 min I2, renfo 1 min, 3 min I3), 5 min I1",
+    advice:
+      "Renfo 1 min = 30 s fentes arrière gauche-droite (tempo 1-0-1-0) + 30 s climbers. Puis 3 min I2, renfo, 3 min I3. Retour au calme 5 min I1.",
+    options: [
+      {
+        key: "rounds",
+        label: "Nombre de tours",
+        default: 6,
+        choices: [
+          { value: 6, label: "6 tours (58 min)" },
+          { value: 7, label: "7 tours (66 min)" },
+        ],
+      },
+    ],
+    blocks: [
+      {
+        name: "Mise en route",
+        steps: [
+          { kind: "step", name: "Course, intensité I1", spoken: "Course, intensité 1", seconds: 300, announceNext: true },
+        ],
+      },
+      {
+        name: "Corps de séance",
+        rounds: { option: "rounds" },
+        intro:
+          "Corps de séance, tours de 8 minutes. Une minute de renfo, 3 minutes en intensité 2, une minute de renfo, 3 minutes en intensité 3.",
+        round: [
+          {
+            label: "1 min renfo (30 s fentes arrière G-D 1-0-1-0 + 30 s climbers)",
+            steps: [
+              { name: "Fentes arrière gauche-droite (1-0-1-0)", spoken: "Fentes arrière, gauche droite, tempo un, zéro, un, zéro", seconds: 30 },
+              { name: "Climbers", seconds: 30 },
+            ],
+          },
+          { name: "Course, intensité I2", spoken: "Course, intensité 2", seconds: 180, announceNext: true },
+          {
+            label: "1 min renfo (30 s fentes arrière G-D 1-0-1-0 + 30 s climbers)",
+            steps: [
+              { name: "Fentes arrière gauche-droite (1-0-1-0)", spoken: "Fentes arrière, gauche droite", seconds: 30 },
+              { name: "Climbers", seconds: 30 },
+            ],
+          },
+          { name: "Course, intensité I3", spoken: "Course, intensité 3", seconds: 180, announceNext: true },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course, intensité I1", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
 ];
 
 function librarySessionById(id) {
