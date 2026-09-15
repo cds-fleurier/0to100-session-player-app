@@ -299,6 +299,12 @@ li {
   color: var(--warn);
 }
 
+/* Step estimé (distance, répétitions) : durée indicative, pas de décompte. */
+.phase.estimated {
+  background: #e8f4f0;
+  color: #1d6b5a;
+}
+
 /* Checkpoint (sortie de la maison…) : le player attend qu'on appuie sur Démarrer. */
 .phase.checkpoint {
   background: #fff7cc;

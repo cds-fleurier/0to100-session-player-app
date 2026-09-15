@@ -2,6 +2,14 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.18.0] - 2026-09-15
+
+### Ajouté
+- **Séance intégrée C1S5 du 30/09/26 — Gammes, fentes marchées et cadence (≈ 60 min).** Préparation à la maison 14 min (équilibre genou levé + cadence des bras, mobilité hanches / tronc et rotations), course libre 10/12/15 min, **gammes simples** (3 passages talons-fesses / montées de genoux / course arrière, 30 m + retour trotté), puis **2 blocs de ~12 min** séparés de 2 min de récup : boucles de 30 s chaise → 30 m de gammes (genoux / talons-fesses / schtroumpf en rotation) → 30 fentes marchées → 30 m course en cadence I2 → retour trotté au départ. Retour au calme 5 / 7 / 10 min.
+- **Steps « à ton rythme » (`estimated`).** Les éléments définis en distance ou en répétitions (30 m, 30 fentes) ne sont pas chronométrables pour tout le monde, et un décompte qui tombe trop tôt met en stress. Sur ces steps : pas de décompte final, annonce sans durée, chrono affiché avec `~` et pastille « À ton rythme », et le step suivant s'introduit par « Quand tu as fini » (ou une formule dédiée : « Quand tu es revenu au départ »). Le retour trotté, libre par nature, absorbe l'écart entre coureurs.
+- **Option « Rythme » par séance** (Tranquille ×1,25 / Normal / Rapide ×0,8), mémorisée : multiplie les durées estimées. Le nombre de boucles d'un bloc défini par une durée (`rounds: { target }`) se recalcule pour rester proche de la durée du coach : 3 boucles en tranquille et normal, 4 en rapide.
+- Moteur : step `kind: "rest"` (récup passive entre deux blocs, avec « Prépare-toi » avant la reprise).
+
 ## [1.17.0] - 2026-09-15
 
 ### Ajouté

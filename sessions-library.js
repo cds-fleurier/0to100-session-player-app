@@ -33,6 +33,13 @@
 // `roundLabel` sur un bloc à tours : mot annoncé à la place de « Tour » (ex. « Bloc »).
 //
 // `cadence: true` : le métronome (si activé) tourne pendant ce step.
+// `estimated: true` : durée estimée (distance ou répétitions, pas un chrono du
+// coach). Le player n'y fait pas de décompte final, annonce le step sans sa durée
+// et introduit le suivant par « Quand tu as fini » (`doneCue` pour une formule
+// dédiée). Si la séance a une option `pace`, sa valeur multiplie ces durées.
+// `rounds` peut être `{ target: <s> }` : nombre de tours = arrondi(target / durée
+// d'un tour), calculé après application du rythme — le bloc garde ~la durée du coach.
+// `kind: "rest"` : récup passive (type "rest" du player, « Prépare-toi » avant le step suivant).
 // `intro` (sur un bloc, ou sur le premier step d'un cycle/sequence) : phrase
 // dite une seule fois à l'entrée, avant l'annonce du step.
 
@@ -346,6 +353,197 @@ const SESSION_LIBRARY = [
       },
     ],
   },
+  {
+    id: "C1S5",
+    date: "30/09/26",
+    title: "C1S5 — Gammes, fentes marchées et cadence",
+    subtitle: "≈ 65 min · préparation à la maison, gammes, 2 blocs de boucles en course",
+    advice:
+      "Gammes et fentes sont estimées en temps : pas de décompte, chacun finit à son rythme et enchaîne. Le retour trotté au départ absorbe l'écart. Règle ton rythme si ça va trop vite ou trop lentement.",
+    options: [
+      {
+        key: "freeRun",
+        label: "Course libre (échauffement)",
+        default: 720,
+        choices: [
+          { value: 600, label: "10 min" },
+          { value: 720, label: "12 min" },
+          { value: 900, label: "15 min" },
+        ],
+      },
+      {
+        key: "pace",
+        label: "Rythme sur gammes et fentes",
+        default: 1,
+        choices: [
+          { value: 1.25, label: "Tranquille" },
+          { value: 1, label: "Normal" },
+          { value: 0.8, label: "Rapide" },
+        ],
+      },
+      {
+        key: "coolDown",
+        label: "Retour au calme",
+        default: 300,
+        choices: [
+          { value: 300, label: "5 min" },
+          { value: 420, label: "7 min" },
+          { value: 600, label: "10 min" },
+        ],
+      },
+    ],
+    blocks: [
+      {
+        name: "Préparation (à la maison)",
+        steps: [
+          {
+            kind: "cycle",
+            name: "Cadence",
+            total: 180,
+            slot: 20,
+            cadence: true,
+            intro: "Cadence, 3 minutes, à 180 battements par minute. Alterne toutes les 20 secondes.",
+            items: [
+              "Mouvements de bras sans courir",
+              "Stepper",
+              "Marche",
+              "Course sur place",
+            ],
+          },
+          {
+            kind: "sequence",
+            name: "Étirements actifs",
+            intro: "Étirements actifs, 5 minutes.",
+            items: [
+              { name: "Étirements actifs : mollets", seconds: 100 },
+              { name: "Étirements actifs : quadriceps", seconds: 100 },
+              { name: "Étirements actifs : chaîne postérieure", seconds: 100 },
+            ],
+          },
+          {
+            kind: "cycle",
+            name: "Équilibre",
+            total: 180,
+            slot: 20,
+            intro: "Équilibre sur un pied, genou de la jambe libre levé, avec cadence des bras. 3 minutes.",
+            items: [
+              { name: "Équilibre pied gauche, genou levé, cadence des bras" },
+              { name: "Équilibre pied droit, genou levé, cadence des bras" },
+              { name: "Course sur place en cadence", cadence: true },
+            ],
+          },
+          {
+            kind: "sequence",
+            name: "Mobilité",
+            intro: "Mobilité, 3 minutes.",
+            items: [
+              { name: "Mobilité : hanches", seconds: 90 },
+              { name: "Mobilité : tronc et rotations articulaires", seconds: 90 },
+            ],
+          },
+          {
+            kind: "checkpoint",
+            name: "Sortie",
+            instruction:
+              "Préparation terminée. Sors, et appuie sur Démarrer dès que tu es dehors.",
+          },
+        ],
+      },
+      {
+        name: "Course libre",
+        steps: [
+          {
+            kind: "step",
+            name: "Course libre, très facile (I1)",
+            spoken: "Course libre, très facile, intensité 1",
+            secondsFrom: "freeRun",
+            announceNext: true,
+          },
+        ],
+      },
+      {
+        name: "Gammes simples",
+        rounds: 3,
+        roundLabel: "Passage",
+        intro:
+          "Gammes simples, 3 passages de 30 mètres, retour en trottant. Peu de vitesse de déplacement, beaucoup de cadence.",
+        round: [
+          {
+            label: "talons-fesses 30 m + retour trotté",
+            steps: [
+              { name: "Talons-fesses, 30 m", spoken: "Talons-fesses, 30 mètres", seconds: 15, estimated: true },
+              { name: "Retour en trottant", seconds: 20, estimated: true, doneCue: "Quand tu es revenu" },
+            ],
+          },
+          {
+            label: "montées de genoux 30 m + retour trotté",
+            steps: [
+              { name: "Montées de genoux, 30 m", spoken: "Montées de genoux, 30 mètres", seconds: 15, estimated: true },
+              { name: "Retour en trottant", seconds: 20, estimated: true, doneCue: "Quand tu es revenu" },
+            ],
+          },
+          {
+            label: "course arrière 30 m + retour trotté",
+            steps: [
+              { name: "Course arrière, 30 m", spoken: "Course arrière, 30 mètres", seconds: 15, estimated: true },
+              { name: "Retour en trottant", seconds: 20, estimated: true, doneCue: "Quand tu es revenu" },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Corps de séance — bloc 1",
+        rounds: { target: 720 },
+        roundLabel: "Boucle",
+        intro:
+          "Corps de séance, bloc 1 sur 2, environ 12 minutes. À chaque boucle : chaise, 30 mètres de gammes, 30 fentes marchées, 30 mètres de course en cadence, puis retour au départ en trottant.",
+        round: [
+          { name: "Chaise", seconds: 30 },
+          {
+            label: "30 m de gammes (montées de genoux / talons-fesses / schtroumpf)",
+            variants: [
+              [{ name: "Montées de genoux, 30 m", spoken: "Montées de genoux, 30 mètres", seconds: 15, estimated: true }],
+              [{ name: "Talons-fesses, 30 m", spoken: "Talons-fesses, 30 mètres", seconds: 15, estimated: true }],
+              [{ name: "Schtroumpf, 30 m", spoken: "Schtroumpf, 30 mètres", seconds: 15, estimated: true }],
+            ],
+          },
+          { name: "30 fentes marchées", spoken: "30 fentes marchées", seconds: 90, estimated: true, doneCue: "Quand tu as fini tes fentes" },
+          { name: "Course en cadence 30 m (I2)", spoken: "30 mètres de course en cadence, facile", seconds: 12, cadence: true, estimated: true },
+          { name: "Retour au départ en trottant (I2)", spoken: "Retour au point de départ en trottant", seconds: 60, estimated: true, doneCue: "Quand tu es revenu au départ" },
+        ],
+      },
+      {
+        name: "Récupération entre les blocs",
+        steps: [{ kind: "rest", name: "Récupération", seconds: 120 }],
+      },
+      {
+        name: "Corps de séance — bloc 2",
+        rounds: { target: 720 },
+        roundLabel: "Boucle",
+        intro: "Bloc 2 sur 2, dernier bloc. Mêmes boucles.",
+        round: [
+          { name: "Chaise", seconds: 30 },
+          {
+            label: "30 m de gammes (montées de genoux / talons-fesses / schtroumpf)",
+            variants: [
+              [{ name: "Montées de genoux, 30 m", spoken: "Montées de genoux, 30 mètres", seconds: 15, estimated: true }],
+              [{ name: "Talons-fesses, 30 m", spoken: "Talons-fesses, 30 mètres", seconds: 15, estimated: true }],
+              [{ name: "Schtroumpf, 30 m", spoken: "Schtroumpf, 30 mètres", seconds: 15, estimated: true }],
+            ],
+          },
+          { name: "30 fentes marchées", spoken: "30 fentes marchées", seconds: 90, estimated: true, doneCue: "Quand tu as fini tes fentes" },
+          { name: "Course en cadence 30 m (I2)", spoken: "30 mètres de course en cadence, facile", seconds: 12, cadence: true, estimated: true },
+          { name: "Retour au départ en trottant (I2)", spoken: "Retour au point de départ en trottant", seconds: 60, estimated: true, doneCue: "Quand tu es revenu au départ" },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile", secondsFrom: "coolDown" },
+        ],
+      },
+    ],
+  },
 ];
 
 function librarySessionById(id) {
@@ -390,8 +588,11 @@ function compileLibrarySession(def, optionOverrides = {}) {
     });
   };
 
-  const seconds = (item) =>
-    item.secondsFrom != null ? options[item.secondsFrom] : item.seconds;
+  const pace = options.pace || 1;
+  const seconds = (item) => {
+    const base = item.secondsFrom != null ? options[item.secondsFrom] : item.seconds;
+    return item.estimated ? Math.max(5, Math.round(base * pace)) : base;
+  };
 
   def.blocks.forEach((block, blockIndex) => {
     const blockId = blockIndex + 1;
@@ -417,7 +618,15 @@ function compileLibrarySession(def, optionOverrides = {}) {
         if (item.steps) return item.steps;
         return [item];
       };
-      for (let r = 1; r <= block.rounds; r += 1) {
+      const loopSeconds = block.round.reduce(
+        (sum, item) => sum + groupFor(item, 1).reduce((a, sub) => a + seconds(sub), 0),
+        0
+      );
+      const rounds =
+        typeof block.rounds === "object"
+          ? Math.max(1, Math.round(block.rounds.target / loopSeconds))
+          : block.rounds;
+      for (let r = 1; r <= rounds; r += 1) {
         block.round.forEach((item, i) => {
           const group = groupFor(item, r);
           group.forEach((sub, j) => {
@@ -448,6 +657,8 @@ function compileLibrarySession(def, optionOverrides = {}) {
               roundLabel: block.roundLabel,
               sayRound: i === 0 && j === 0,
               cadence: Boolean(sub.cadence),
+              estimated: Boolean(sub.estimated),
+              doneCue: sub.doneCue,
               announceNext: Boolean(sub.announceNext),
               intro: r === 1 && i === 0 && j === 0 ? introFor() : undefined,
               blockName: block.name,
@@ -459,19 +670,36 @@ function compileLibrarySession(def, optionOverrides = {}) {
         .map((item) => {
           // `label` : libellé du plan quand le nom tourne à chaque tour ou pour un groupe.
           if (item.label) return item.label;
+          // Durée estimée : « 30 fentes marchées (~1 min 30) », pas « 1 min 30 30 fentes ».
+          const fmt = (sub, name) =>
+            sub.estimated
+              ? `${name} (~${libraryFormatDuration(seconds(sub))})`
+              : `${libraryFormatDuration(seconds(sub))} ${name}`;
           if (item.variants || item.steps) {
-            return groupFor(item, 1)
-              .map((sub) => `${libraryFormatDuration(seconds(sub))} ${pick(sub.name, 1)}`)
-              .join(" → ");
+            return groupFor(item, 1).map((sub) => fmt(sub, pick(sub.name, 1))).join(" → ");
           }
-          const label = Array.isArray(item.name) ? item.name.join(" / ") : item.name;
-          return `${libraryFormatDuration(seconds(item))} ${label}`;
+          return fmt(item, Array.isArray(item.name) ? item.name.join(" / ") : item.name);
         })
         .join(" + ");
-      detail.push(`${block.rounds} ${(block.roundLabel || "tour").toLowerCase()}s de ${roundDesc}`);
+      detail.push(`${rounds} ${(block.roundLabel || "tour").toLowerCase()}s de ${roundDesc}`);
     }
 
     (block.steps || []).forEach((item) => {
+      if (item.kind === "rest") {
+        const dur = seconds(item);
+        blockSeconds += dur;
+        push(blockId, {
+          type: "rest",
+          name: item.name || "Récupération",
+          spoken: item.spoken,
+          seconds: dur,
+          intro: introFor(item.intro),
+          blockName: block.name,
+        });
+        detail.push(`${libraryFormatDuration(dur)} ${(item.name || "récupération").toLowerCase()}`);
+        return;
+      }
+
       if (item.kind === "checkpoint") {
         push(blockId, {
           type: "checkpoint",
@@ -541,6 +769,8 @@ function compileLibrarySession(def, optionOverrides = {}) {
         spoken: item.spoken || item.name,
         seconds: dur,
         cadence: Boolean(item.cadence),
+        estimated: Boolean(item.estimated),
+        doneCue: item.doneCue,
         announceNext: Boolean(item.announceNext),
         intro: introFor(item.intro),
         blockName: block.name,

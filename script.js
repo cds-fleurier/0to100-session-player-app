@@ -26,7 +26,7 @@ const els = {
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.17.0";
+const APP_VERSION = "v1.18.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -1165,6 +1165,8 @@ function renderPlayer() {
     ? "Transition"
     : isRest
     ? restPhase
+    : step.estimated
+    ? "À ton rythme"
     : "Exercice";
   els.phase.className = `phase ${
     inPrepareWindow
@@ -1175,9 +1177,11 @@ function renderPlayer() {
       ? step.active
         ? "active-rest"
         : "rest"
+      : step.estimated
+      ? "estimated"
       : ""
   }`.trim();
-  els.countdown.textContent = formatSeconds(remaining);
+  els.countdown.textContent = `${step.estimated ? "~" : ""}${formatSeconds(remaining)}`;
   if (isTransition) {
     els.current.textContent = `Transition → ${step.target}`;
   } else if (isRest && step.interRound) {
@@ -1213,7 +1217,11 @@ function announceStepStart(step) {
     // la fin du step précédent (voir tick). Sinon, l'action d'abord, l'intro
     // ensuite : une intro de 9 s avant « Chaise à 90 degrés » mangeait la moitié
     // d'un step de 20 s.
-    speak(`${prefix}${spokenName}. ${spokenDuration(step.seconds)}.`);
+    const prev = timeline[idx - 1];
+    const afterEstimated = prev && prev.estimated && prev.type === "work";
+    const cue = afterEstimated ? `${prev.doneCue || "Quand tu as fini"} : ` : "";
+    const durationPart = step.estimated ? "" : ` ${spokenDuration(step.seconds)}.`;
+    speak(`${cue}${prefix}${spokenName}.${durationPart}`);
     if (step.intro && !step.introSpoken) speak(step.intro, false);
   } else {
     const next = upcomingStep();
@@ -1305,7 +1313,9 @@ function tick() {
     beep();
   }
 
-  if (step.type === "work" && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
+  // Step estimé (distance, répétitions) : pas de décompte final, il mettrait la
+  // pression à qui n'a pas fini. Le step suivant s'annonce par « Quand tu as fini ».
+  if (step.type === "work" && !step.estimated && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
     speak(String(remaining));
   }

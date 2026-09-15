@@ -69,6 +69,7 @@ Séances disponibles :
 | `C1S1` | 15/09/26 | Run + renfo isométrique — préparation à la maison (cadence, étirements actifs, équilibre), course libre 10/12/15 min, 13 tours de 20 s renfo + 30 s course en cadence + 1 min 30 libre, retour au calme 5 min | ≈ 58-61 min |
 | `C1S3` | 23/09/26 | Run + renfo isométrique, modération d'impact — préparation 14 min (+ mobilité hanches/tronc), course libre 10/12/15 min, 12 tours de renfo en rotation (fentes D+G 40 s / planche 30 s / mollets G+D 40 s) + 2 min course I2 (cadence → libre → sans bruit → libre), retour au calme 5 min | ≈ 60-63 min |
 | `C1S4` | 27/09/26 | Course I2/I3 + renfo isométrique — 3 blocs de 14 min (4'15 I2 → 45 s chaise → 4'15 I2 → 45 s planche → 3'15 I3 → 45 s fentes statiques G/D). Pas d'échauffement. | 42 min |
+| `C1S5` | 30/09/26 | Gammes, fentes marchées et cadence — préparation 14 min, course libre 10/12/15 min, gammes simples (3 passages), 2 blocs de ~12 min de boucles (chaise, 30 m gammes, 30 fentes marchées, 30 m cadence, retour trotté) avec 2 min de récup, retour au calme 5/7/10 min. Option Rythme. | ≈ 60 min |
 | `C1S2` | 19/09/26 | Course + renfo isométrique — 9 tours de 4 min course + 30 s + 30 s renfo (demi-squat statique / planche ventrale), I1 sur les tours impairs, I2 sur les pairs. Pas d'échauffement. | 45 min |
 
 Notions propres à ces séances :
@@ -76,7 +77,9 @@ Notions propres à ces séances :
 - **Checkpoint** : step qui met le player en pause (ex. « Sors, et appuie sur Démarrer dès que tu es dehors »). La reprise se fait sur Démarrer.
 - **Options** : une séance peut exposer un choix (ex. durée de la course libre). Il s'affiche sous le sélecteur et le choix est mémorisé.
 - **Cadence** : les steps marqués `cadence: true` font tourner le métronome si la case « Métronome cadence » est cochée.
-- **Intro** : phrase dite une seule fois à l'entrée d'un bloc (rappel d'allure, consigne). « Tour N » n'est annoncé qu'au premier step de chaque tour.
+- **Intro** : phrase dite une seule fois à l'entrée d'un bloc (rappel d'allure, consigne), énoncée pendant la fin du step précédent quand il est long. « Tour N » (ou « Bloc N », « Boucle N » via `roundLabel`) n'est annoncé qu'au premier step de chaque tour.
+- **Steps « à ton rythme »** (`estimated: true`) : éléments en distance ou en répétitions dont la durée n'est qu'une estimation. Pas de décompte final, annonce sans durée, `~` devant le chrono, et le step suivant s'introduit par « Quand tu as fini ». L'option **Rythme** (Tranquille / Normal / Rapide) multiplie ces durées ; un bloc défini par `rounds: { target }` recalcule son nombre de boucles en conséquence.
+- **Transitions courtes** dans un groupe (`transition: true`, ex. « Changement de jambe » 5 s : consigne, 3-2-1, « Go ! »).
 
 Ajouter une séance = ajouter un objet dans `SESSION_LIBRARY` (le vocabulaire — `step`, `cycle`, `sequence`, `checkpoint`, `rounds`/`round` — est documenté en tête du fichier), puis bumper la version.
 
