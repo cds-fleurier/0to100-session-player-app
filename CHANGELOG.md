@@ -2,6 +2,20 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.14.0] - 2026-09-15
+
+### Ajouté
+- **Séances intégrées.** Nouveau sélecteur « Séance » au-dessus du collage Nolio : les séances décrites dans `sessions-library.js` sont disponibles pour tous, sans rien coller. Le choix est mémorisé. Première séance : **C1S1 — Run + renfo isométrique** (préparation à la maison : cadence 3 min par slots de 20 s, étirements actifs 3 × 1 min 40, équilibre 3 min ; course libre ; 13 tours de 20 s renfo en rotation chaise → planche → équilibre G → équilibre D + 30 s course en cadence + 1 min 30 libre ; retour au calme 5 min).
+  - Ces séances ne passent pas par le parser : leur structure (cycles imbriqués, tours définis par une durée totale, pause pour sortir) est décrite en déclaratif et compilée en timeline. Ajouter une séance = ajouter un objet dans `SESSION_LIBRARY`.
+  - **Options de séance** : C1S1 propose la durée de la course libre (10 / 12 / 15 min), choix mémorisé.
+  - **Checkpoint** : nouveau type de step qui met le player en pause avec une consigne (« Sors, et appuie sur Démarrer dès que tu es dehors ») ; la reprise se fait sur Démarrer.
+  - **Intro de bloc** dite une seule fois (rappel d'allure I1 → I2 à l'entrée du corps de séance) ; « Tour N » n'est annoncé qu'au premier step de chaque tour, pas à chaque sous-step.
+  - Un step de course long prévient à T-11 de ce qui suit (« Prépare-toi. Ensuite : planche ventrale »), pour savoir où s'arrêter.
+- **Métronome de cadence** (case à cocher, 180 BPM, désactivé par défaut) : clics WebAudio pendant les steps « en cadence » des séances intégrées. Planifié 1,5 s en avance sur l'horloge audio pour survivre au ralentissement des timers en arrière-plan ; s'arrête en pause / reset / step non cadencé.
+
+### Modifié
+- Les durées du plan s'affichent en « 58 min 20 » plutôt qu'en secondes au-delà d'une minute ; la durée totale de la séance figure dans l'en-tête du plan pour les séances en blocs.
+
 ## [1.13.0] - 2026-09-09
 
 ### Corrigé

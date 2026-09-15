@@ -18,7 +18,16 @@
 
       <section class="card input-card">
         <h1>0 to 100 Session Player</h1>
-        <p>Colle ta séance brute. L'app génère automatiquement le player.</p>
+        <p>Choisis une séance 0 to 100, ou colle ta séance brute depuis Nolio.</p>
+        <div class="session-picker-row">
+          <label class="voice-row" for="sessionPicker">
+            <span>Séance</span>
+            <select id="sessionPicker" class="voice-picker">
+              <option value="" selected>Coller depuis Nolio</option>
+            </select>
+          </label>
+          <div id="sessionOptions" class="session-options"></div>
+        </div>
         <textarea
           id="sessionInput"
           rows="14"
@@ -41,6 +50,10 @@
                 <option value="female" selected>Femme</option>
                 <option value="male">Homme</option>
               </select>
+            </label>
+            <label class="toggle">
+              <input type="checkbox" id="metronomeToggle" />
+              <span>Métronome cadence (180 BPM)</span>
             </label>
           </div>
         </div>
@@ -100,6 +113,7 @@
     </main>
 
     <script src="music-library.js"></script>
+    <script src="sessions-library.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

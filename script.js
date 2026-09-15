@@ -22,10 +22,16 @@ const els = {
   musicGenre: document.getElementById("musicGenre"),
   musicTracklist: document.getElementById("musicTracklist"),
   musicPlatform: document.getElementById("musicPlatform"),
+  sessionPicker: document.getElementById("sessionPicker"),
+  sessionOptions: document.getElementById("sessionOptions"),
+  metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.13.0";
+const APP_VERSION = "v1.14.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
+const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
+const LIBRARY_OPT_PREFIX = "sportSessionLibraryOpt_";
+const METRONOME_PREF_KEY = "sportSessionMetronome";
 const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
 
 const PLATFORM_LABELS = { spotify: "Spotify", apple: "Apple Music", youtube: "YouTube", deezer: "Deezer" };
@@ -573,6 +579,10 @@ function formatDurationForPlan(seconds) {
     const minutes = Math.round(seconds / 60);
     return `${minutes} min`;
   }
+  // Au-delà d'une minute, "58 min 20" se lit mieux que "3500s".
+  if (seconds > 60) {
+    return `${Math.floor(seconds / 60)} min ${String(seconds % 60).padStart(2, "0")}`;
+  }
   return `${seconds}s`;
 }
 
@@ -703,6 +713,70 @@ async function beep() {
   osc.stop(ctx.currentTime + 0.18);
 }
 
+// --- Métronome de cadence --------------------------------------------------
+// Les séances de la bibliothèque marquent certains steps `cadence: true`
+// (course en cadence 170-190). Si l'utilisateur l'a activé, un clic tourne à
+// METRONOME_BPM pendant ces steps. Les clics sont planifiés sur l'horloge de
+// l'AudioContext avec une bonne avance : setInterval est ralenti à 1 s quand
+// la page n'est plus au premier plan, une avance courte laisserait des trous.
+const METRONOME_BPM = 180;
+const METRONOME_LOOKAHEAD = 1.5;
+let metronomeTimer = null;
+let metronomeNextTime = 0;
+
+function metronomeEnabled() {
+  return Boolean(els.metronomeToggle && els.metronomeToggle.checked);
+}
+
+function metronomeClick(ctx, at) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.value = 1400;
+  gain.gain.setValueAtTime(0.05, at);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.03);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(at);
+  osc.stop(at + 0.035);
+}
+
+function scheduleMetronome() {
+  const ctx = sharedAudioCtx;
+  if (!ctx || ctx.state !== "running") return;
+  const interval = 60 / METRONOME_BPM;
+  // Retour de veille : on repart de maintenant plutôt que de rattraper les clics manqués.
+  if (metronomeNextTime < ctx.currentTime) metronomeNextTime = ctx.currentTime + 0.05;
+  while (metronomeNextTime < ctx.currentTime + METRONOME_LOOKAHEAD) {
+    metronomeClick(ctx, metronomeNextTime);
+    metronomeNextTime += interval;
+  }
+}
+
+function startMetronome() {
+  if (metronomeTimer || !metronomeEnabled()) return;
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  if (ctx.state !== "running") ctx.resume().catch(() => {});
+  metronomeNextTime = ctx.currentTime + 0.05;
+  scheduleMetronome();
+  metronomeTimer = setInterval(scheduleMetronome, 200);
+}
+
+function stopMetronome() {
+  if (!metronomeTimer) return;
+  clearInterval(metronomeTimer);
+  metronomeTimer = null;
+}
+
+// À appeler quand le step courant ou le réglage change : le métronome ne
+// tourne que si une séance est en cours sur un step en cadence.
+function syncMetronome() {
+  const step = currentStep();
+  if (timerId && step && step.cadence && metronomeEnabled()) startMetronome();
+  else stopMetronome();
+}
+
 // Une récup active (corde à sauter) impose un changement de matériel : poser
 // son matériel et prendre la corde, puis l'inverse. On réserve ce temps plutôt
 // que de le prendre sur la récup.
@@ -718,6 +792,8 @@ function exerciseDisplayName(ex, round) {
 }
 
 function buildTimeline(data) {
+  // Séance de la bibliothèque : la timeline est déjà compilée.
+  if (data.timelineSteps) return data.timelineSteps.map((s) => ({ ...s }));
   const steps = [];
   // Le matériel n'est pas déductible du nom de l'exercice : "BEAR TAPE MAIN"
   // demande un élastique sans le dire, "MONTER SUR POINTE DE PIED" n'en demande
@@ -857,7 +933,8 @@ function buildPlaylist(genre, sessionType, totalSeconds) {
 }
 
 function renderMusicLinks(data) {
-  if (!data || !data.exercises || !data.exercises.length) {
+  const hasContent = data && ((data.exercises && data.exercises.length) || data.timelineSteps);
+  if (!hasContent) {
     els.musicCard.style.display = "none";
     return;
   }
@@ -906,7 +983,8 @@ function renderPlan(data) {
   els.meta.innerHTML = `
     <strong>${data.title}</strong><br>
     ${data.advice ? `Conseils: ${data.advice}<br>` : ""}
-    ${data.blocks ? `${data.blocks.length} blocs` : `${data.exercises.length} exercices · ${data.rounds} tour${data.rounds > 1 ? "s" : ""}${data.interRoundRest ? ` · ${formatDurationForPlan(data.interRoundRest)} entre les tours` : ""}${transitionNote}`}
+    ${data.subtitle ? `${data.subtitle}<br>` : ""}
+    ${data.blocks ? `${data.blocks.length} blocs · ${formatDurationForPlan(calcSessionDuration(data))}` : `${data.exercises.length} exercices · ${data.rounds} tour${data.rounds > 1 ? "s" : ""}${data.interRoundRest ? ` · ${formatDurationForPlan(data.interRoundRest)} entre les tours` : ""}${transitionNote}`}
   `;
 
   els.list.innerHTML = "";
@@ -948,6 +1026,7 @@ function nextIsWork() {
 function stepDisplayName(step) {
   if (!step) return "Fin de séance";
   if (step.type === "transition") return `Transition → ${step.target}`;
+  if (step.type === "checkpoint") return `Pause — ${step.name.toLowerCase()}`;
   if (step.type === "rest") return `${step.name} (${formatDurationForPlan(step.seconds)})`;
   return step.name;
 }
@@ -982,6 +1061,8 @@ function spokenDuration(seconds) {
 // à leur première lettre.
 function spokenStepName(step) {
   if (!step) return "";
+  if (step.spoken) return step.spoken;
+  if (step.type === "checkpoint") return step.name;
   return step.type === "rest" ? step.name : spokenExerciseName(step.name);
 }
 
@@ -1022,6 +1103,16 @@ function skipToNextBlock() {
   announceStepStart(timeline[idx]);
 }
 
+// Checkpoint atteint : le player se met en pause, la reprise se fait sur Démarrer.
+function enterCheckpoint(step) {
+  remaining = 0;
+  stopMetronome();
+  renderPlayer();
+  speak(step.instruction || step.name);
+  beep();
+  pauseTimer();
+}
+
 function renderPlayer() {
   const step = currentStep();
   if (!step) {
@@ -1042,6 +1133,15 @@ function renderPlayer() {
     els.countdown.textContent = isLaunchPause ? "00" : formatSeconds(preStartRemaining);
     els.current.textContent = isLaunchPause ? "On y va" : "Démarrage imminent";
     els.next.textContent = `Premier exercice: ${step.name}`;
+    return;
+  }
+
+  if (step.type === "checkpoint") {
+    els.phase.textContent = "Pause";
+    els.phase.className = "phase checkpoint";
+    els.countdown.textContent = "▶";
+    els.current.textContent = step.instruction || step.name;
+    els.next.textContent = `Ensuite: ${stepDisplayName(upcomingStep())}`;
     return;
   }
 
@@ -1093,12 +1193,17 @@ function announceStepStart(step) {
   const sortieDeTransition = timeline[idx - 1] && timeline[idx - 1].type === "transition";
   const spokenName = spokenStepName(step);
   if (step.type === "work") {
+    // sayRound === false : sous-step d'un tour déjà annoncé (séances bibliothèque),
+    // on ne répète pas "Tour N" trois fois par tour.
     const prefix = sortieDeTransition
       ? "Go ! "
-      : step.round && step.round > 0
+      : step.round && step.round > 0 && step.sayRound !== false
       ? `Tour ${step.round}. `
       : "";
-    speak(`${prefix}${spokenName}. ${spokenDuration(step.seconds)}.`);
+    // L'intro (rappel d'allure, consigne de bloc) est dite une fois, puis
+    // l'annonce du step est mise à la suite sans l'interrompre.
+    if (step.intro) speak(step.intro);
+    speak(`${prefix}${spokenName}. ${spokenDuration(step.seconds)}.`, !step.intro);
   } else {
     const next = upcomingStep();
     // Annoncer "Ensuite transition" n'apprend rien : on nomme ce qui vient après elle.
@@ -1115,6 +1220,7 @@ function announceStepStart(step) {
     );
   }
   beep();
+  syncMetronome();
 }
 
 function tick() {
@@ -1160,7 +1266,15 @@ function tick() {
 
   if (restBeforeWork && remaining === 11 && !prepareAnnounced) {
     prepareAnnounced = true;
-    speak(`Prépare-toi. Prochain exercice: ${spokenExerciseName(upcomingStep().name)}.`);
+    speak(`Prépare-toi. Prochain exercice: ${spokenStepName(upcomingStep())}.`);
+    beep();
+  }
+
+  // Séances bibliothèque : un step de course long (annonceNext) prévient de ce
+  // qui suit — savoir où s'arrêter pour se mettre en planche, par exemple.
+  if (step.type === "work" && step.announceNext && remaining === 11 && !prepareAnnounced && upcomingStep()) {
+    prepareAnnounced = true;
+    speak(`Prépare-toi. Ensuite: ${spokenStepName(upcomingStep())}.`);
     beep();
   }
 
@@ -1205,6 +1319,10 @@ function tick() {
     prepareAnnounced = false;
     lastCountdownCall = null;
     endTransitionArmed = false;
+    if (nextStep.type === "checkpoint") {
+      enterCheckpoint(nextStep);
+      return;
+    }
     announceStepStart(nextStep);
     renderPlayer();
     return;
@@ -1233,9 +1351,29 @@ function startTimer() {
   els.start.disabled = true;
   els.pause.disabled = false;
   timerId = setInterval(tick, 1000);
+
+  // Reprise depuis un checkpoint : on passe au step suivant et on l'annonce.
+  const step = currentStep();
+  if (step && step.type === "checkpoint") {
+    idx += 1;
+    const nextStep = currentStep();
+    if (!nextStep) {
+      stopTimer();
+      renderPlayer();
+      return;
+    }
+    remaining = nextStep.seconds;
+    prepareAnnounced = false;
+    lastCountdownCall = null;
+    announceStepStart(nextStep);
+    renderPlayer();
+    return;
+  }
+  syncMetronome();
 }
 
 function stopTimer() {
+  stopMetronome();
   if (timerId) {
     clearInterval(timerId);
     timerId = null;
@@ -1285,9 +1423,76 @@ function resetTimer() {
   els.next.textContent = timeline[0] ? `Premier exercice: ${timeline[0].name}` : "";
 }
 
+// --- Bibliothèque de séances ------------------------------------------------
+function selectedLibrarySession() {
+  const id = els.sessionPicker ? els.sessionPicker.value : "";
+  return id ? librarySessionById(id) : null;
+}
+
+function libraryOptionOverrides(def) {
+  const overrides = {};
+  (def.options || []).forEach((opt) => {
+    const stored = localStorage.getItem(`${LIBRARY_OPT_PREFIX}${def.id}_${opt.key}`);
+    if (stored != null) overrides[opt.key] = stored;
+  });
+  return overrides;
+}
+
+function renderSessionOptions(def) {
+  if (!els.sessionOptions) return;
+  els.sessionOptions.innerHTML = "";
+  if (!def) return;
+  const overrides = libraryOptionOverrides(def);
+  const values = librarySessionOptionValues(def, overrides);
+  (def.options || []).forEach((opt) => {
+    const label = document.createElement("label");
+    label.className = "voice-row";
+    const span = document.createElement("span");
+    span.textContent = opt.label;
+    const select = document.createElement("select");
+    select.className = "voice-picker";
+    opt.choices.forEach((choice) => {
+      const o = document.createElement("option");
+      o.value = String(choice.value);
+      o.textContent = choice.label;
+      if (choice.value === values[opt.key]) o.selected = true;
+      select.appendChild(o);
+    });
+    select.addEventListener("change", () => {
+      localStorage.setItem(`${LIBRARY_OPT_PREFIX}${def.id}_${opt.key}`, select.value);
+      stopTimer();
+      paused = false;
+      parseAndLoad();
+    });
+    label.appendChild(span);
+    label.appendChild(select);
+    els.sessionOptions.appendChild(label);
+  });
+}
+
+function populateSessionPicker() {
+  if (!els.sessionPicker || typeof SESSION_LIBRARY === "undefined") return;
+  SESSION_LIBRARY.forEach((def) => {
+    const o = document.createElement("option");
+    o.value = def.id;
+    o.textContent = `${def.title} (${def.subtitle.split("·")[0].trim()})`;
+    els.sessionPicker.appendChild(o);
+  });
+  const stored = localStorage.getItem(LIBRARY_PREF_KEY);
+  if (stored && librarySessionById(stored)) els.sessionPicker.value = stored;
+}
+
+// Le textarea et ses boutons ne servent qu'au mode Nolio.
+function applySessionMode() {
+  const def = selectedLibrarySession();
+  document.body.classList.toggle("library-mode", Boolean(def));
+  renderSessionOptions(def);
+}
+
 function parseAndLoad() {
-  const rawText = (els.input.value || "").trim();
-  if (!rawText) {
+  const libraryDef = selectedLibrarySession();
+  const rawText = libraryDef ? "" : (els.input.value || "").trim();
+  if (!rawText && !libraryDef) {
     sessionData = null;
     timeline = [];
     idx = 0;
@@ -1308,7 +1513,9 @@ function parseAndLoad() {
   }
 
   try {
-    sessionData = parseSession(rawText);
+    sessionData = libraryDef
+      ? compileLibrarySession(libraryDef, libraryOptionOverrides(libraryDef))
+      : parseSession(rawText);
     renderPlan(sessionData);
     renderMusicLinks(sessionData);
     timeline = buildTimeline(sessionData);
@@ -1329,7 +1536,7 @@ function parseAndLoad() {
     els.current.textContent = "Démarrage imminent";
     els.next.textContent = `Premier exercice: ${timeline[0].name}`;
 
-    setStatus("Séance chargée. Appuie sur Demarrer.");
+    setStatus(libraryDef ? `Séance ${libraryDef.id} chargée. Appuie sur Demarrer.` : "Séance chargée. Appuie sur Demarrer.");
   } catch (err) {
     sessionData = null;
     timeline = [];
@@ -1371,6 +1578,21 @@ els.musicPlatform.addEventListener("change", () => {
   localStorage.setItem(PLATFORM_PREF_KEY, els.musicPlatform.value);
   renderMusicLinks(sessionData);
 });
+if (els.sessionPicker) {
+  els.sessionPicker.addEventListener("change", () => {
+    localStorage.setItem(LIBRARY_PREF_KEY, els.sessionPicker.value);
+    stopTimer();
+    paused = false;
+    applySessionMode();
+    parseAndLoad();
+  });
+}
+if (els.metronomeToggle) {
+  els.metronomeToggle.addEventListener("change", () => {
+    localStorage.setItem(METRONOME_PREF_KEY, els.metronomeToggle.checked ? "1" : "0");
+    syncMetronome();
+  });
+}
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
@@ -1392,5 +1614,8 @@ if (window.speechSynthesis) {
 }
 refreshWakeLockButton();
 if (els.appVersion) els.appVersion.textContent = APP_VERSION;
+if (els.metronomeToggle) els.metronomeToggle.checked = localStorage.getItem(METRONOME_PREF_KEY) === "1";
+populateSessionPicker();
+applySessionMode();
 
 parseAndLoad();

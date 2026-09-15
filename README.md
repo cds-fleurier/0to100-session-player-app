@@ -1,6 +1,6 @@
 # 0 to 100 Session Player
 
-Web app légère pour transformer une séance de renforcement musculaire en texte brut en player automatique (effort/récup/tours).
+Web app légère pour jouer une séance 0 to 100 en player automatique (effort/récup/tours), soit depuis une séance intégrée à l'app, soit en collant le texte brut d'une séance de renforcement.
 
 ## Objectif
 
@@ -8,6 +8,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 
 ## Fonctionnalités
 
+- **Séances intégrées** (sélecteur « Séance ») : des séances 0 to 100 décrites dans `sessions-library.js`, disponibles pour tous sans rien coller. Voir § Séances intégrées.
 - Collage d'une séance en texte libre
 - Bouton `Coller ma séance depuis Nolio` (lecture du presse-papiers)
 - Parsing automatique des exercices, durées, récupérations et nombre de tours
@@ -29,6 +30,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
   - annonce "prépare-toi" + nom du prochain exercice (à T-11)
   - countdown vocal sur les 5 dernières secondes (`5,4,3,2,1`)
 - Alertes sonores + vocales
+- **Métronome de cadence** (optionnel, 180 BPM) sur les steps « en cadence » des séances intégrées
 - Option de voix `Femme` / `Homme` (préférence sauvegardée)
 - Mode `Focus` (affichage grand écran centré sur le player)
 - Option `Écran actif` (Wake Lock) activée par défaut pour éviter la mise en veille pendant la séance
@@ -55,6 +57,25 @@ Puis ouvrir: `http://localhost:8000`
 App publique:
 
 - https://cds-fleurier.github.io/0to100-session-player-app/
+
+## Séances intégrées
+
+Certaines séances (course + renfo en enchaînements imbriqués) ne se laissent pas deviner depuis du texte : un cycle de 20 s à l'intérieur d'un bloc de 3 min, des tours définis par une durée totale, une pause pour sortir de la maison… Elles sont décrites en déclaratif dans `sessions-library.js` et compilées en timeline par `compileLibrarySession()`. Le player (voix, bips, FWD, pause) est le même que pour les séances collées.
+
+Séances disponibles :
+
+| Id | Séance | Durée |
+|----|--------|-------|
+| `C1S1` | Run + renfo isométrique — préparation à la maison (cadence, étirements actifs, équilibre), course libre 10/12/15 min, 13 tours de 20 s renfo + 30 s course en cadence + 1 min 30 libre, retour au calme 5 min | ≈ 58-61 min |
+
+Notions propres à ces séances :
+
+- **Checkpoint** : step qui met le player en pause (ex. « Sors, et appuie sur Démarrer dès que tu es dehors »). La reprise se fait sur Démarrer.
+- **Options** : une séance peut exposer un choix (ex. durée de la course libre). Il s'affiche sous le sélecteur et le choix est mémorisé.
+- **Cadence** : les steps marqués `cadence: true` font tourner le métronome si la case « Métronome cadence » est cochée.
+- **Intro** : phrase dite une seule fois à l'entrée d'un bloc (rappel d'allure, consigne). « Tour N » n'est annoncé qu'au premier step de chaque tour.
+
+Ajouter une séance = ajouter un objet dans `SESSION_LIBRARY` (le vocabulaire — `step`, `cycle`, `sequence`, `checkpoint`, `rounds`/`round` — est documenté en tête du fichier), puis bumper la version.
 
 ## Format de séance attendu (exemple)
 
@@ -133,6 +154,7 @@ fixes n'auraient plus besoin du réseau).
 
 ## Roadmap
 
+- Ajouter les prochaines séances run + renfo (C1S2, …) dans `sessions-library.js`
 - Parser plus tolérant sur des formats coach variés
 - Sauvegarde locale de séances favorites
 - Historique simple des séances réalisées
