@@ -355,16 +355,6 @@ body.library-mode .nolio-input {
   text-transform: uppercase;
 }
 
-.music-genre-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--muted);
-}
-
 .music-links {
   display: flex;
   flex-wrap: wrap;

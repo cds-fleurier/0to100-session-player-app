@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.15.2] - 2026-09-15
+
+### Modifié
+- Bloc **Musique** aligné sur la carte principale : les sélecteurs Genre et « Écouter sur » passent en champs pleine largeur empilés (le second débordait de la carte sur desktop).
+
 ## [1.15.1] - 2026-09-15
 
 ### Corrigé

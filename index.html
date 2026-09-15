@@ -70,9 +70,9 @@
 
       <section class="card music-card" id="musicCard" style="display:none">
         <h2>Musique</h2>
-        <div class="music-genre-row">
-          <label for="musicGenre">Genre</label>
-          <select id="musicGenre" class="voice-picker">
+        <div class="field">
+          <label class="field-label" for="musicGenre">Genre</label>
+          <select id="musicGenre" class="field-select">
             <option value="none" selected>Sans musique</option>
             <option value="motown">Motown / Soul</option>
             <option value="hiphop">Hip-hop</option>
@@ -81,8 +81,10 @@
             <option value="lofi">Lo-fi / Ambiant</option>
             <option value="myriam">🔥 Spécial Myriam</option>
           </select>
-          <label for="musicPlatform">Sur</label>
-          <select id="musicPlatform" class="voice-picker">
+        </div>
+        <div class="field">
+          <label class="field-label" for="musicPlatform">Écouter sur</label>
+          <select id="musicPlatform" class="field-select">
             <option value="spotify">Spotify</option>
             <option value="apple">Apple Music</option>
             <option value="youtube">YouTube</option>
