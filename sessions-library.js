@@ -40,6 +40,8 @@
 // `rounds` peut être `{ target: <s> }` : nombre de tours = arrondi(target / durée
 // d'un tour), calculé après application du rythme — le bloc garde ~la durée du coach ;
 // ou `{ option: <clé> }` : nombre de tours choisi par l'utilisateur (option de la séance).
+// `restBetweenRounds: <s>` sur un bloc à tours : récup passive entre les tours.
+// `sayDuration: false` sur un step : la voix n'énonce pas la durée (intervalles courts répétés).
 // `kind: "rest"` : récup passive (type "rest" du player, « Prépare-toi » avant le step suivant).
 // `intro` (sur un bloc, ou sur le premier step d'un cycle/sequence) : phrase
 // dite une seule fois à l'entrée, avant l'annonce du step.
@@ -598,6 +600,203 @@ const SESSION_LIBRARY = [
       },
     ],
   },
+  {
+    id: "C1S7",
+    date: "06/10/26",
+    title: "C1S7 — Renfo + EPIC 15-15",
+    subtitle: "≈ 70 min · préparation à la maison, gammes, 2 à 4 blocs renfo + course EPIC 15-15",
+    advice:
+      "Renfo en répétitions, à ton rythme (squats, mountain climbers, mollets, 2 séries). EPIC 15-15 : 15 s lent I1-I2, 15 s plus rapide, de plus en plus vite sur les 4 min pour finir un peu au-dessus de I3.",
+    options: [
+      {
+        key: "freeRun",
+        label: "Course libre (échauffement)",
+        default: 720,
+        choices: [
+          { value: 600, label: "10 min" },
+          { value: 720, label: "12 min" },
+          { value: 900, label: "15 min" },
+        ],
+      },
+      {
+        key: "pace",
+        label: "Rythme sur gammes et renfo",
+        default: 1,
+        choices: [
+          { value: 1.25, label: "Tranquille" },
+          { value: 1, label: "Normal" },
+          { value: 0.8, label: "Rapide" },
+        ],
+      },
+      {
+        key: "blocs",
+        label: "Nombre de blocs",
+        default: 4,
+        choices: [
+          { value: 2, label: "2 blocs (15 min)" },
+          { value: 3, label: "3 blocs (23 min)" },
+          { value: 4, label: "4 blocs (31 min)" },
+        ],
+      },
+    ],
+    blocks: [
+      {
+        name: "Préparation (à la maison)",
+        steps: [
+          {
+            kind: "cycle",
+            name: "Cadence",
+            total: 180,
+            slot: 20,
+            cadence: true,
+            intro: "Cadence, 3 minutes, à 180 battements par minute. Alterne toutes les 20 secondes.",
+            items: [
+              "Mouvements de bras sans courir",
+              "Stepper",
+              "Marche",
+              "Course sur place",
+            ],
+          },
+          {
+            kind: "sequence",
+            name: "Étirements actifs",
+            intro: "Étirements actifs, 5 minutes.",
+            items: [
+              { name: "Étirements actifs : mollets", seconds: 100 },
+              { name: "Étirements actifs : quadriceps", seconds: 100 },
+              { name: "Étirements actifs : chaîne postérieure", seconds: 100 },
+            ],
+          },
+          {
+            kind: "cycle",
+            name: "Équilibre",
+            total: 180,
+            slot: 30,
+            intro: "Équilibre sur un pied, genou de la jambe libre levé. 3 minutes, 30 secondes par côté.",
+            items: [
+              { name: "Équilibre pied gauche, genou levé" },
+              { name: "Équilibre pied droit, genou levé" },
+            ],
+          },
+          {
+            kind: "sequence",
+            name: "Mobilité",
+            intro: "Mobilité, 3 minutes.",
+            items: [
+              { name: "Mobilité : hanches", seconds: 60 },
+              { name: "Mobilité : tronc", seconds: 60 },
+              { name: "Étirements balistiques progressifs", seconds: 60 },
+            ],
+          },
+          {
+            kind: "sequence",
+            name: "Mobilité pied-cheville",
+            intro: "Mobilité du pied et de la cheville, 3 minutes.",
+            items: [
+              { name: "Mobilité pied-cheville : pied gauche", spoken: "Pied et cheville gauches", seconds: 90 },
+              { name: "Mobilité pied-cheville : pied droit", spoken: "Pied et cheville droits", seconds: 90 },
+            ],
+          },
+          {
+            kind: "checkpoint",
+            name: "Sortie",
+            instruction:
+              "Préparation terminée. Sors, et appuie sur Démarrer dès que tu es dehors.",
+          },
+        ],
+      },
+      {
+        name: "Course libre",
+        steps: [
+          {
+            kind: "step",
+            name: "Course libre, très facile (I1)",
+            spoken: "Course libre, très facile, intensité 1",
+            secondsFrom: "freeRun",
+            announceNext: true,
+          },
+        ],
+      },
+      {
+        name: "Gammes simples",
+        rounds: 3,
+        roundLabel: "Passage",
+        intro:
+          "Gammes simples, 3 passages de 30 mètres, retour en trottant. Peu de vitesse de déplacement, beaucoup de cadence.",
+        round: [
+          {
+            label: "talons-fesses 30 m + retour trotté",
+            steps: [
+              { name: "Talons-fesses, 30 m", spoken: "Talons-fesses, 30 mètres", seconds: 15, estimated: true },
+              { name: "Retour en trottant", seconds: 20, estimated: true, doneCue: "Quand tu es revenu" },
+            ],
+          },
+          {
+            label: "montées de genoux 30 m + retour trotté",
+            steps: [
+              { name: "Montées de genoux, 30 m", spoken: "Montées de genoux, 30 mètres", seconds: 15, estimated: true },
+              { name: "Retour en trottant", seconds: 20, estimated: true, doneCue: "Quand tu es revenu" },
+            ],
+          },
+          {
+            label: "course arrière 30 m + retour trotté",
+            steps: [
+              { name: "Course arrière, 30 m", spoken: "Course arrière, 30 mètres", seconds: 15, estimated: true },
+              { name: "Retour en trottant", seconds: 20, estimated: true, doneCue: "Quand tu es revenu" },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Corps de séance",
+        rounds: { option: "blocs" },
+        roundLabel: "Bloc",
+        restBetweenRounds: 60,
+        intro:
+          "Corps de séance. Chaque bloc : renfo en 2 séries, squats, mountain climbers, mollets, puis 4 minutes de course EPIC 15-15, 15 secondes lent, 15 secondes plus rapide, de plus en plus vite.",
+        round: [
+          {
+            label: "renfo ~3 min, 2 × (15 squats 1-0-1-0 · 30 mountain climbers · 10 paires de mollets)",
+            steps: [
+              { name: "15 squats (1-0-1-0)", spoken: "Série 1. 15 squats, tempo un, zéro, un, zéro", seconds: 30, estimated: true },
+              { name: "30 mountain climbers", spoken: "30 mountain climbers", seconds: 30, estimated: true },
+              { name: "10 paires de mollets", spoken: "10 paires de mollets", seconds: 30, estimated: true },
+              { name: "15 squats (1-0-1-0) — série 2", spoken: "Série 2. 15 squats", seconds: 30, estimated: true },
+              { name: "30 mountain climbers — série 2", spoken: "30 mountain climbers", seconds: 30, estimated: true },
+              { name: "10 paires de mollets — série 2", spoken: "10 paires de mollets", seconds: 30, estimated: true, doneCue: "Quand tu as fini" },
+            ],
+          },
+          {
+            label: "4 min course EPIC 15-15 (8 × 15 s lent / 15 s plus rapide, progressif)",
+            steps: [
+              { name: "EPIC 1/8 — lent (I1-I2)", spoken: "Course EPIC, 4 minutes. Lent", seconds: 15, sayDuration: false },
+              { name: "EPIC 1/8 — plus rapide", spoken: "Plus rapide", seconds: 15, sayDuration: false },
+              { name: "EPIC 2/8 — lent", spoken: "Lent", seconds: 15, sayDuration: false },
+              { name: "EPIC 2/8 — plus rapide", spoken: "Plus rapide", seconds: 15, sayDuration: false },
+              { name: "EPIC 3/8 — lent", spoken: "Lent", seconds: 15, sayDuration: false },
+              { name: "EPIC 3/8 — plus rapide", spoken: "Plus rapide", seconds: 15, sayDuration: false },
+              { name: "EPIC 4/8 — lent", spoken: "Lent", seconds: 15, sayDuration: false },
+              { name: "EPIC 4/8 — plus rapide", spoken: "Plus rapide, à mi-série", seconds: 15, sayDuration: false },
+              { name: "EPIC 5/8 — lent", spoken: "Lent", seconds: 15, sayDuration: false },
+              { name: "EPIC 5/8 — plus rapide", spoken: "Plus rapide", seconds: 15, sayDuration: false },
+              { name: "EPIC 6/8 — lent", spoken: "Lent", seconds: 15, sayDuration: false },
+              { name: "EPIC 6/8 — plus rapide", spoken: "Plus rapide", seconds: 15, sayDuration: false },
+              { name: "EPIC 7/8 — lent", spoken: "Lent", seconds: 15, sayDuration: false },
+              { name: "EPIC 7/8 — plus rapide", spoken: "Plus rapide", seconds: 15, sayDuration: false },
+              { name: "EPIC 8/8 — lent", spoken: "Lent, dernier", seconds: 15, sayDuration: false },
+              { name: "EPIC 8/8 — plus rapide (> I3)", spoken: "Plus rapide, au-dessus de I3", seconds: 15, sayDuration: false },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile", seconds: 300 },
+        ],
+      },
+    ],
+  },
 ];
 
 function librarySessionById(id) {
@@ -715,6 +914,7 @@ function compileLibrarySession(def, optionOverrides = {}) {
               sayRound: i === 0 && j === 0,
               cadence: Boolean(sub.cadence),
               estimated: Boolean(sub.estimated),
+              sayDuration: sub.sayDuration,
               doneCue: sub.doneCue,
               announceNext: Boolean(sub.announceNext),
               intro: r === 1 && i === 0 && j === 0 ? introFor() : undefined,
@@ -722,6 +922,18 @@ function compileLibrarySession(def, optionOverrides = {}) {
             });
           });
         });
+        // Récup entre les tours (pas après le dernier).
+        if (block.restBetweenRounds && r < rounds) {
+          blockSeconds += block.restBetweenRounds;
+          push(blockId, {
+            type: "rest",
+            name: "Récupération",
+            seconds: block.restBetweenRounds,
+            round: r,
+            roundLabel: block.roundLabel,
+            blockName: block.name,
+          });
+        }
       }
       const roundDesc = block.round
         .map((item) => {
@@ -738,7 +950,10 @@ function compileLibrarySession(def, optionOverrides = {}) {
           return fmt(item, Array.isArray(item.name) ? item.name.join(" / ") : item.name);
         })
         .join(" + ");
-      detail.push(`${rounds} ${(block.roundLabel || "tour").toLowerCase()}s de ${roundDesc}`);
+      const restDesc = block.restBetweenRounds
+        ? `, ${libraryFormatDuration(block.restBetweenRounds)} de récup entre`
+        : "";
+      detail.push(`${rounds} ${(block.roundLabel || "tour").toLowerCase()}s de ${roundDesc}${restDesc}`);
     }
 
     (block.steps || []).forEach((item) => {

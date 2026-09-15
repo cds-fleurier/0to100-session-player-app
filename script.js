@@ -26,7 +26,7 @@ const els = {
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.19.0";
+const APP_VERSION = "v1.20.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -1220,7 +1220,7 @@ function announceStepStart(step) {
     const prev = timeline[idx - 1];
     const afterEstimated = prev && prev.estimated && prev.type === "work";
     const cue = afterEstimated ? `${prev.doneCue || "Quand tu as fini"} : ` : "";
-    const durationPart = step.estimated ? "" : ` ${spokenDuration(step.seconds)}.`;
+    const durationPart = step.estimated || step.sayDuration === false ? "" : ` ${spokenDuration(step.seconds)}.`;
     speak(`${cue}${prefix}${spokenName}.${durationPart}`);
     if (step.intro && !step.introSpoken) speak(step.intro, false);
   } else {

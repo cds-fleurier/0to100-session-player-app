@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.20.0] - 2026-09-15
+
+### Ajouté
+- **Séance intégrée C1S7 du 06/10/26 — Renfo + EPIC 15-15 (≈ 70 min).** Préparation à la maison 17 min (cadence, étirements actifs, équilibre 30 s par côté, mobilité hanches / tronc / balistiques, **mobilité pied-cheville**), course libre 10/12/15 min, gammes simples, puis **2 / 3 / 4 blocs** (option, défaut 4 = 31 min) de renfo à ton rythme en 2 séries (15 squats 1-0-1-0, 30 mountain climbers, 10 paires de mollets) + 4 min de course EPIC 15-15 (8 × 15 s lent / 15 s plus rapide, progressif jusqu'au-dessus de I3), 1 min de récup entre les blocs. Retour au calme 5 min.
+- Moteur : `restBetweenRounds` (récup entre les tours d'un bloc) et `sayDuration: false` (la voix n'énonce pas « 15 secondes » à chaque intervalle court).
+
 ## [1.19.0] - 2026-09-15
 
 ### Ajouté
