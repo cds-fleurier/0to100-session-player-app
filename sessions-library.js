@@ -38,7 +38,8 @@
 // et introduit le suivant par « Quand tu as fini » (`doneCue` pour une formule
 // dédiée). Si la séance a une option `pace`, sa valeur multiplie ces durées.
 // `rounds` peut être `{ target: <s> }` : nombre de tours = arrondi(target / durée
-// d'un tour), calculé après application du rythme — le bloc garde ~la durée du coach.
+// d'un tour), calculé après application du rythme — le bloc garde ~la durée du coach ;
+// ou `{ option: <clé> }` : nombre de tours choisi par l'utilisateur (option de la séance).
 // `kind: "rest"` : récup passive (type "rest" du player, « Prépare-toi » avant le step suivant).
 // `intro` (sur un bloc, ou sur le premier step d'un cycle/sequence) : phrase
 // dite une seule fois à l'entrée, avant l'annonce du step.
@@ -544,6 +545,59 @@ const SESSION_LIBRARY = [
       },
     ],
   },
+  {
+    // Séance complète telle que fournie : pas d'échauffement, on part sur 5' de course.
+    id: "C1S6",
+    date: "03/10/26",
+    title: "C1S6 — Course I2/I3, fentes arrière et équilibre",
+    subtitle: "45 min · 5 min I1 puis 4 à 6 tours de 8 min (3 min I2, fentes, 3 min I3, équilibre)",
+    advice:
+      "5 min de course I1, puis 4 à 6 tours : 3 min I2 → 30 s fente arrière gauche + 30 s droite (tempo 1-0-1-0) → 3 min I3 → 30 s équilibre pied gauche + 30 s pied droit, genou de la jambe libre levé. 5 tours = 45 min.",
+    options: [
+      {
+        key: "rounds",
+        label: "Nombre de tours",
+        default: 5,
+        choices: [
+          { value: 4, label: "4 tours (37 min)" },
+          { value: 5, label: "5 tours (45 min)" },
+          { value: 6, label: "6 tours (53 min)" },
+        ],
+      },
+    ],
+    blocks: [
+      {
+        name: "Mise en route",
+        steps: [
+          { kind: "step", name: "Course, intensité I1", spoken: "Course, intensité 1", seconds: 300, announceNext: true },
+        ],
+      },
+      {
+        name: "Corps de séance",
+        rounds: { option: "rounds" },
+        intro:
+          "Corps de séance, tours de 8 minutes. 3 minutes en intensité 2, fentes arrière, 3 minutes en intensité 3, équilibre sur un pied.",
+        round: [
+          { name: "Course, intensité I2", spoken: "Course, intensité 2", seconds: 180, announceNext: true },
+          {
+            label: "30 s fente arrière G + 30 s D (tempo 1-0-1-0)",
+            steps: [
+              { name: "Fente arrière gauche (1-0-1-0)", spoken: "Fente arrière gauche, tempo un, zéro, un, zéro", seconds: 30 },
+              { name: "Fente arrière droite (1-0-1-0)", spoken: "Fente arrière droite", seconds: 30 },
+            ],
+          },
+          { name: "Course, intensité I3", spoken: "Course, intensité 3", seconds: 180, announceNext: true },
+          {
+            label: "30 s équilibre pied G + 30 s pied D, genou levé",
+            steps: [
+              { name: "Équilibre pied gauche, genou levé", spoken: "Équilibre pied gauche, genou de la jambe libre levé", seconds: 30 },
+              { name: "Équilibre pied droit, genou levé", spoken: "Équilibre pied droit, genou levé", seconds: 30 },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 function librarySessionById(id) {
@@ -622,9 +676,12 @@ function compileLibrarySession(def, optionOverrides = {}) {
         (sum, item) => sum + groupFor(item, 1).reduce((a, sub) => a + seconds(sub), 0),
         0
       );
+      // rounds : nombre fixe, `{ target }` (durée visée) ou `{ option }` (choix utilisateur).
       const rounds =
         typeof block.rounds === "object"
-          ? Math.max(1, Math.round(block.rounds.target / loopSeconds))
+          ? block.rounds.option
+            ? options[block.rounds.option]
+            : Math.max(1, Math.round(block.rounds.target / loopSeconds))
           : block.rounds;
       for (let r = 1; r <= rounds; r += 1) {
         block.round.forEach((item, i) => {

@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.19.0] - 2026-09-15
+
+### Ajouté
+- **Séance intégrée C1S6 du 03/10/26 — Course I2/I3, fentes arrière et équilibre.** Sans échauffement : 5 min I1, puis **4 / 5 / 6 tours** (option, défaut 5 = 45 min) de 3 min I2 → 30 s fente arrière gauche + 30 s droite (tempo 1-0-1-0) → 3 min I3 → 30 s équilibre pied gauche + 30 s pied droit, genou levé.
+- Moteur : `rounds: { option }` — nombre de tours choisi par l'utilisateur.
+
 ## [1.18.0] - 2026-09-15
 
 ### Ajouté
