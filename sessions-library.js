@@ -25,6 +25,9 @@
 //
 // Dans un `round`, `name` peut être un tableau : l'item tourne à chaque tour
 // (tour 1 → [0], tour 2 → [1], …, modulo). `label` donne alors le libellé du plan.
+// Un item de `round` peut aussi être un groupe : `steps: [...]` (fixe) ou
+// `variants: [[...], [...]]` (le groupe change à chaque tour, modulo) — pour un
+// renfo dont la durée dépend du tour. `label` obligatoire pour un libellé propre.
 //
 // `cadence: true` : le métronome (si activé) tourne pendant ce step.
 // `intro` (sur un bloc, ou sur le premier step d'un cycle/sequence) : phrase
@@ -145,6 +148,133 @@ const SESSION_LIBRARY = [
     ],
   },
   {
+    id: "C1S3",
+    date: "23/09/26",
+    title: "C1S3 — Run + renfo isométrique, modération d'impact",
+    subtitle: "≈ 60 min · préparation à la maison, corps de séance en course I2",
+    advice:
+      "Course en I2 sur tout le corps de séance. Chaque course de 2 min : 30 s en cadence, 30 s libre, 30 s le moins de bruit possible, 30 s libre.",
+    options: [
+      {
+        key: "freeRun",
+        label: "Course libre (échauffement)",
+        default: 720,
+        choices: [
+          { value: 600, label: "10 min" },
+          { value: 720, label: "12 min" },
+          { value: 900, label: "15 min" },
+        ],
+      },
+    ],
+    blocks: [
+      {
+        name: "Préparation (à la maison)",
+        steps: [
+          {
+            kind: "cycle",
+            name: "Cadence",
+            total: 180,
+            slot: 20,
+            cadence: true,
+            intro: "Cadence, 3 minutes, à 180 battements par minute. Alterne toutes les 20 secondes.",
+            items: [
+              "Mouvements de bras sans courir",
+              "Stepper",
+              "Marche",
+              "Course sur place",
+            ],
+          },
+          {
+            kind: "sequence",
+            name: "Étirements actifs",
+            intro: "Étirements actifs, 5 minutes.",
+            items: [
+              { name: "Étirements actifs : mollets", seconds: 100 },
+              { name: "Étirements actifs : quadriceps", seconds: 100 },
+              { name: "Étirements actifs : chaîne postérieure", seconds: 100 },
+            ],
+          },
+          {
+            kind: "cycle",
+            name: "Équilibre",
+            total: 180,
+            slot: 20,
+            intro: "Équilibre sur un pied avec cadence des bras, 3 minutes.",
+            items: [
+              { name: "Équilibre pied gauche, cadence des bras" },
+              { name: "Équilibre pied droit, cadence des bras" },
+              { name: "Course sur place en cadence", cadence: true },
+            ],
+          },
+          {
+            kind: "sequence",
+            name: "Mobilité",
+            intro: "Mobilité, 3 minutes.",
+            items: [
+              { name: "Mobilité : hanches", seconds: 90 },
+              { name: "Mobilité : tronc", seconds: 90 },
+            ],
+          },
+          {
+            kind: "checkpoint",
+            name: "Sortie",
+            instruction:
+              "Préparation terminée. Sors, et appuie sur Démarrer dès que tu es dehors.",
+          },
+        ],
+      },
+      {
+        name: "Course libre",
+        steps: [
+          {
+            kind: "step",
+            name: "Course libre, très facile (I1)",
+            spoken: "Course libre, très facile, intensité 1",
+            secondsFrom: "freeRun",
+            announceNext: true,
+          },
+        ],
+      },
+      {
+        name: "Corps de séance",
+        rounds: 12,
+        intro:
+          "Corps de séance, 12 tours, course en intensité 2. Un renfo, puis 2 minutes de course : 30 secondes en cadence, 30 libre, 30 le moins de bruit possible, 30 libre.",
+        round: [
+          {
+            label: "renfo en rotation (fentes statiques 20 s D + 20 s G → planche 30 s → mollets 20 s G + 20 s D)",
+            variants: [
+              [
+                { name: "Fentes statiques, jambe droite", seconds: 20 },
+                { name: "Fentes statiques, jambe gauche", seconds: 20 },
+              ],
+              [{ name: "Planche ventrale", seconds: 30 }],
+              [
+                { name: "Mollet statique gauche", spoken: "Mollet statique gauche, sur la pointe du pied", seconds: 20 },
+                { name: "Mollet statique droit", spoken: "Mollet statique droit, sur la pointe du pied", seconds: 20 },
+              ],
+            ],
+          },
+          {
+            label: "course 2 min I2 (30 s cadence → 30 s libre → 30 s sans bruit → 30 s libre)",
+            steps: [
+              { name: "Course en cadence (170-190)", spoken: "Course en cadence", seconds: 30, cadence: true },
+              { name: "Course libre (I2)", spoken: "Course libre", seconds: 30 },
+              { name: "Course silencieuse (moins de bruit possible)", spoken: "Course silencieuse, le moins de bruit possible", seconds: 30 },
+              { name: "Course libre (I2)", spoken: "Course libre", seconds: 30, announceNext: true },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
     // Séance complète telle que fournie : pas d'échauffement, on part sur 4' de course.
     id: "C1S2",
     date: "19/09/26",
@@ -243,27 +373,43 @@ function compileLibrarySession(def, optionOverrides = {}) {
     };
 
     if (block.rounds && block.round) {
+      // Un item de tour est soit un step simple, soit un groupe fixe (`steps`),
+      // soit un groupe qui change à chaque tour (`variants`, modulo) — utile quand
+      // le renfo n'a pas la même durée selon le tour (40 s de fentes, 30 s de planche…).
+      const groupFor = (item, r) => {
+        if (item.variants) return item.variants[(r - 1) % item.variants.length];
+        if (item.steps) return item.steps;
+        return [item];
+      };
       for (let r = 1; r <= block.rounds; r += 1) {
         block.round.forEach((item, i) => {
-          const dur = seconds(item);
-          blockSeconds += dur;
-          push(blockId, {
-            name: pick(item.name, r),
-            spoken: item.spoken ? pick(item.spoken, r) : pick(item.name, r),
-            seconds: dur,
-            round: r,
-            sayRound: i === 0,
-            cadence: Boolean(item.cadence),
-            announceNext: Boolean(item.announceNext),
-            intro: r === 1 && i === 0 ? introFor() : undefined,
-            blockName: block.name,
+          groupFor(item, r).forEach((sub, j) => {
+            const dur = seconds(sub);
+            blockSeconds += dur;
+            push(blockId, {
+              name: pick(sub.name, r),
+              spoken: sub.spoken ? pick(sub.spoken, r) : pick(sub.name, r),
+              seconds: dur,
+              round: r,
+              sayRound: i === 0 && j === 0,
+              cadence: Boolean(sub.cadence),
+              announceNext: Boolean(sub.announceNext),
+              intro: r === 1 && i === 0 && j === 0 ? introFor() : undefined,
+              blockName: block.name,
+            });
           });
         });
       }
       const roundDesc = block.round
         .map((item) => {
-          // `label` : libellé du plan quand le nom tourne à chaque tour.
-          const label = item.label || (Array.isArray(item.name) ? item.name.join(" / ") : item.name);
+          // `label` : libellé du plan quand le nom tourne à chaque tour ou pour un groupe.
+          if (item.label) return item.label;
+          if (item.variants || item.steps) {
+            return groupFor(item, 1)
+              .map((sub) => `${libraryFormatDuration(seconds(sub))} ${pick(sub.name, 1)}`)
+              .join(" → ");
+          }
+          const label = Array.isArray(item.name) ? item.name.join(" / ") : item.name;
           return `${libraryFormatDuration(seconds(item))} ${label}`;
         })
         .join(" + ");

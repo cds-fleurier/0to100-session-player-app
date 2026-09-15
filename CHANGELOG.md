@@ -2,6 +2,13 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.16.0] - 2026-09-15
+
+### Ajouté
+- **Séance intégrée C1S3 du 23/09/26 — Run + renfo isométrique, modération d'impact.** Préparation à la maison 14 min (cadence 3 min, étirements actifs 3 × 1 min 40, équilibre 3 min avec cadence des bras, **mobilité hanches / tronc 2 × 1 min 30**), course libre 10/12/15 min, puis **12 tours** (31 min 20) de renfo en rotation — fentes statiques 20 s D + 20 s G → planche 30 s → mollets statiques 20 s G + 20 s D — suivi de 2 min de course en I2 découpée en 30 s cadence → 30 s libre → 30 s le moins de bruit possible → 30 s libre. Retour au calme 5 min.
+- Compilateur : un item de tour peut être un **groupe** (`steps`, fixe) ou des **variantes par tour** (`variants`, modulo) — nécessaire quand le renfo n'a pas la même durée selon le tour.
+- Le sélecteur trie les séances par date.
+
 ## [1.15.4] - 2026-09-15
 
 ### Modifié

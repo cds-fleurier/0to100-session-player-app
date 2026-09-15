@@ -26,7 +26,7 @@ const els = {
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.15.4";
+const APP_VERSION = "v1.16.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -1497,7 +1497,9 @@ function renderSessionOptions(def) {
 
 function populateSessionPicker() {
   if (!els.sessionPicker || typeof SESSION_LIBRARY === "undefined") return;
-  SESSION_LIBRARY.forEach((def) => {
+  // Tri par date du plan (jj/mm/aa), l'ordre du fichier n'a pas d'importance.
+  const dateKey = (d) => (d.date ? d.date.split("/").reverse().join("") : "");
+  [...SESSION_LIBRARY].sort((a, b) => dateKey(a).localeCompare(dateKey(b))).forEach((def) => {
     const o = document.createElement("option");
     o.value = def.id;
     // "C1S1 du 15/09/26 — Run + renfo isométrique (≈ 60 min)"
