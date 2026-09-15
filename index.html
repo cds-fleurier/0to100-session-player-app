@@ -19,45 +19,47 @@
       <section class="card input-card">
         <h1>0 to 100 Session Player</h1>
         <p>Choisis une séance 0 to 100, ou colle ta séance brute depuis Nolio.</p>
-        <div class="session-picker-row">
-          <label class="voice-row" for="sessionPicker">
-            <span>Séance</span>
-            <select id="sessionPicker" class="voice-picker">
-              <option value="" selected>Coller depuis Nolio</option>
-            </select>
-          </label>
-          <div id="sessionOptions" class="session-options"></div>
+
+        <div class="field">
+          <label class="field-label" for="sessionPicker">Séance</label>
+          <select id="sessionPicker" class="field-select">
+            <option value="" selected>Coller depuis Nolio</option>
+          </select>
         </div>
-        <textarea
-          id="sessionInput"
-          rows="14"
-          spellcheck="false"
-          placeholder="Colle ta session ici"
-        ></textarea>
-        <div class="row">
+        <div id="sessionOptions" class="session-options"></div>
+
+        <div class="nolio-input">
+          <textarea
+            id="sessionInput"
+            rows="12"
+            spellcheck="false"
+            placeholder="Colle ta session ici"
+          ></textarea>
           <div class="input-actions">
-            <button id="pasteNolioBtn" class="secondary-btn">Coller ma séance depuis Nolio</button>
-            <button id="parseBtn">Generer la séance</button>
-          </div>
-          <div class="voice-settings">
-            <label class="toggle">
-              <input type="checkbox" id="voiceToggle" checked />
-              <span>Alertes vocales</span>
-            </label>
-            <label class="voice-row" for="voiceMode">
-              <span>Voix</span>
-              <select id="voiceMode" class="voice-picker">
-                <option value="female" selected>Femme</option>
-                <option value="male">Homme</option>
-              </select>
-            </label>
-            <label class="toggle">
-              <input type="checkbox" id="metronomeToggle" />
-              <span>Métronome cadence (180 BPM)</span>
-            </label>
+            <button id="parseBtn">Générer la séance</button>
+            <button id="pasteNolioBtn" class="secondary-btn">Coller depuis Nolio</button>
           </div>
         </div>
         <p id="parseStatus" class="status"></p>
+
+        <div class="settings">
+          <div class="settings-title">Réglages</div>
+          <label class="setting-row">
+            <span>Alertes vocales</span>
+            <input type="checkbox" id="voiceToggle" checked />
+          </label>
+          <label class="setting-row" for="voiceMode">
+            <span>Voix</span>
+            <select id="voiceMode" class="voice-picker">
+              <option value="female" selected>Femme</option>
+              <option value="male">Homme</option>
+            </select>
+          </label>
+          <label class="setting-row">
+            <span>Métronome cadence · 180 BPM</span>
+            <input type="checkbox" id="metronomeToggle" />
+          </label>
+        </div>
       </section>
 
       <section class="card plan-card">

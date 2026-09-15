@@ -95,18 +95,14 @@ textarea:focus {
   outline-offset: 1px;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 12px;
+.input-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
 }
 
-.input-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.input-actions button {
+  width: 100%;
 }
 
 button {
@@ -147,28 +143,81 @@ button:disabled {
   line-height: 1;
 }
 
-.toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+/* Champ pleine largeur : libellé en petites capitales au-dessus, select en dessous.
+   Tout est vertical dans cette carte : elle ne fait que ~350 px sur desktop. */
+.field {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.field-label {
   color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.field-select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d2c7ba;
+  border-radius: 12px;
+  padding: 10px 12px;
   font-size: 14px;
-}
-
-.voice-settings {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.voice-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 13px;
   font-weight: 700;
+  font-family: inherit;
+  background: #fffdf9;
+  color: #2b3138;
+}
+
+.field-select:focus {
+  outline: 2px solid rgba(255, 107, 0, 0.36);
+  outline-offset: 1px;
+}
+
+/* Réglages : liste façon « Réglages » système, libellé à gauche, contrôle à droite. */
+.settings {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.settings-title {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 4px 0 2px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.setting-row:last-child {
+  border-bottom: 0;
+}
+
+.setting-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 .voice-picker {
@@ -256,28 +305,8 @@ li {
   color: #7a5a00;
 }
 
-/* Sélecteur de séance intégrée + ses options (course libre 10/12/15…). */
-.session-picker-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 18px;
-  margin-bottom: 10px;
-}
-
-.session-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-}
-
-.session-options:empty {
-  display: none;
-}
-
 /* Séance de la bibliothèque : le collage Nolio n'a plus lieu d'être. */
-body.library-mode textarea,
-body.library-mode .input-actions {
+body.library-mode .nolio-input {
   display: none;
 }
 
@@ -500,11 +529,4 @@ body.focus-mode .player-card {
     width: min(220px, 78%);
   }
 
-  .voice-settings {
-    align-items: flex-start;
-  }
-
-  .input-actions {
-    width: 100%;
-  }
 }

@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.14.1] - 2026-09-15
+
+### Modifié
+- **Carte « Session Player » remise à plat.** Sur desktop la carte ne fait que ~350 px et le rang « boutons à gauche, réglages à droite » ne tenait pas (select « Séance » qui débordait, libellés sur trois lignes). Tout est désormais vertical et pleine largeur : champ « Séance » (et ses options) avec libellé en petites capitales, textarea puis deux boutons empilés en mode Nolio, et un bloc **Réglages** en liste (libellé à gauche, contrôle à droite : alertes vocales, voix, métronome). Même rendu mobile et desktop. Aucun changement de logique.
+
 ## [1.14.0] - 2026-09-15
 
 ### Ajouté

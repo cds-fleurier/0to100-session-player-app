@@ -26,7 +26,7 @@ const els = {
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeToggle: document.getElementById("metronomeToggle"),
 };
-const APP_VERSION = "v1.14.0";
+const APP_VERSION = "v1.14.1";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -1446,11 +1446,12 @@ function renderSessionOptions(def) {
   const values = librarySessionOptionValues(def, overrides);
   (def.options || []).forEach((opt) => {
     const label = document.createElement("label");
-    label.className = "voice-row";
+    label.className = "field";
     const span = document.createElement("span");
+    span.className = "field-label";
     span.textContent = opt.label;
     const select = document.createElement("select");
-    select.className = "voice-picker";
+    select.className = "field-select";
     opt.choices.forEach((choice) => {
       const o = document.createElement("option");
       o.value = String(choice.value);
