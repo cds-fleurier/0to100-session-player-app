@@ -23,7 +23,7 @@
 //                  reprise se fait sur Démarrer
 //
 // Dans un `round`, `name` peut être un tableau : l'item tourne à chaque tour
-// (tour 1 → [0], tour 2 → [1], …, modulo).
+// (tour 1 → [0], tour 2 → [1], …, modulo). `label` donne alors le libellé du plan.
 //
 // `cadence: true` : le métronome (si activé) tourne pendant ce step.
 // `intro` (sur un bloc, ou sur le premier step d'un cycle/sequence) : phrase
@@ -127,6 +127,7 @@ const SESSION_LIBRARY = [
               "Équilibre pied gauche, genou droit levé",
               "Équilibre pied droit, genou gauche levé",
             ],
+            label: "renfo (chaise → planche → équilibre G → équilibre D, en rotation)",
             seconds: 20,
           },
           { name: "Course en cadence (170-190)", spoken: "Course en cadence", seconds: 30, cadence: true },
@@ -137,6 +138,41 @@ const SESSION_LIBRARY = [
         name: "Retour au calme",
         steps: [
           { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // Séance complète telle que fournie : pas d'échauffement, on part sur 4' de course.
+    id: "C1S2",
+    title: "C1S2 — Course + renfo isométrique",
+    subtitle: "45 min · 9 tours de 4 min course + 1 min renfo, intensité I1 / I2 en alternance",
+    advice:
+      "Alterner 4 min de course et 1 min de renfo isométrique. Tours impairs en I1 (demi-squat puis planche), tours pairs en I2 (planche puis demi-squat).",
+    blocks: [
+      {
+        name: "Corps de séance",
+        rounds: 9,
+        intro:
+          "Corps de séance, 9 tours de 5 minutes. 4 minutes de course, puis 1 minute de renfo. Intensité 1 sur les tours impairs, intensité 2 sur les tours pairs.",
+        round: [
+          {
+            name: ["Course, intensité I1", "Course, intensité I2"],
+            spoken: ["Course, intensité 1", "Course, intensité 2"],
+            label: "course (I1 tours impairs / I2 tours pairs)",
+            seconds: 240,
+            announceNext: true,
+          },
+          {
+            name: ["Demi-squat statique", "Planche ventrale"],
+            label: "demi-squat / planche",
+            seconds: 30,
+          },
+          {
+            name: ["Planche ventrale", "Demi-squat statique"],
+            label: "planche / demi-squat",
+            seconds: 30,
+          },
         ],
       },
     ],
@@ -223,10 +259,9 @@ function compileLibrarySession(def, optionOverrides = {}) {
       }
       const roundDesc = block.round
         .map((item) => {
-          const label = Array.isArray(item.name)
-            ? `${libraryFormatDuration(seconds(item))} renfo (${item.name.join(" → ")})`
-            : `${libraryFormatDuration(seconds(item))} ${item.name}`;
-          return label;
+          // `label` : libellé du plan quand le nom tourne à chaque tour.
+          const label = item.label || (Array.isArray(item.name) ? item.name.join(" / ") : item.name);
+          return `${libraryFormatDuration(seconds(item))} ${label}`;
         })
         .join(" + ");
       detail.push(`${block.rounds} tours de ${roundDesc}`);

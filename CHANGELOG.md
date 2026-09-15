@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.15.0] - 2026-09-15
+
+### Ajouté
+- **Séance intégrée C1S2 — Course + renfo isométrique (45 min).** Séance complète telle que fournie, sans échauffement : 9 tours de 4 min de course + 30 s + 30 s de renfo. Tours impairs en I1 (demi-squat statique puis planche ventrale), tours pairs en I2 (planche puis demi-squat). Un tour = 5 min, 9 tours = 45 min pile. « Prépare-toi. Ensuite : … » à T-11 de chaque course.
+- Champ `label` sur les items d'un tour dont le nom tourne : le plan affiche « course (I1 tours impairs / I2 tours pairs) » plutôt qu'un « renfo (…) » générique.
+
 ## [1.14.1] - 2026-09-15
 
 ### Modifié
