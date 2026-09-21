@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.22.0] - 2026-09-21
+
+### Ajouté
+- Barre d'onglets partagée de la team (hub `0to100-hub/nav.js`) : Calendrier · Carte · Qui court où · Séances, en bas d'écran. Masquée en mode focus.
+
 ## [1.21.0] - 2026-09-15
 
 ### Ajouté
