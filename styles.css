@@ -220,6 +220,21 @@ button:disabled {
   cursor: pointer;
 }
 
+.setting-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.setting-hint {
+  margin: 0;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .voice-picker {
   border: 1px solid #d2c7ba;
   border-radius: 10px;

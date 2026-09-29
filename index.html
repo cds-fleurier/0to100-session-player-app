@@ -55,9 +55,18 @@
               <option value="male">Homme</option>
             </select>
           </label>
+          <label class="setting-row" for="metronomeMode">
+            <span>Métronome · 180 BPM</span>
+            <select id="metronomeMode" class="voice-picker">
+              <option value="off" selected>Off</option>
+              <option value="cadence">Passages cadence</option>
+              <option value="run">Toute la course</option>
+            </select>
+          </label>
+          <p id="metronomeHint" class="setting-hint" hidden></p>
           <label class="setting-row">
-            <span>Métronome cadence · 180 BPM</span>
-            <input type="checkbox" id="metronomeToggle" />
+            <span>Sonner en mode silencieux<small class="setting-sub">Coupe la musique des autres apps (iPhone)</small></span>
+            <input type="checkbox" id="silentSwitchToggle" />
           </label>
         </div>
       </section>

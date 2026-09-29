@@ -30,10 +30,11 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
   - annonce "prépare-toi" + nom du prochain exercice (à T-11)
   - countdown vocal sur les 5 dernières secondes (`5,4,3,2,1`)
 - Alertes sonores + vocales
-- **Métronome de cadence** (optionnel, 180 BPM) sur les steps « en cadence » des séances intégrées
+- **Métronome** (180 BPM) : Off / Passages cadence (steps « en cadence » des séances intégrées) / Toute la course (tous les steps de course)
 - Option de voix `Femme` / `Homme` (préférence sauvegardée)
 - Mode `Focus` (affichage grand écran centré sur le player)
-- Option `Écran actif` (Wake Lock) activée par défaut pour éviter la mise en veille pendant la séance
+- Option `Écran actif` (Wake Lock) activée par défaut pour éviter la mise en veille pendant la séance ; si l'iPhone la refuse, elle est redemandée au retour sur la page et au prochain toucher, sans message d'erreur
+- Se mélange à la musique d'une autre app (Apple Music, Spotify…) par défaut ; option « Sonner en mode silencieux » pour l'usage sans musique
 - Compatibilités mobile renforcées (iOS Safari / Android Chrome)
 - Interface customisée dans l'univers du challenge 0 to 100
 
@@ -79,7 +80,7 @@ Notions propres à ces séances :
 
 - **Checkpoint** : step qui met le player en pause (ex. « Sors, et appuie sur Démarrer dès que tu es dehors »). La reprise se fait sur Démarrer.
 - **Options** : une séance peut exposer un choix (ex. durée de la course libre). Il s'affiche sous le sélecteur et le choix est mémorisé.
-- **Cadence** : les steps marqués `cadence: true` font tourner le métronome si la case « Métronome cadence » est cochée.
+- **Cadence** : les steps marqués `cadence: true` font tourner le métronome en mode « Passages cadence ». En mode « Toute la course », il tourne aussi sur tous les steps dont le nom commence par « Course », « EPIC » ou « Retour … en trottant ».
 - **Intro** : phrase dite une seule fois à l'entrée d'un bloc (rappel d'allure, consigne), énoncée pendant la fin du step précédent quand il est long. « Tour N » (ou « Bloc N », « Boucle N » via `roundLabel`) n'est annoncé qu'au premier step de chaque tour.
 - **Steps « à ton rythme »** (`estimated: true`) : éléments en distance ou en répétitions dont la durée n'est qu'une estimation. Pas de décompte final, annonce sans durée, `~` devant le chrono, et le step suivant s'introduit par « Quand tu as fini ». L'option **Rythme** (Tranquille / Normal / Rapide) multiplie ces durées ; un bloc défini par `rounds: { target }` recalcule son nombre de boucles en conséquence.
 - **Transitions courtes** dans un groupe (`transition: true`, ex. « Changement de jambe » 5 s : consigne, 3-2-1, « Go ! »).
@@ -115,19 +116,37 @@ et détecte aussi le nombre de tours (`X TOURS`).
 - JavaScript vanilla (sans build)
 - Web Speech API (voix navigateur)
 - Web Audio API (bips)
-- AudioSession API (catégorie audio `playback` sur iOS)
+- AudioSession API (catégorie audio `ambient` ou `playback` sur iOS)
 
 ## Son sur iPhone
 
-WebKit range le Web Audio dans la catégorie audio « ambient », que l'interrupteur
-Sonnerie/Silencieux de l'iPhone coupe. Depuis la v1.13.0 le player réclame la
-catégorie `playback` (celle de YouTube/Spotify, qui ignore l'interrupteur) et
-maintient en secours un `<audio>` quasi silencieux en boucle pour les versions
-d'iOS sans l'AudioSession API.
+**Musique ou mode silencieux, il faut choisir** (v1.23.0). Sur iPhone, une page
+qui sonne malgré l'interrupteur Sonnerie/Silencieux se déclare lecteur audio
+principal (catégorie `playback`) et **coupe la musique des autres apps** —
+Apple Music s'arrêtait au Démarrer et à chaque retour sur le navigateur. Comme
+les participants lancent leur musique dans leur player habituel :
+
+- **par défaut** : catégorie `ambient`, le player se mélange à la musique. Il
+  faut désactiver le mode silencieux pour entendre les bips ;
+- **case « Sonner en mode silencieux »** : catégorie `playback` + `<audio>` quasi
+  silencieux en boucle (comportement v1.13.0). Les bips sonnent en silencieux,
+  mais la musique d'une autre app est coupée.
+
+### Voix sur iPhone (v1.23.0)
+
+WebKit a trois pièges avec `speechSynthesis`, à l'origine du « Cinq » suivi de
+bips seuls au démarrage et du nom du bloc annoncé ~5 s en retard :
+`speechSynthesis.speaking` reste vrai après la fin de l'énoncé, `speak()` juste
+après `cancel()` est avalé (et `cancel()` bloque le fil principal), et une
+utterance ramassée par le garbage collector est coupée. Le player suit donc
+lui-même ce qui parle, n'annule que si quelque chose parle vraiment, relance
+150 ms après un `cancel()`, et met les chiffres des décomptes en file au lieu
+d'interrompre. L'horloge de séance se cale sur l'heure réelle (sondage 200 ms),
+plus sur `setInterval(1000)` qui collait deux ticks après un retard.
 
 Deux points à connaître :
 
-- **La voix est muette en mode silence** (constaté sur iPhone, v1.13.0,
+- **La voix est muette en mode silence**, dans les deux réglages (constaté sur iPhone, v1.13.0,
   septembre 2026). Elle passe par le TTS système (`speechSynthesis`) qui a sa
   propre session audio, hors de portée du web. Les **bips**, eux, sonnent.
   État assumé pour l'instant — voir « Voix en mode silence : options » ci-dessous.

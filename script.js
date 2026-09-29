@@ -24,14 +24,17 @@ const els = {
   musicPlatform: document.getElementById("musicPlatform"),
   sessionPicker: document.getElementById("sessionPicker"),
   sessionOptions: document.getElementById("sessionOptions"),
-  metronomeToggle: document.getElementById("metronomeToggle"),
+  metronomeMode: document.getElementById("metronomeMode"),
+  metronomeHint: document.getElementById("metronomeHint"),
+  silentSwitchToggle: document.getElementById("silentSwitchToggle"),
 };
-const APP_VERSION = "v1.22.0";
+const APP_VERSION = "v1.23.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
 const LIBRARY_OPT_PREFIX = "sportSessionLibraryOpt_";
 const METRONOME_PREF_KEY = "sportSessionMetronome";
+const SILENT_SWITCH_PREF_KEY = "sportSessionSilentSwitch";
 const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
 
 const PLATFORM_LABELS = { spotify: "Spotify", apple: "Apple Music", youtube: "YouTube", deezer: "Deezer" };
@@ -78,6 +81,7 @@ let keepAliveSrc = null;
 let isFocusMode = false;
 let wakeLockSentinel = null;
 let wakeLockWanted = true;
+let wakeLockPending = false;
 let endTransitionDelay = false;
 let endTransitionTimeoutId = null;
 let endTransitionArmed = false;
@@ -129,7 +133,15 @@ function ensureAudioContext() {
   return sharedAudioCtx;
 }
 
-// --- iOS : sonner malgre l'interrupteur silencieux -------------------------
+// --- iOS : musique a cote OU interrupteur silencieux -----------------------
+// Retour terrain 28/09/2026 : en v1.13 la page se declarait toujours lecteur
+// "playback" + <audio> keep-alive, ce qui coupe Apple Music / Spotify au
+// Demarrer et a chaque retour sur le navigateur. Or l'utilisateur lance sa
+// musique dans son player habituel (le bloc Musique ne fait que suggerer).
+// Les deux besoins sont incompatibles cote iOS, donc :
+//   - par defaut : session "ambient" -> se melange a la musique, mais
+//     l'interrupteur silencieux coupe les bips ;
+//   - case "Sonner en mode silencieux" : comportement v1.13 ci-dessous.
 // WebKit range WebAudio dans la categorie audio "ambient", celle que le switch
 // Sonnerie/Silencieux de l'iPhone coupe. Le player etait donc muet en mode
 // silence (constate sur Safari ET Chrome iOS : meme moteur). Deux leviers,
@@ -139,9 +151,15 @@ function ensureAudioContext() {
 //   2. Fallback historique : garder un <audio> quasi silencieux en boucle,
 //      ce qui force la sortie WebAudio sur le canal media.
 // Les deux exigent un geste utilisateur, d'ou l'appel depuis startTimer().
+function wantsSilentSwitchBypass() {
+  return Boolean(els.silentSwitchToggle && els.silentSwitchToggle.checked);
+}
+
 function claimPlaybackAudioSession() {
   try {
-    if (navigator.audioSession) navigator.audioSession.type = "playback";
+    if (navigator.audioSession) {
+      navigator.audioSession.type = wantsSilentSwitchBypass() ? "playback" : "ambient";
+    }
   } catch (err) {
     // API absente ou type refuse : le keep-alive ci-dessous prend le relais.
   }
@@ -175,6 +193,12 @@ function buildKeepAliveSrc() {
 
 function ensureSilentKeepAlive() {
   if (!IS_IOS) return;
+  // Un <audio> qui joue fait passer la page en lecteur principal : c'est lui
+  // qui coupait la musique des autres apps. Seulement si on l'a demande.
+  if (!wantsSilentSwitchBypass()) {
+    if (keepAliveAudio) keepAliveAudio.pause();
+    return;
+  }
   if (!keepAliveAudio) {
     keepAliveSrc = buildKeepAliveSrc();
     keepAliveAudio = new Audio(keepAliveSrc);
@@ -214,7 +238,7 @@ function primeSpeechSynthesis() {
   const warmup = new SpeechSynthesisUtterance(" ");
   warmup.lang = "fr-FR";
   warmup.volume = 0;
-  window.speechSynthesis.speak(warmup);
+  sayNow(warmup);
   speechPrimed = true;
 }
 
@@ -602,14 +626,23 @@ function refreshWakeLockButton() {
   els.wakeLockBtn.textContent = `Écran actif: ${state}`;
 }
 
-async function requestWakeLock() {
+// iOS refuse souvent la demande (retour depuis Apple Music avant que la page
+// soit vraiment au premier plan, mode économie d'énergie…). Retour terrain
+// 28/09 : le message d'erreur s'affichait en boucle et un seul refus
+// désactivait l'écran actif pour toute la séance. Désormais : on garde
+// l'intention, on réessaie au prochain toucher, et on ne parle d'erreur que si
+// l'utilisateur a appuyé lui-même sur le bouton.
+async function requestWakeLock({ fromUser = false } = {}) {
   if (!("wakeLock" in navigator) || !navigator.wakeLock?.request) {
-    setStatus("Wake Lock non supporté sur ce navigateur.", true);
+    if (fromUser) setStatus("Écran actif non supporté sur ce navigateur.", true);
     wakeLockWanted = false;
     refreshWakeLockButton();
     return;
   }
+  if (wakeLockPending || wakeLockSentinel) return;
+  if (document.visibilityState !== "visible") return;
 
+  wakeLockPending = true;
   try {
     wakeLockSentinel = await navigator.wakeLock.request("screen");
     wakeLockSentinel.addEventListener("release", () => {
@@ -620,9 +653,10 @@ async function requestWakeLock() {
     refreshWakeLockButton();
   } catch (err) {
     wakeLockSentinel = null;
-    wakeLockWanted = false;
     refreshWakeLockButton();
-    setStatus("Impossible d'activer l'écran actif pour le moment.", true);
+    if (fromUser) setStatus("Écran actif refusé par le téléphone (mode économie d'énergie ?).", true);
+  } finally {
+    wakeLockPending = false;
   }
 }
 
@@ -640,7 +674,8 @@ async function toggleWakeLock() {
     await releaseWakeLock();
     return;
   }
-  await requestWakeLock();
+  wakeLockWanted = true;
+  await requestWakeLock({ fromUser: true });
 }
 
 async function pasteFromClipboard() {
@@ -667,8 +702,47 @@ async function pasteFromClipboard() {
   }
 }
 
-function speak(text, interrupt = true) {
-  if (!els.voiceToggle.checked || !window.speechSynthesis) return;
+// --- Voix ------------------------------------------------------------------
+// Retour terrain iPhone 28/09 : au Démarrer, « Cinq » puis plus que des bips,
+// et le nom du premier bloc annoncé ~5 s en retard. Trois pièges WebKit :
+//   1. speechSynthesis.speaking reste vrai après la fin de l'énoncé : on
+//      appelait cancel() à chaque chiffre du décompte alors que rien ne parlait ;
+//   2. speak() juste après cancel() est avalé et le moteur peut rester muet
+//      plusieurs secondes — cancel() bloque aussi le fil principal, d'où des
+//      ticks (et des bips) en retard puis collés ;
+//   3. une utterance ramassée par le garbage collector en pleine lecture est
+//      coupée et ne déclenche jamais onend.
+// On suit donc nous-mêmes ce qui parle (utterances gardées en vie jusqu'à
+// onend), on n'annule que si quelque chose parle vraiment, et on relance
+// après un court délai.
+const liveUtterances = new Map(); // utterance -> échéance (garde-fou si onend ne vient jamais)
+let speechAfterCancel = null; // énoncés en attente pendant le délai post-cancel
+const SPEECH_RESTART_DELAY = 150;
+
+function speechDeadline(text, started) {
+  return Date.now() + (started ? 2000 : 6000) + text.length * 120;
+}
+
+function speechBusy() {
+  const now = Date.now();
+  for (const [utterance, deadline] of liveUtterances) {
+    if (deadline < now) liveUtterances.delete(utterance);
+  }
+  return liveUtterances.size > 0;
+}
+
+function sayNow(utterance) {
+  const text = utterance.text || "";
+  liveUtterances.set(utterance, speechDeadline(text, false));
+  utterance.onstart = () => {
+    if (liveUtterances.has(utterance)) liveUtterances.set(utterance, speechDeadline(text, true));
+  };
+  utterance.onend = () => liveUtterances.delete(utterance);
+  utterance.onerror = () => liveUtterances.delete(utterance);
+  window.speechSynthesis.speak(utterance);
+}
+
+function buildUtterance(text) {
   const utterance = new SpeechSynthesisUtterance(text);
   const preferredVoice = getPreferredVoice();
   if (preferredVoice && !IS_IOS) {
@@ -684,10 +758,29 @@ function speak(text, interrupt = true) {
   if (IS_ANDROID) utterance.rate = 1.02;
   utterance.volume = 1;
   utterance.rate = utterance.rate || 1;
-  if (interrupt && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
-    window.speechSynthesis.cancel();
+  return utterance;
+}
+
+function speak(text, interrupt = true) {
+  if (!els.voiceToggle.checked || !window.speechSynthesis) return;
+  const utterance = buildUtterance(text);
+  if (speechAfterCancel) {
+    if (interrupt) speechAfterCancel.length = 0;
+    speechAfterCancel.push(utterance);
+    return;
   }
-  window.speechSynthesis.speak(utterance);
+  if (interrupt && speechBusy()) {
+    window.speechSynthesis.cancel();
+    liveUtterances.clear();
+    speechAfterCancel = [utterance];
+    setTimeout(() => {
+      const queued = speechAfterCancel || [];
+      speechAfterCancel = null;
+      queued.forEach(sayNow);
+    }, SPEECH_RESTART_DELAY);
+    return;
+  }
+  sayNow(utterance);
 }
 
 async function beep() {
@@ -696,11 +789,15 @@ async function beep() {
   // resume() est asynchrone : monter l'oscillateur sans l'attendre produisait
   // un bip muet a chaque fois que le contexte etait encore suspendu.
   if (ctx.state !== "running") {
+    const askedAt = performance.now();
     try {
       await ctx.resume();
     } catch (err) {
       return;
     }
+    // Contexte long à repartir (iOS) : un bip en retard tomberait sur le
+    // chiffre suivant — les « 4 » et « 3 » collés. Mieux vaut le sauter.
+    if (performance.now() - askedAt > 250) return;
   }
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -715,7 +812,10 @@ async function beep() {
 
 // --- Métronome de cadence --------------------------------------------------
 // Les séances de la bibliothèque marquent certains steps `cadence: true`
-// (course en cadence 170-190). Si l'utilisateur l'a activé, un clic tourne à
+// (course en cadence 170-190). Réglage à trois positions (v1.23.0) : off,
+// passages cadence seulement, ou toute la course (steps dont le nom commence
+// par « Course », « EPIC », « Retour … en trottant » — la C1S4 n'a aucun
+// passage cadence, le métronome y restait muet). Un clic tourne à
 // METRONOME_BPM pendant ces steps. Les clics sont planifiés sur l'horloge de
 // l'AudioContext avec une bonne avance : setInterval est ralenti à 1 s quand
 // la page n'est plus au premier plan, une avance courte laisserait des trous.
@@ -724,8 +824,35 @@ const METRONOME_LOOKAHEAD = 1.5;
 let metronomeTimer = null;
 let metronomeNextTime = 0;
 
-function metronomeEnabled() {
-  return Boolean(els.metronomeToggle && els.metronomeToggle.checked);
+const RUN_STEP_RE = /^(course|epic|retour (en|au départ en) trottant)/i;
+
+function metronomeMode() {
+  return els.metronomeMode ? els.metronomeMode.value : "off";
+}
+
+function stepWantsMetronome(step) {
+  if (!step || step.type === "rest" || step.type === "transition" || step.type === "checkpoint") return false;
+  const mode = metronomeMode();
+  if (mode === "cadence") return Boolean(step.cadence);
+  if (mode === "run") return Boolean(step.cadence) || RUN_STEP_RE.test(step.name || "");
+  return false;
+}
+
+function updateMetronomeHint() {
+  if (!els.metronomeHint) return;
+  const mode = metronomeMode();
+  let hint = "";
+  if (sessionData && mode !== "off") {
+    const steps = timeline.length ? timeline : buildTimeline(sessionData);
+    if (!steps.some(stepWantsMetronome)) {
+      hint =
+        mode === "cadence"
+          ? "Aucun passage en cadence dans cette séance : choisis « Toute la course »."
+          : "Aucun passage de course reconnu dans cette séance.";
+    }
+  }
+  els.metronomeHint.textContent = hint;
+  els.metronomeHint.hidden = !hint;
 }
 
 function metronomeClick(ctx, at) {
@@ -733,7 +860,7 @@ function metronomeClick(ctx, at) {
   const gain = ctx.createGain();
   osc.type = "square";
   osc.frequency.value = 1400;
-  gain.gain.setValueAtTime(0.05, at);
+  gain.gain.setValueAtTime(0.12, at);
   gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.03);
   osc.connect(gain);
   gain.connect(ctx.destination);
@@ -754,7 +881,7 @@ function scheduleMetronome() {
 }
 
 function startMetronome() {
-  if (metronomeTimer || !metronomeEnabled()) return;
+  if (metronomeTimer) return;
   const ctx = ensureAudioContext();
   if (!ctx) return;
   if (ctx.state !== "running") ctx.resume().catch(() => {});
@@ -773,7 +900,7 @@ function stopMetronome() {
 // tourne que si une séance est en cours sur un step en cadence.
 function syncMetronome() {
   const step = currentStep();
-  if (timerId && step && step.cadence && metronomeEnabled()) startMetronome();
+  if (timerId && preStartRemaining < 0 && stepWantsMetronome(step)) startMetronome();
   else stopMetronome();
 }
 
@@ -1250,7 +1377,9 @@ function tick() {
     renderPlayer();
     if (lastCountdownCall !== preStartRemaining) {
       lastCountdownCall = preStartRemaining;
-      speak(String(preStartRemaining));
+      // Chiffres en file, jamais en interruption : un « cinq » encore en cours
+      // ferait sinon un cancel() par seconde (voir speak()).
+      speak(String(preStartRemaining), false);
       beep();
     }
 
@@ -1317,18 +1446,18 @@ function tick() {
   // pression à qui n'a pas fini. Le step suivant s'annonce par « Quand tu as fini ».
   if (step.type === "work" && !step.estimated && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
-    speak(String(remaining));
+    speak(String(remaining), false);
   }
 
   if (restBeforeWork && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
-    speak(String(remaining));
+    speak(String(remaining), false);
   }
 
   // Transition : décompte court, la consigne matériel a été énoncée au départ.
   if (step.type === "transition" && remaining <= 3 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
-    speak(String(remaining));
+    speak(String(remaining), false);
   }
 
   renderPlayer();
@@ -1368,6 +1497,23 @@ function tick() {
   remaining -= 1;
 }
 
+// Horloge : setInterval(tick, 1000) dérivait et, quand un tick partait en
+// retard (fil principal bloqué), le suivant arrivait collé derrière — les bips
+// « 4 » et « 3 » trop proches. On sonde toutes les 200 ms et on déclenche
+// tick() sur l'horloge murale ; un retard est rattrapé par petites touches
+// (jamais moins de 700 ms entre deux ticks), une longue absence (page gelée)
+// est abandonnée comme avant.
+const TICK_MS = 1000;
+let nextTickAt = 0;
+
+function clockLoop() {
+  const now = performance.now();
+  if (now < nextTickAt) return;
+  if (now - nextTickAt > 2000) nextTickAt = now;
+  nextTickAt = Math.max(nextTickAt + TICK_MS, now + 700);
+  tick();
+}
+
 function startTimer() {
   if (!sessionData) return;
   initMediaEngines();
@@ -1387,7 +1533,8 @@ function startTimer() {
   paused = false;
   els.start.disabled = true;
   els.pause.disabled = false;
-  timerId = setInterval(tick, 1000);
+  nextTickAt = performance.now() + TICK_MS;
+  timerId = setInterval(clockLoop, 200);
 
   // Reprise depuis un checkpoint : on passe au step suivant et on l'annonce.
   const step = currentStep();
@@ -1581,6 +1728,7 @@ function parseAndLoad() {
     els.next.textContent = `Premier exercice: ${timeline[0].name}`;
 
     setStatus(libraryDef ? `Séance ${libraryDef.id} chargée. Appuie sur Demarrer.` : "Séance chargée. Appuie sur Demarrer.");
+    updateMetronomeHint();
   } catch (err) {
     sessionData = null;
     timeline = [];
@@ -1631,17 +1779,33 @@ if (els.sessionPicker) {
     parseAndLoad();
   });
 }
-if (els.metronomeToggle) {
-  els.metronomeToggle.addEventListener("change", () => {
-    localStorage.setItem(METRONOME_PREF_KEY, els.metronomeToggle.checked ? "1" : "0");
+if (els.metronomeMode) {
+  els.metronomeMode.addEventListener("change", () => {
+    localStorage.setItem(METRONOME_PREF_KEY, els.metronomeMode.value);
+    updateMetronomeHint();
     syncMetronome();
+  });
+}
+if (els.silentSwitchToggle) {
+  els.silentSwitchToggle.addEventListener("change", () => {
+    localStorage.setItem(SILENT_SWITCH_PREF_KEY, els.silentSwitchToggle.checked ? "1" : "0");
+    // Geste utilisateur : on peut basculer la session audio tout de suite.
+    if (timerId || paused) resumeAudioEngines();
   });
 }
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
-  if (wakeLockWanted && !wakeLockSentinel) requestWakeLock();
+  // iOS annonce « visible » avant que la page soit vraiment active : une
+  // demande immédiate d'écran actif est refusée. On laisse la page se poser.
+  if (wakeLockWanted && !wakeLockSentinel && (timerId || paused)) setTimeout(requestWakeLock, 600);
   if (timerId || paused) resumeAudioEngines();
+});
+
+// Filet de sécurité : si l'écran actif a été refusé, le prochain toucher
+// (geste utilisateur, que iOS accepte) le redemande.
+document.addEventListener("pointerdown", () => {
+  if (wakeLockWanted && !wakeLockSentinel && (timerId || paused)) requestWakeLock();
 });
 
 const storedVoicePreference = localStorage.getItem(VOICE_PREF_KEY);
@@ -1658,7 +1822,13 @@ if (window.speechSynthesis) {
 }
 refreshWakeLockButton();
 if (els.appVersion) els.appVersion.textContent = APP_VERSION;
-if (els.metronomeToggle) els.metronomeToggle.checked = localStorage.getItem(METRONOME_PREF_KEY) === "1";
+if (els.metronomeMode) {
+  // Ancien réglage (case à cocher, « 1 ») = passages cadence.
+  const storedMetronome = localStorage.getItem(METRONOME_PREF_KEY);
+  els.metronomeMode.value =
+    storedMetronome === "1" ? "cadence" : ["cadence", "run"].includes(storedMetronome) ? storedMetronome : "off";
+}
+if (els.silentSwitchToggle) els.silentSwitchToggle.checked = localStorage.getItem(SILENT_SWITCH_PREF_KEY) === "1";
 populateSessionPicker();
 applySessionMode();
 

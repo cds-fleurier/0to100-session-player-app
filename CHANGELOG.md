@@ -2,6 +2,19 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.23.0] - 2026-09-29
+
+Retour terrain iPhone (Safari, son activé) : démarrage avec « Cinq » puis des bips seuls, bips 4 et 3 collés, nom du bloc annoncé ~5 s en retard, métronome muet sur la C1S4, Apple Music coupée au retour sur le navigateur, message « Impossible d'activer l'écran actif » à répétition.
+
+### Corrigé
+- **Voix** : le player suit lui-même ce qui parle (utterances gardées en vie jusqu'à `onend`) au lieu de se fier à `speechSynthesis.speaking`, qui reste vrai sur iOS. `cancel()` seulement si quelque chose parle vraiment, puis reprise 150 ms plus tard (un `speak()` juste après `cancel()` est avalé par WebKit). Les chiffres des décomptes passent en file, jamais en interruption.
+- **Horloge** : tick calé sur l'heure réelle (sondage 200 ms, au moins 700 ms entre deux ticks) au lieu de `setInterval(tick, 1000)`, qui collait deux ticks après un retard. Un bip qui arrive en retard de plus de 250 ms (contexte audio lent à repartir) est sauté plutôt que joué sur le chiffre suivant.
+- **Musique** : par défaut la page se mélange à la musique des autres apps (session audio `ambient`, plus de `<audio>` keep-alive). Nouvelle case **« Sonner en mode silencieux »** pour retrouver le comportement v1.13 (bips malgré l'interrupteur, musique coupée).
+- **Écran actif** : un refus d'iOS ne désactive plus l'option pour la séance ; nouvelle demande 600 ms après le retour sur la page et au prochain toucher. Message d'erreur seulement si on a appuyé soi-même sur le bouton.
+
+### Modifié
+- **Métronome** : réglage à trois positions — Off / Passages cadence / Toute la course (steps « Course… », « EPIC… », « Retour … en trottant »). Mention sous le réglage quand la séance n'a aucun passage concerné (C1S4 en mode cadence). Clic plus fort (gain 0,05 → 0,12). L'ancien réglage « coché » devient « Passages cadence ».
+
 ## [1.22.0] - 2026-09-21
 
 ### Ajouté
