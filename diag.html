@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Diagnostic son</title>
+<style>
+  :root { --bg: #fbf7f1; --text: #22272e; --muted: #6b6259; --accent: #d9542b; --border: #e4d9cc; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1b1d21; --text: #ece7e0; --muted: #a39a90; --border: #353840; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 -apple-system, system-ui, sans-serif; }
+  main { max-width: 520px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  p, li { color: var(--muted); }
+  ol { padding-left: 20px; }
+  button { display: block; width: 100%; margin: 10px 0; padding: 14px; border: 0; border-radius: 12px;
+           background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; text-align: left; }
+  button small { display: block; font-weight: 500; opacity: .85; }
+  #env { font: 13px ui-monospace, monospace; border: 1px solid var(--border); border-radius: 10px; padding: 10px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Diagnostic son · musique</h1>
+  <ol>
+    <li>Lance ta musique dans Apple Music.</li>
+    <li>Reviens ici et appuie sur <strong>un seul</strong> bouton.</li>
+    <li>Note ce que fait la musique : elle <em>continue</em>, elle <em>baisse puis revient</em>, ou elle <em>s'arrête</em>.</li>
+    <li><strong>Recharge la page</strong> avant le test suivant (le réglage audio reste collé à la page).</li>
+  </ol>
+
+  <button data-test="beep-ambient">A · Bip<small>Web Audio, session « ambient » (réglage actuel du player)</small></button>
+  <button data-test="voice-ambient">B · Voix<small>Synthèse vocale, session « ambient »</small></button>
+  <button data-test="voice-auto">C · Voix sans réglage<small>Synthèse vocale, session non touchée</small></button>
+  <button data-test="voice-transient">D · Voix en « transient »<small>Session qui doit baisser la musique puis la rendre</small></button>
+  <button data-test="beep-transient">E · Bip en « transient »</button>
+
+  <p>Environnement :</p>
+  <div id="env"></div>
+</main>
+<script>
+const env = document.getElementById("env");
+function show(extra) {
+  env.textContent =
+    `audioSession : ${"audioSession" in navigator ? navigator.audioSession.type : "non supporté"}\n` +
+    `speechSynthesis : ${"speechSynthesis" in window ? "oui" : "non"}\n` +
+    `UA : ${navigator.userAgent}` + (extra ? `\n\n${extra}` : "");
+}
+function setSession(type) {
+  try { if (navigator.audioSession) navigator.audioSession.type = type; } catch (e) { show(`erreur session : ${e}`); }
+}
+let ctx = null;
+async function beep() {
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state !== "running") await ctx.resume();
+  for (let i = 0; i < 3; i += 1) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = 880;
+    gain.gain.value = 0.15;
+    osc.connect(gain); gain.connect(ctx.destination);
+    const at = ctx.currentTime + i * 0.6;
+    osc.start(at); osc.stop(at + 0.18);
+  }
+}
+function voice() {
+  const u = new SpeechSynthesisUtterance("Test de la voix. Prépare-toi. Course, intensité 2.");
+  u.lang = "fr-FR";
+  window.__u = u; // garder l'énoncé en vie jusqu'au bout
+  speechSynthesis.speak(u);
+}
+const tests = {
+  "beep-ambient": () => { setSession("ambient"); beep(); },
+  "voice-ambient": () => { setSession("ambient"); voice(); },
+  "voice-auto": () => { voice(); },
+  "voice-transient": () => { setSession("transient"); voice(); },
+  "beep-transient": () => { setSession("transient"); beep(); },
+};
+document.querySelectorAll("button[data-test]").forEach((b) =>
+  b.addEventListener("click", () => { tests[b.dataset.test](); show(`test lancé : ${b.textContent.trim().split("\n")[0]}`); })
+);
+show();
+</script>
+</body>
+</html>
