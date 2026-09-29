@@ -2,6 +2,21 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.24.0] - 2026-09-29
+
+Test `diag.html` sur iPhone : la synthèse vocale du navigateur coupe Apple Music définitivement, quelle que soit la session audio ; les bips Web Audio se mélangent sans la baisser.
+
+### Ajouté
+- **Voix enregistrée pour les séances intégrées** : 183 phrases (toutes séances, toutes options) enregistrées sur Mac avec Audrey (Premium) et Daniel (Enhanced), jouées en Web Audio. La musique d'une autre app n'est plus coupée. Chargement des seules phrases de la séance choisie, décodage hors ligne (pas de contexte audio avant Démarrer).
+- `tools/collect-phrases.cjs` : joue chaque séance dans un faux navigateur (Node) et relève tout ce que le player prononce → `tools/phrases.json`.
+- `tools/generate-voice.cjs` : enregistre les phrases (`say` + `afconvert`), incrémental → `voice/<voix>/<hash>.m4a` + `voice/manifest.js`.
+- `diag.html` : page de test son (bip / voix × session audio).
+
+### Modifié
+- Décomptes : avec la voix enregistrée, chaque chiffre interrompt la phrase en cours (fiable en Web Audio, le chiffre tombe à l'heure) ; en synthèse vocale, ils restent en file (v1.23.0).
+- `INTRO_LEAD` 26 → 28 s : l'intro enregistrée la plus longue (C1S7) dure 16 s.
+- Plus d'énoncé d'amorçage `speechSynthesis` quand la voix enregistrée est prête.
+
 ## [1.23.0] - 2026-09-29
 
 Retour terrain iPhone (Safari, son activé) : démarrage avec « Cinq » puis des bips seuls, bips 4 et 3 collés, nom du bloc annoncé ~5 s en retard, métronome muet sur la C1S4, Apple Music coupée au retour sur le navigateur, message « Impossible d'activer l'écran actif » à répétition.

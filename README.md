@@ -85,7 +85,14 @@ Notions propres à ces séances :
 - **Steps « à ton rythme »** (`estimated: true`) : éléments en distance ou en répétitions dont la durée n'est qu'une estimation. Pas de décompte final, annonce sans durée, `~` devant le chrono, et le step suivant s'introduit par « Quand tu as fini ». L'option **Rythme** (Tranquille / Normal / Rapide) multiplie ces durées ; un bloc défini par `rounds: { target }` recalcule son nombre de boucles en conséquence.
 - **Transitions courtes** dans un groupe (`transition: true`, ex. « Changement de jambe » 5 s : consigne, 3-2-1, « Go ! »).
 
-Ajouter une séance = ajouter un objet dans `SESSION_LIBRARY` (le vocabulaire — `step`, `cycle`, `sequence`, `checkpoint`, `rounds`/`round` — est documenté en tête du fichier), puis bumper la version.
+Ajouter une séance = ajouter un objet dans `SESSION_LIBRARY` (le vocabulaire — `step`, `cycle`, `sequence`, `checkpoint`, `rounds`/`round` — est documenté en tête du fichier), **regénérer la voix**, puis bumper la version :
+
+```bash
+node tools/collect-phrases.cjs   # joue chaque séance (toutes options) et relève les phrases → tools/phrases.json
+node tools/generate-voice.cjs    # enregistre les phrases nouvelles (say, Audrey / Daniel) → voice/ + voice/manifest.js
+```
+
+Toute modification d'un texte parlé (`spoken`, `intro`, `instruction`, libellés de `script.js`) impose la même regénération ; sinon la phrase repasse par la synthèse vocale du navigateur (et coupe la musique sur iPhone). Le générateur est incrémental et supprime les fichiers orphelins.
 
 ## Format de séance attendu (exemple)
 
@@ -132,7 +139,22 @@ les participants lancent leur musique dans leur player habituel :
   silencieux en boucle (comportement v1.13.0). Les bips sonnent en silencieux,
   mais la musique d'une autre app est coupée.
 
-### Voix sur iPhone (v1.23.0)
+### Voix enregistrée (v1.24.0)
+
+Test `diag.html` du 29/09/2026 sur iPhone : la synthèse vocale du navigateur
+(`speechSynthesis`) **coupe Apple Music définitivement**, quelle que soit la
+session audio (`ambient`, `transient`, non réglée), alors qu'un bip Web Audio
+se mélange sans même la baisser. Les séances intégrées utilisent donc des
+phrases **pré-enregistrées sur Mac** (voix Audrey Premium / Daniel Enhanced,
+AAC mono 40 kb/s, ~5 Mo par voix), jouées en Web Audio comme les bips. Seules
+les phrases de la séance choisie sont chargées (quelques centaines de Ko). Le
+réglage Voix Femme / Homme choisit Audrey ou Daniel.
+
+- Séances collées depuis Nolio : toujours `speechSynthesis` (et donc musique coupée sur iPhone).
+- Avec la case « Sonner en mode silencieux », la voix enregistrée sonne aussi malgré l'interrupteur.
+- Pas d'amorçage `speechSynthesis` quand la voix enregistrée est prête : cet énoncé vide suffisait à couper la musique.
+
+### Synthèse vocale sur iPhone (v1.23.0, séances collées)
 
 WebKit a trois pièges avec `speechSynthesis`, à l'origine du « Cinq » suivi de
 bips seuls au démarrage et du nom du bloc annoncé ~5 s en retard :

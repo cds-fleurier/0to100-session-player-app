@@ -28,7 +28,7 @@ const els = {
   metronomeHint: document.getElementById("metronomeHint"),
   silentSwitchToggle: document.getElementById("silentSwitchToggle"),
 };
-const APP_VERSION = "v1.23.0";
+const APP_VERSION = "v1.24.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -234,6 +234,8 @@ function initMediaEngines() {
 }
 
 function primeSpeechSynthesis() {
+  // Voix enregistrée : surtout pas d'énoncé d'amorçage, il suffit à couper la musique.
+  if (voiceClipsReady) return;
   if (!els.voiceToggle.checked || !window.speechSynthesis || speechPrimed) return;
   const warmup = new SpeechSynthesisUtterance(" ");
   warmup.lang = "fr-FR";
@@ -761,8 +763,91 @@ function buildUtterance(text) {
   return utterance;
 }
 
+// --- Voix enregistrée (v1.24.0) -------------------------------------------
+// Test diag.html du 29/09/2026 sur iPhone : speechSynthesis coupe Apple Music
+// définitivement, quelle que soit la session audio ; un bip Web Audio se
+// mélange sans même la baisser. Les séances de la bibliothèque étant
+// déclaratives, toutes leurs phrases sont connues d'avance : elles sont
+// enregistrées sur Mac (tools/collect-phrases.cjs + tools/generate-voice.cjs,
+// voix Audrey / Daniel) et jouées en Web Audio comme les bips. speechSynthesis
+// ne sert plus qu'aux séances collées depuis Nolio et aux phrases manquantes.
+const voiceBuffers = new Map(); // id de clip -> AudioBuffer, pour la séance et la voix courantes
+let voiceLoadKey = null;
+let voiceClipsReady = false;
+let clipSources = [];
+let clipQueueEnd = 0;
+
+async function loadSessionVoice() {
+  voiceClipsReady = false;
+  voiceBuffers.clear();
+  const manifest = window.VOICE_MANIFEST;
+  const id = sessionData && sessionData.libraryId;
+  const dir = manifest && manifest.voices[els.voiceMode?.value || "female"];
+  if (!manifest || !id || !dir || !manifest.sessions[id]) {
+    voiceLoadKey = null;
+    return;
+  }
+  const key = `${id}:${dir}`;
+  voiceLoadKey = key;
+  // Décodage hors ligne : pas de contexte audio « live » avant le geste
+  // Démarrer. Un AudioBuffer se rejoue ensuite dans n'importe quel contexte.
+  const Offline = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!Offline) return;
+  const decoder = new Offline(1, 1, 44100);
+  try {
+    const decoded = await Promise.all(
+      manifest.sessions[id].map(async (clip) => {
+        const res = await fetch(`voice/${dir}/${clip}.m4a`);
+        if (!res.ok) throw new Error(`clip ${clip} : ${res.status}`);
+        return [clip, await decoder.decodeAudioData(await res.arrayBuffer())];
+      })
+    );
+    if (voiceLoadKey !== key) return; // séance ou voix changée entre-temps
+    decoded.forEach(([clip, buffer]) => voiceBuffers.set(clip, buffer));
+    voiceClipsReady = true;
+  } catch (err) {
+    console.warn("[voix] enregistrements indisponibles, synthèse vocale en secours :", err);
+  }
+}
+
+function stopClips() {
+  clipSources.forEach((src) => {
+    try {
+      src.stop();
+    } catch (err) {
+      // déjà terminé
+    }
+  });
+  clipSources = [];
+  clipQueueEnd = 0;
+}
+
+function playClip(buffer, interrupt) {
+  const ctx = ensureAudioContext();
+  if (!ctx) return false;
+  if (ctx.state !== "running") ctx.resume().catch(() => {});
+  if (interrupt) stopClips();
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(ctx.destination);
+  const at = Math.max(ctx.currentTime + 0.02, clipQueueEnd);
+  src.start(at);
+  clipQueueEnd = at + buffer.duration;
+  clipSources.push(src);
+  src.onended = () => {
+    clipSources = clipSources.filter((s) => s !== src);
+  };
+  return true;
+}
+
 function speak(text, interrupt = true) {
-  if (!els.voiceToggle.checked || !window.speechSynthesis) return;
+  if (!els.voiceToggle.checked) return;
+  if (voiceClipsReady) {
+    const buffer = voiceBuffers.get(window.VOICE_MANIFEST.clips[text]);
+    if (buffer && playClip(buffer, interrupt)) return;
+    console.warn("[voix] phrase non enregistrée, synthèse vocale :", text);
+  }
+  if (!window.speechSynthesis) return;
   const utterance = buildUtterance(text);
   if (speechAfterCancel) {
     if (interrupt) speechAfterCancel.length = 0;
@@ -914,7 +999,7 @@ const TRANSITION_SECONDS = 8;
 
 // Avance (en s avant la fin du step courant) à laquelle on énonce l'intro du
 // bloc suivant. Doit laisser l'intro finir avant le « Prépare-toi » de T-11.
-const INTRO_LEAD = 26;
+const INTRO_LEAD = 28;
 
 function exerciseDisplayName(ex, round) {
   return ex.alternates && ex.alternates.length
@@ -1377,9 +1462,10 @@ function tick() {
     renderPlayer();
     if (lastCountdownCall !== preStartRemaining) {
       lastCountdownCall = preStartRemaining;
-      // Chiffres en file, jamais en interruption : un « cinq » encore en cours
-      // ferait sinon un cancel() par seconde (voir speak()).
-      speak(String(preStartRemaining), false);
+      // Synthèse vocale : chiffres en file, jamais en interruption (un « cinq »
+      // encore en cours ferait un cancel() par seconde, voir speak()). Voix
+      // enregistrée : interrompre est fiable, le chiffre tombe à l'heure.
+      speak(String(preStartRemaining), voiceClipsReady);
       beep();
     }
 
@@ -1420,7 +1506,7 @@ function tick() {
 
   // Intro du bloc suivant dite en avance, pendant un step assez long : avant le
   // « Prépare-toi » de T-11 et le décompte, pour ne pas empiéter sur le step
-  // qu'elle introduit. INTRO_LEAD laisse ~15 s de parole avant T-11.
+  // qu'elle introduit. INTRO_LEAD laisse ~17 s de parole avant T-11 (intro C1S7 enregistrée : 16 s).
   const next = upcomingStep();
   if (
     next &&
@@ -1446,18 +1532,18 @@ function tick() {
   // pression à qui n'a pas fini. Le step suivant s'annonce par « Quand tu as fini ».
   if (step.type === "work" && !step.estimated && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
-    speak(String(remaining), false);
+    speak(String(remaining), voiceClipsReady);
   }
 
   if (restBeforeWork && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
-    speak(String(remaining), false);
+    speak(String(remaining), voiceClipsReady);
   }
 
   // Transition : décompte court, la consigne matériel a été énoncée au départ.
   if (step.type === "transition" && remaining <= 3 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
-    speak(String(remaining), false);
+    speak(String(remaining), voiceClipsReady);
   }
 
   renderPlayer();
@@ -1585,6 +1671,7 @@ function pauseTimer() {
 
 function resetTimer() {
   stopTimer();
+  stopClips();
   paused = false;
   timeline = sessionData ? buildTimeline(sessionData) : [];
   idx = 0;
@@ -1729,6 +1816,7 @@ function parseAndLoad() {
 
     setStatus(libraryDef ? `Séance ${libraryDef.id} chargée. Appuie sur Demarrer.` : "Séance chargée. Appuie sur Demarrer.");
     updateMetronomeHint();
+    loadSessionVoice();
   } catch (err) {
     sessionData = null;
     timeline = [];
@@ -1761,6 +1849,7 @@ els.skipBlockBtn.addEventListener("click", skipToNextBlock);
 els.voiceToggle.addEventListener("change", updateVoiceControlsState);
 els.voiceMode.addEventListener("change", () => {
   localStorage.setItem(VOICE_PREF_KEY, els.voiceMode.value);
+  loadSessionVoice();
 });
 els.musicGenre.addEventListener("change", () => {
   localStorage.setItem(MUSIC_PREF_KEY, els.musicGenre.value);

@@ -7,6 +7,10 @@
 // timeline que le player joue. Ajouter une séance = ajouter un objet dans
 // SESSION_LIBRARY.
 //
+// ⚠️ Après tout ajout ou changement de texte parlé : regénérer la voix enregistrée
+//   node tools/collect-phrases.cjs && node tools/generate-voice.cjs
+// (sinon la phrase passe par speechSynthesis, qui coupe la musique sur iPhone).
+//
 // Vocabulaire d'un bloc :
 //   - steps  : liste de steps joués une fois (kind: "step" | "cycle" |
 //              "sequence" | "checkpoint")
