@@ -201,6 +201,7 @@ fixes n'auraient plus besoin du réseau).
 - `README.md` est mis à jour à chaque changement fonctionnel visible utilisateur.
 - Historique des changements dans `CHANGELOG.md`.
 - À chaque modification livrée, incrémenter `APP_VERSION` dans `script.js` (SemVer: `major.minor.patch`).
+- Et reporter le même numéro dans les `?v=` de `index.html` (styles + scripts) : sans ça, les navigateurs gardent jusqu’à 10 min l’ancien JS en cache (GitHub Pages sert `max-age=600`).
 
 ## Roadmap
 

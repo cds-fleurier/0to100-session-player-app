@@ -16,6 +16,9 @@ Réponses du coach sur la séance C1S7 du 06/10.
   - **course libre raccourcie à 7 min 20, sans option** : l'échauffement (préparation 17 min 40 + course libre) fait 25 min, comme le veut le coach.
 - La séance passe de ≈ 70 à ≈ 66 min. Voix régénérée (9 nouvelles phrases par voix).
 
+### Corrigé
+- **Cache navigateur** : `index.html` charge styles et scripts avec `?v=<version>`. Avant, un iPhone pouvait garder l'ancien `sessions-library.js` jusqu'à 10 min après une mise en ligne, et ajouter `?v=` à l'adresse de la page n'y changeait rien.
+
 ## [1.24.0] - 2026-09-29
 
 Test `diag.html` sur iPhone : la synthèse vocale du navigateur coupe Apple Music définitivement, quelle que soit la session audio ; les bips Web Audio se mélangent sans la baisser.
