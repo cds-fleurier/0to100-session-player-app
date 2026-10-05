@@ -2,6 +2,20 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.25.0] - 2026-10-05
+
+Réponses du coach sur la séance C1S7 du 06/10.
+
+### Modifié
+- **C1S7 corrigée selon le coach** :
+  - mollets en **tempo 1-0-1-0** (le « 1-0-10 » était une coquille) ;
+  - bloc = 3 min de renfo + 4 min d'EPIC 15-15, 4 blocs par défaut, 1 min de récup entre les blocs. La progression EPIC se fait dans le bloc ;
+  - mobilité = **un seul step de 3 min « Mobilité de hanches »** (plus de découpage hanches / tronc / balistiques), puis **étirements balistiques 15 de chaque côté**, en durée estimée (~20 s par côté) ;
+  - mobilité pied-cheville 1 min 30 par pied, confirmée ;
+  - équilibre 30 s par côté × 3 en alternance, sans course sur place, bras en cadence possibles (le métronome tourne si « Passages cadence » est activé) ;
+  - **course libre raccourcie à 7 min 20, sans option** : l'échauffement (préparation 17 min 40 + course libre) fait 25 min, comme le veut le coach.
+- La séance passe de ≈ 70 à ≈ 66 min. Voix régénérée (9 nouvelles phrases par voix).
+
 ## [1.24.0] - 2026-09-29
 
 Test `diag.html` sur iPhone : la synthèse vocale du navigateur coupe Apple Music définitivement, quelle que soit la session audio ; les bips Web Audio se mélangent sans la baisser.

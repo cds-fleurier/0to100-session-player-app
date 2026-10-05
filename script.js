@@ -28,7 +28,7 @@ const els = {
   metronomeHint: document.getElementById("metronomeHint"),
   silentSwitchToggle: document.getElementById("silentSwitchToggle"),
 };
-const APP_VERSION = "v1.24.0";
+const APP_VERSION = "v1.25.0";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";

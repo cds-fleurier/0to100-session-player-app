@@ -608,20 +608,10 @@ const SESSION_LIBRARY = [
     id: "C1S7",
     date: "06/10/26",
     title: "C1S7 — Renfo + EPIC 15-15",
-    subtitle: "≈ 70 min · préparation à la maison, gammes, 2 à 4 blocs renfo + course EPIC 15-15",
+    subtitle: "≈ 66 min · échauffement 25 min (préparation + course libre), gammes, 2 à 4 blocs renfo + course EPIC 15-15",
     advice:
-      "Renfo en répétitions, à ton rythme (squats, mountain climbers, mollets, 2 séries). EPIC 15-15 : 15 s lent I1-I2, 15 s plus rapide, de plus en plus vite sur les 4 min pour finir un peu au-dessus de I3.",
+      "Échauffement 25 min : la préparation dure ~18 min, la course libre est raccourcie à 7 min 20 (consigne du coach). Bloc = 3 min de renfo à ton rythme (squats et mollets en tempo 1-0-1-0, mountain climbers, 2 séries) + 4 min de course EPIC 15-15 : 15 s lent I1-I2, 15 s plus rapide, de plus en plus vite sur les 4 min pour finir un peu au-dessus de I3. 1 min de récup entre les blocs.",
     options: [
-      {
-        key: "freeRun",
-        label: "Course libre (échauffement)",
-        default: 720,
-        choices: [
-          { value: 600, label: "10 min" },
-          { value: 720, label: "12 min" },
-          { value: 900, label: "15 min" },
-        ],
-      },
       {
         key: "pace",
         label: "Rythme sur gammes et renfo",
@@ -676,21 +666,28 @@ const SESSION_LIBRARY = [
             name: "Équilibre",
             total: 180,
             slot: 30,
-            intro: "Équilibre sur un pied, genou de la jambe libre levé. 3 minutes, 30 secondes par côté.",
+            cadence: true,
+            intro: "Équilibre sur un pied, genou de la jambe libre levé. 3 minutes, 30 secondes par côté, 3 fois chaque côté. Pas de course sur place, mais tu peux faire les bras en cadence.",
             items: [
               { name: "Équilibre pied gauche, genou levé" },
               { name: "Équilibre pied droit, genou levé" },
             ],
           },
+          { kind: "step", name: "Mobilité de hanches", spoken: "Mobilité des hanches", seconds: 180 },
           {
-            kind: "sequence",
-            name: "Mobilité",
-            intro: "Mobilité, 3 minutes.",
-            items: [
-              { name: "Mobilité : hanches", seconds: 60 },
-              { name: "Mobilité : tronc", seconds: 60 },
-              { name: "Étirements balistiques progressifs", seconds: 60 },
-            ],
+            kind: "step",
+            name: "Étirements balistiques, 15 côté gauche",
+            spoken: "15 côté gauche",
+            intro: "Étirements balistiques progressifs, 15 de chaque côté.",
+            seconds: 20,
+            estimated: true,
+          },
+          {
+            kind: "step",
+            name: "Étirements balistiques, 15 côté droit",
+            spoken: "15 côté droit",
+            seconds: 20,
+            estimated: true,
           },
           {
             kind: "sequence",
@@ -714,9 +711,10 @@ const SESSION_LIBRARY = [
         steps: [
           {
             kind: "step",
+            // Le coach veut 25 min d'échauffement : préparation 17 min 40 + 7 min 20.
             name: "Course libre, très facile (I1)",
             spoken: "Course libre, très facile, intensité 1",
-            secondsFrom: "freeRun",
+            seconds: 440,
             announceNext: true,
           },
         ],
@@ -757,17 +755,17 @@ const SESSION_LIBRARY = [
         roundLabel: "Bloc",
         restBetweenRounds: 60,
         intro:
-          "Corps de séance. Chaque bloc : renfo en 2 séries, squats, mountain climbers, mollets, puis 4 minutes de course EPIC 15-15, 15 secondes lent, 15 secondes plus rapide, de plus en plus vite.",
+          "Corps de séance. Chaque bloc : 3 minutes de renfo en 2 séries, squats, mountain climbers, mollets, puis 4 minutes de course EPIC 15-15, 15 secondes lent, 15 secondes plus rapide, de plus en plus vite. 1 minute de récup entre les blocs.",
         round: [
           {
-            label: "renfo ~3 min, 2 × (15 squats 1-0-1-0 · 30 mountain climbers · 10 paires de mollets)",
+            label: "renfo ~3 min, 2 × (15 squats 1-0-1-0 · 30 mountain climbers · 10 paires de mollets 1-0-1-0)",
             steps: [
               { name: "15 squats (1-0-1-0)", spoken: "Série 1. 15 squats, tempo un, zéro, un, zéro", seconds: 30, estimated: true },
               { name: "30 mountain climbers", spoken: "30 mountain climbers", seconds: 30, estimated: true },
-              { name: "10 paires de mollets", spoken: "10 paires de mollets", seconds: 30, estimated: true },
+              { name: "10 paires de mollets (1-0-1-0)", spoken: "10 paires de mollets, tempo un, zéro, un, zéro", seconds: 30, estimated: true },
               { name: "15 squats (1-0-1-0) — série 2", spoken: "Série 2. 15 squats", seconds: 30, estimated: true },
               { name: "30 mountain climbers — série 2", spoken: "30 mountain climbers", seconds: 30, estimated: true },
-              { name: "10 paires de mollets — série 2", spoken: "10 paires de mollets", seconds: 30, estimated: true, doneCue: "Quand tu as fini" },
+              { name: "10 paires de mollets (1-0-1-0) — série 2", spoken: "10 paires de mollets", seconds: 30, estimated: true, doneCue: "Quand tu as fini" },
             ],
           },
           {
