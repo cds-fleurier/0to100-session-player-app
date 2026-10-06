@@ -667,7 +667,7 @@ const SESSION_LIBRARY = [
             total: 180,
             slot: 30,
             cadence: true,
-            intro: "Équilibre sur un pied, genou de la jambe libre levé. 3 minutes, 30 secondes par côté, 3 fois chaque côté. Pas de course sur place, mais tu peux faire les bras en cadence.",
+            intro: "Équilibre sur un pied, genou de la jambe libre levé. 3 minutes, 30 secondes par côté, 3 fois chaque côté. Tu peux faire les bras en cadence.",
             items: [
               { name: "Équilibre pied gauche, genou levé" },
               { name: "Équilibre pied droit, genou levé" },

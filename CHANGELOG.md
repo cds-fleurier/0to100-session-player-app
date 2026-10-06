@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.25.2] - 2026-10-06
+
+### Corrigé
+- C1S7, consigne de l'équilibre sur un pied : la voix ne dit plus « Pas de course sur place » (évident sur un pied), seulement « Tu peux faire les bras en cadence ». Voix régénérée.
+
 ## [1.25.1] - 2026-10-06
 
 Retour d'utilisateurs Android : « Écran actif : on » affiché, mais le téléphone se met quand même en veille.
