@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.25.1] - 2026-10-06
+
+Retour d'utilisateurs Android : « Écran actif : on » affiché, mais le téléphone se met quand même en veille.
+
+### Corrigé
+- **Le bouton Écran actif affiche l'état réel**, plus l'intention : `on` (écran tenu), `off`, `au démarrage` (tenu dès Démarrer), `en attente` (relâché en quittant l'onglet, redemandé au retour), `refusé`, `non supporté`. Avant, un refus du téléphone était avalé sans message et le bouton restait sur « on ».
+- **Explication sous le bouton** quand le téléphone refuse : mode économie d'énergie (Chrome Android refuse alors le verrou d'écran) → le couper pour la séance, ou régler la mise en veille sur 10 min ; navigateur intégré d'une appli sans l'API → ouvrir la page dans Chrome/Safari. Le message d'erreur s'affichait auparavant dans la carte de saisie, invisible pendant la séance.
+- Un appui sur « refusé » réessaie au lieu d'éteindre (après avoir coupé l'économie d'énergie).
+
 ## [1.25.0] - 2026-10-05
 
 Réponses du coach sur la séance C1S7 du 06/10.

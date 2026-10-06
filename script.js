@@ -14,6 +14,7 @@ const els = {
   reset: document.getElementById("resetBtn"),
   focusModeBtn: document.getElementById("focusModeBtn"),
   wakeLockBtn: document.getElementById("wakeLockBtn"),
+  wakeLockHint: document.getElementById("wakeLockHint"),
   skipBlockBtn: document.getElementById("skipBlockBtn"),
   appVersion: document.getElementById("appVersion"),
   voiceToggle: document.getElementById("voiceToggle"),
@@ -28,7 +29,7 @@ const els = {
   metronomeHint: document.getElementById("metronomeHint"),
   silentSwitchToggle: document.getElementById("silentSwitchToggle"),
 };
-const APP_VERSION = "v1.25.0";
+const APP_VERSION = "v1.25.1";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -82,6 +83,9 @@ let isFocusMode = false;
 let wakeLockSentinel = null;
 let wakeLockWanted = true;
 let wakeLockPending = false;
+// null | "unsupported" | "refused" : pourquoi l'écran n'est pas tenu alors qu'on le veut.
+let wakeLockError = null;
+let wakeLockErrorName = "";
 let endTransitionDelay = false;
 let endTransitionTimeoutId = null;
 let endTransitionArmed = false;
@@ -623,21 +627,41 @@ function toggleFocusMode() {
   els.focusModeBtn.textContent = isFocusMode ? "Quitter focus" : "Mode focus";
 }
 
+// Le bouton affiche l'état réel, pas l'intention. Retour Android (06/10) :
+// « Écran actif : on » restait affiché alors que le téléphone avait refusé le
+// verrou (économie d'énergie, navigateur intégré d'une appli sans l'API), et
+// l'écran se mettait en veille. Le refus était avalé sans rien dire.
 function refreshWakeLockButton() {
-  const state = wakeLockWanted ? "on" : "off";
+  let state;
+  let hint = "";
+  if (!wakeLockWanted) state = "off";
+  else if (wakeLockSentinel) state = "on";
+  else if (wakeLockError === "unsupported") {
+    state = "non supporté";
+    hint =
+      "Ce navigateur ne sait pas garder l'écran allumé (navigateur intégré d'une appli ?). Ouvre la page dans Chrome ou Safari, ou règle la mise en veille du téléphone sur 10 min pour la séance.";
+  } else if (wakeLockError === "refused") {
+    state = "refusé";
+    hint = `Le téléphone refuse de garder l'écran allumé, le plus souvent à cause du mode économie d'énergie. Désactive-le pour la séance puis touche ce bouton, ou règle la mise en veille sur 10 min.${
+      wakeLockErrorName ? ` (${wakeLockErrorName})` : ""
+    }`;
+  } else state = timerId || paused ? "en attente" : "au démarrage"; // relâché (onglet quitté) → redemandé au retour
   els.wakeLockBtn.textContent = `Écran actif: ${state}`;
+  if (els.wakeLockHint) {
+    els.wakeLockHint.textContent = hint;
+    els.wakeLockHint.hidden = !hint;
+  }
 }
 
 // iOS refuse souvent la demande (retour depuis Apple Music avant que la page
 // soit vraiment au premier plan, mode économie d'énergie…). Retour terrain
 // 28/09 : le message d'erreur s'affichait en boucle et un seul refus
 // désactivait l'écran actif pour toute la séance. Désormais : on garde
-// l'intention, on réessaie au prochain toucher, et on ne parle d'erreur que si
-// l'utilisateur a appuyé lui-même sur le bouton.
-async function requestWakeLock({ fromUser = false } = {}) {
+// l'intention, on réessaie au prochain toucher, et le refus s'affiche sous le
+// bouton (pas dans un message d'état qui clignote).
+async function requestWakeLock() {
   if (!("wakeLock" in navigator) || !navigator.wakeLock?.request) {
-    if (fromUser) setStatus("Écran actif non supporté sur ce navigateur.", true);
-    wakeLockWanted = false;
+    wakeLockError = "unsupported";
     refreshWakeLockButton();
     return;
   }
@@ -652,18 +676,22 @@ async function requestWakeLock({ fromUser = false } = {}) {
       refreshWakeLockButton();
     });
     wakeLockWanted = true;
-    refreshWakeLockButton();
+    wakeLockError = null;
+    wakeLockErrorName = "";
   } catch (err) {
     wakeLockSentinel = null;
-    refreshWakeLockButton();
-    if (fromUser) setStatus("Écran actif refusé par le téléphone (mode économie d'énergie ?).", true);
+    wakeLockError = "refused";
+    wakeLockErrorName = err?.name || "";
+    console.warn("[écran actif] refusé :", err);
   } finally {
     wakeLockPending = false;
+    refreshWakeLockButton();
   }
 }
 
 async function releaseWakeLock() {
   wakeLockWanted = false;
+  wakeLockError = null;
   if (wakeLockSentinel) {
     await wakeLockSentinel.release();
     wakeLockSentinel = null;
@@ -671,13 +699,15 @@ async function releaseWakeLock() {
   refreshWakeLockButton();
 }
 
+// Un appui sur « refusé » / « non supporté » réessaie au lieu d'éteindre :
+// l'utilisateur vient de couper l'économie d'énergie et veut que ça marche.
 async function toggleWakeLock() {
-  if (wakeLockSentinel || wakeLockWanted) {
+  if (wakeLockSentinel || (wakeLockWanted && !wakeLockError)) {
     await releaseWakeLock();
     return;
   }
   wakeLockWanted = true;
-  await requestWakeLock({ fromUser: true });
+  await requestWakeLock();
 }
 
 async function pasteFromClipboard() {
