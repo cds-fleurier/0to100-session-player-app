@@ -2,6 +2,23 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.26.0] - 2026-10-10
+
+Séances lues directement dans Nolio (Claude in Chrome sur le compte de l'utilisateur), lecture validée question par question avec l'utilisateur.
+
+### Ajouté
+- **C1S9** (13/10) — aller progressivement vers I3-I4 : préparation maison 14 min, 10 min I1, gammes chronométrées (6 × 50 s), 2 blocs de 6/7 tours (squats 2-0-1-0 puis climbers + 30 s I3 + 20 s I2), « vers I4 » sur les 2 derniers tours, 2 min de pause entre les blocs, 5 min I1.
+- **C1S10** (17/10) — 9 portions de course I1 à I4, 1 min de renfo squats/climbers après chacune, 5 min de retour au calme.
+- **C1S12** (20/10, planifiée avant la C1S11) — pyramide I1 → I5 → I1 en 11 portions, 1 min de fente + montée de genou après chacune ; fin après le dernier renfo.
+- Moteur : `lastRounds: { count, name, spoken }` sur un step de tour = variante sur les N derniers tours, comptés depuis la fin (juste quel que soit le nombre de tours choisi).
+- Helpers `edtHomePrep()`, `EDT_GAMMES`, `edtRunRenfoSteps()` pour les séances « EDT ».
+- Voix enregistrée régénérée (237 phrases par voix).
+
+- **C1S11** (30/10) — technique de course en côte, **version provisoire** : 7 passages (20 climbers, montée avec une consigne technique dans l'ordre de la liste du coach, 6 paires de fentes arrière + montée de genou, descente relâchée), I2 sur les 3 premiers passages puis I3, durées estimées + option Rythme.
+
+### En attente
+- C1S11 : nombre de passages et gestion de l'intensité I2 → I3 à confirmer par Céline (coach EDT), message envoyé le 10/10 avec les autres points à valider (C1S9 pause / tours / vers I4 / gammes, C1S12 fin sur le renfo).
+
 ## [1.25.2] - 2026-10-06
 
 ### Corrigé

@@ -49,6 +49,85 @@
 // `kind: "rest"` : récup passive (type "rest" du player, « Prépare-toi » avant le step suivant).
 // `intro` (sur un bloc, ou sur le premier step d'un cycle/sequence) : phrase
 // dite une seule fois à l'entrée, avant l'annonce du step.
+// `lastRounds: { count, name?, spoken? }` sur un step de `round` : sur les `count`
+// derniers tours, ce nom / cette phrase remplacent les siens (« vers I4 sur la fin
+// du bloc ») — compté depuis la fin, donc juste quel que soit le nombre de tours.
+
+// Préparation à la maison des séances « EDT » (C1S9 →) : 9 min, + 5 min d'équilibre
+// quand le coach le demande, puis la pause « Sors ».
+function edtHomePrep({ balance = false } = {}) {
+  return [
+    {
+      kind: "sequence",
+      name: "Étirements actifs",
+      intro: "Étirements actifs, 3 minutes.",
+      items: [
+        { name: "Étirements actifs : mollets", seconds: 60 },
+        { name: "Étirements actifs : quadriceps", seconds: 60 },
+        { name: "Étirements actifs : ischios", seconds: 60 },
+      ],
+    },
+    {
+      kind: "sequence",
+      name: "Rotations articulaires",
+      intro: "Rotations articulaires, 3 minutes.",
+      items: [
+        { name: "Rotations de hanches", spoken: "Rotations des hanches", seconds: 90 },
+        { name: "Rotations de chevilles", spoken: "Rotations des chevilles", seconds: 90 },
+      ],
+    },
+    {
+      kind: "sequence",
+      name: "Mobilité pied-cheville",
+      intro: "Mobilité du pied et de la cheville, 3 minutes.",
+      items: [
+        { name: "Mobilité pied-cheville : pied gauche", spoken: "Pied et cheville gauches", seconds: 90 },
+        { name: "Mobilité pied-cheville : pied droit", spoken: "Pied et cheville droits", seconds: 90 },
+      ],
+    },
+    ...(balance
+      ? [
+          {
+            kind: "cycle",
+            name: "Équilibre",
+            total: 300,
+            slot: 15,
+            intro: "Équilibre sur un pied, genou de la jambe libre levé. 5 minutes, on change de pied toutes les 15 secondes.",
+            items: [
+              { name: "Équilibre pied gauche, genou levé", spoken: "Pied gauche" },
+              { name: "Équilibre pied droit, genou levé", spoken: "Pied droit" },
+            ],
+          },
+        ]
+      : []),
+    {
+      kind: "checkpoint",
+      name: "Sortie",
+      instruction: "Préparation terminée. Sors, et appuie sur Démarrer dès que tu es dehors.",
+    },
+  ];
+}
+
+// Gammes simples EDT : 2 passages des 3 gammes, 50 s chacune (30 m + retour trotté) = 5 min.
+const EDT_GAMMES = {
+  name: "Gammes simples",
+  rounds: 2,
+  roundLabel: "Passage",
+  intro: "Gammes simples, 5 minutes, 2 passages. Chaque gamme sur 30 mètres, puis retour en trottant.",
+  round: [
+    { name: "Talons-fesses, 30 m + retour trotté", spoken: "Talons-fesses", seconds: 50 },
+    { name: "Montées de genoux, 30 m + retour trotté", spoken: "Montées de genoux", seconds: 50 },
+    { name: "Schtroumpf, 30 m + retour trotté", spoken: "Schtroumpf", seconds: 50 },
+  ],
+};
+
+// Corps « course à allures variables + 1 min de renfo après chaque portion » (C1S10, C1S12).
+function edtRunRenfoSteps(portions, renfo) {
+  return portions.flatMap(([seconds, name, spoken]) => [
+    { kind: "step", name, spoken, seconds, announceNext: true },
+    ...renfo.map((r) => ({ kind: "step", ...r })),
+  ]);
+}
 
 const SESSION_LIBRARY = [
   {
@@ -857,6 +936,249 @@ const SESSION_LIBRARY = [
       },
     ],
   },
+  {
+    id: "C1S9",
+    date: "13/10/26",
+    title: "C1S9 — Aller progressivement vers I3-I4, squats et climbers",
+    subtitle: "≈ 55 min · préparation 14 min, 10 min I1, gammes, 2 blocs de 8 à 9 min (renfo + 30 s I3→I4 + 20 s I2), 5 min I1",
+    advice:
+      "Objectif : préparer les structures à aller vers la VMA. Terrain plat ou en légère montée, facile. Un tour = 10 squats tempo 2-0-1-0 (2 s à la descente) au bloc 1, 30 climbers au bloc 2, puis 30 s en I3 et 20 s de récup en I2. Sur les 2 derniers tours de chaque bloc, monte vers I4. 2 min de pause entre les blocs.",
+    options: [
+      {
+        key: "pace",
+        label: "Rythme sur le renfo",
+        default: 1,
+        choices: [
+          { value: 1.25, label: "Tranquille" },
+          { value: 1, label: "Normal" },
+          { value: 0.8, label: "Rapide" },
+        ],
+      },
+      {
+        key: "rounds",
+        label: "Tours par bloc",
+        default: 7,
+        choices: [
+          { value: 6, label: "6 tours (8 min)" },
+          { value: 7, label: "7 tours (9 min 20)" },
+        ],
+      },
+    ],
+    blocks: [
+      { name: "Préparation (à la maison)", steps: edtHomePrep({ balance: true }) },
+      {
+        name: "Course facile",
+        steps: [
+          {
+            kind: "step",
+            name: "Course facile (I1)",
+            spoken: "Course facile, intensité 1. Tu peux tenir une conversation facilement",
+            seconds: 600,
+            announceNext: true,
+          },
+        ],
+      },
+      EDT_GAMMES,
+      {
+        name: "Squats + I3",
+        rounds: { option: "rounds" },
+        intro:
+          "Bloc 1. À chaque tour : 10 squats, tempo 2, 0, 1, 0, deux secondes à la descente. Puis 30 secondes en intensité 3, et 20 secondes de récup en intensité 2. Sur la fin du bloc, tu montes vers l'intensité 4.",
+        round: [
+          { name: "10 squats (2-0-1-0)", spoken: "10 squats, deux secondes à la descente", seconds: 30, estimated: true },
+          {
+            name: "Course I3",
+            spoken: "Course, intensité 3",
+            seconds: 30,
+            sayDuration: false,
+            lastRounds: { count: 2, name: "Course vers I4", spoken: "Course, monte vers intensité 4" },
+          },
+          { name: "Récup, course I2", spoken: "Récup, intensité 2", seconds: 20, sayDuration: false },
+        ],
+      },
+      {
+        name: "Pause",
+        steps: [{ kind: "rest", name: "Pause", spoken: "Pause, tu arrêtes de courir", seconds: 120 }],
+      },
+      {
+        name: "Climbers + I3",
+        rounds: { option: "rounds" },
+        intro:
+          "Bloc 2. À chaque tour : 30 climbers, puis 30 secondes en intensité 3, et 20 secondes de récup en intensité 2. Sur la fin du bloc, tu montes vers l'intensité 4.",
+        round: [
+          { name: "30 climbers", spoken: "30 climbers", seconds: 30, estimated: true },
+          {
+            name: "Course I3",
+            spoken: "Course, intensité 3",
+            seconds: 30,
+            sayDuration: false,
+            lastRounds: { count: 2, name: "Course vers I4", spoken: "Course, monte vers intensité 4" },
+          },
+          { name: "Récup, course I2", spoken: "Récup, intensité 2", seconds: 20, sayDuration: false },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "C1S10",
+    date: "17/10/26",
+    title: "C1S10 — Variations d'allures et renfo squats-climbers",
+    subtitle: "≈ 54 min · préparation 9 min, 9 portions de course I1 à I4 avec 1 min de renfo après chacune, 5 min I1",
+    advice:
+      "Endurance, terrain plat et facile. Après chaque portion de course : 1 min de renfo = 30 s de squats tempo 1-0-1-0 + 30 s de climbers. Portions : 5 min I1, 3 min I2, 3 min I3, 2 min en montant vers I4, deux fois, puis 5 min I1. Retour au calme 5 min après le dernier renfo.",
+    blocks: [
+      { name: "Préparation (à la maison)", steps: edtHomePrep() },
+      {
+        name: "Corps de séance",
+        intro:
+          "Corps de séance, 40 minutes. Tu alternes une portion de course et une minute de renfo : 30 secondes de squats, 30 secondes de climbers.",
+        steps: edtRunRenfoSteps(
+          [
+            [300, "Course I1", "Course, intensité 1"],
+            [180, "Course I2", "Course, intensité 2"],
+            [180, "Course I3", "Course, intensité 3"],
+            [120, "Course, progressivement I4", "Course, monte progressivement vers intensité 4"],
+            [300, "Course I1", "Course, intensité 1"],
+            [180, "Course I2", "Course, intensité 2"],
+            [180, "Course I3", "Course, intensité 3"],
+            [120, "Course, progressivement I4", "Course, monte progressivement vers intensité 4"],
+            [300, "Course I1", "Course, intensité 1"],
+          ],
+          [
+            { name: "Squats (1-0-1-0)", spoken: "Squats, tempo un, zéro, un, zéro", seconds: 30 },
+            { name: "Climbers", seconds: 30 },
+          ]
+        ),
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "C1S12",
+    date: "20/10/26",
+    title: "C1S12 — Pyramide d'allures jusqu'à I5, fentes et montée de genou",
+    subtitle: "≈ 51 min · préparation 9 min, 11 portions de course I1 → I5 → I1 avec 1 min de renfo après chacune",
+    advice:
+      "Endurance, chercher progressivement I4 puis I5. Terrain plat et facile. Après chaque portion de course : 1 min de renfo = 30 s de fente + montée de genou à gauche, puis 30 s à droite. Portions : 5 min I1, 4 min I2, 3 min I3, 2 min vers I4, 1 min vers I5, 1 min I2, 1 min vers I5, 2 min vers I4, 3 min I3, 4 min I2, 5 min I1. La séance se termine après le dernier renfo.",
+    blocks: [
+      { name: "Préparation (à la maison)", steps: edtHomePrep() },
+      {
+        name: "Corps de séance",
+        intro:
+          "Corps de séance, 42 minutes. Tu alternes une portion de course et une minute de renfo : fente et montée de genou, 30 secondes à gauche, 30 secondes à droite.",
+        steps: edtRunRenfoSteps(
+          [
+            [300, "Course I1", "Course, intensité 1"],
+            [240, "Course I2", "Course, intensité 2"],
+            [180, "Course I3", "Course, intensité 3"],
+            [120, "Course, progressivement I4", "Course, monte progressivement vers intensité 4"],
+            [60, "Course, progressivement I5", "Course, monte progressivement vers intensité 5"],
+            [60, "Course I2", "Course, intensité 2"],
+            [60, "Course, progressivement I5", "Course, monte progressivement vers intensité 5"],
+            [120, "Course I4", "Course, intensité 4"],
+            [180, "Course I3", "Course, intensité 3"],
+            [240, "Course I2", "Course, intensité 2"],
+            [300, "Course I1", "Course, intensité 1"],
+          ],
+          [
+            { name: "Fente + montée de genou gauche", spoken: "Fente et montée de genou, jambe gauche", seconds: 30 },
+            { name: "Fente + montée de genou droite", spoken: "Jambe droite", seconds: 30 },
+          ]
+        ),
+      },
+    ],
+  },
+  {
+    // PROVISOIRE (10/10) : 7 passages et I2 sur les 3 premiers / I3 ensuite, en attendant
+    // la réponse de Céline (coach EDT). Ordre des consignes = celui de la liste du coach.
+    id: "C1S11",
+    date: "30/10/26",
+    title: "C1S11 — Technique de course en côte",
+    subtitle: "≈ 52 min · préparation 14 min, 10 min I1, gammes, 7 passages en côte (climbers, montée avec consigne technique, fentes, descente), 5 min I1",
+    advice:
+      "Terrain : une petite côte de 5 à 10 %, facile, de 100 à 120 m (sinon une petite côte ou des escaliers). Un passage : 20 climbers en bas, montée avec une consigne technique (I2 sur les 3 premiers passages, I3 ensuite), 6 paires de fentes arrière + montée de genou en haut, descente relâchée I1-I2. Les durées sont estimées : règle l'option Rythme selon ta côte. Version provisoire, en attente de validation par la coach.",
+    options: [
+      {
+        key: "pace",
+        label: "Rythme sur les passages",
+        default: 1,
+        choices: [
+          { value: 1.25, label: "Tranquille" },
+          { value: 1, label: "Normal" },
+          { value: 0.8, label: "Rapide" },
+        ],
+      },
+    ],
+    blocks: [
+      { name: "Préparation (à la maison)", steps: edtHomePrep({ balance: true }) },
+      {
+        name: "Course facile",
+        steps: [
+          {
+            kind: "step",
+            name: "Course facile (I1)",
+            spoken: "Course facile, intensité 1. Tu peux tenir une conversation facilement",
+            seconds: 600,
+            announceNext: true,
+          },
+        ],
+      },
+      EDT_GAMMES,
+      {
+        name: "Technique en côte",
+        rounds: 7,
+        roundLabel: "Passage",
+        intro:
+          "Technique de course en côte, 7 passages. En bas, 20 climbers. Tu montes avec une consigne technique, en haut 6 paires de fentes arrière avec montée de genou, et tu redescends relâché.",
+        round: [
+          { name: "20 climbers (en bas)", spoken: "En bas, 20 climbers", seconds: 20, estimated: true },
+          {
+            label: "montée avec consigne (cadence · grandis-toi · bras · cadence + bras · cadence + grandis-toi · grandis-toi + bras · libre), I2 puis I3",
+            name: [
+              "Montée I2 — cadence",
+              "Montée I2 — grandis-toi",
+              "Montée I2 — bras",
+              "Montée I3 — cadence + bras",
+              "Montée I3 — cadence + grandis-toi",
+              "Montée I3 — grandis-toi + bras",
+              "Montée I3 — libre",
+            ],
+            spoken: [
+              "Montée, intensité 2. Beaucoup de cadence, appuis brefs, le sol brûle",
+              "Montée, intensité 2. Grandis-toi, redresse-toi, regarde au loin",
+              "Montée, intensité 2. Exagère le travail des bras",
+              "Montée, intensité 3. Cadence et bras",
+              "Montée, intensité 3. Cadence, et grandis-toi",
+              "Montée, intensité 3. Grandis-toi, et les bras",
+              "Montée, intensité 3. Consigne libre",
+            ],
+            seconds: 45,
+            estimated: true,
+            doneCue: "Arrivé en haut",
+          },
+          { name: "6 paires de fentes arrière + montée de genou", spoken: "6 paires de fentes arrière, avec montée de genou", seconds: 35, estimated: true },
+          { name: "Descente relâchée (I1-I2)", spoken: "Descente relâchée, facile", seconds: 60, estimated: true, doneCue: "Arrivé en bas" },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
 ];
 
 function librarySessionById(id) {
@@ -965,9 +1287,13 @@ function compileLibrarySession(def, optionOverrides = {}) {
               });
               return;
             }
+            // `lastRounds` : variante sur les N derniers tours (compté depuis la fin).
+            const late = sub.lastRounds && r > rounds - sub.lastRounds.count ? sub.lastRounds : null;
+            const subName = late && late.name ? late.name : pick(sub.name, r);
+            const subSpoken = late && late.spoken ? late.spoken : sub.spoken ? pick(sub.spoken, r) : subName;
             push(blockId, {
-              name: pick(sub.name, r),
-              spoken: sub.spoken ? pick(sub.spoken, r) : pick(sub.name, r),
+              name: subName,
+              spoken: subSpoken,
               seconds: dur,
               round: r,
               roundLabel: block.roundLabel,
