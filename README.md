@@ -59,6 +59,12 @@ App publique:
 
 - https://cds-fleurier.github.io/0to100-session-player-app/
 
+### Version École de Trail
+
+- https://cds-fleurier.github.io/ecole-de-trail-session-player/ (repo `ecole-de-trail-session-player`)
+- Même player, ISO : la page EDT charge `script.js`, les séances, la musique et les voix **depuis ce repo** (URL absolues, `window.PLAYER_ASSET_BASE` pour les voix). Seule la page d'accueil diffère : habillage École de Trail (`brands/ecole-de-trail/` : `edt.css`, logo, favicon) et **pas de barre du hub 0 to 100** (pas d'accès à la carte des participants, dates de naissance, photos…).
+- Générée par `node tools/build-edt.cjs` (écrit dans `../ecole-de-trail-session-player`) à partir de `index.html` ; le script échoue s'il reste une trace du hub ou de la marque 0 to 100.
+
 ## Séances intégrées
 
 Certaines séances (course + renfo en enchaînements imbriqués) ne se laissent pas deviner depuis du texte : un cycle de 20 s à l'intérieur d'un bloc de 3 min, des tours définis par une durée totale, une pause pour sortir de la maison… Elles sont décrites en déclaratif dans `sessions-library.js` et compilées en timeline par `compileLibrarySession()`. Le player (voix, bips, FWD, pause) est le même que pour les séances collées.
@@ -206,6 +212,7 @@ fixes n'auraient plus besoin du réseau).
 - Historique des changements dans `CHANGELOG.md`.
 - À chaque modification livrée, incrémenter `APP_VERSION` dans `script.js` (SemVer: `major.minor.patch`).
 - Et reporter le même numéro dans les `?v=` de `index.html` (styles + scripts) : sans ça, les navigateurs gardent jusqu’à 10 min l’ancien JS en cache (GitHub Pages sert `max-age=600`).
+- Puis relancer `node tools/build-edt.cjs` et pousser aussi `ecole-de-trail-session-player` (son `?v=` suit celui d'ici). Prévisualisation locale : `EDT_BASE=http://localhost:8766/ node tools/build-edt.cjs <dossier>` (serveur du player avec en-tête CORS).
 
 ## Roadmap
 

@@ -1,0 +1,77 @@
+/* Habillage École de Trail — chargé APRÈS styles.css, ne fait que surcharger.
+   Charte ecole-de-trail.com : vert forêt #213B22, or #E4A316, Oswald (titres) + Noto Sans (texte). */
+
+:root {
+  --bg-1: #213b22;
+  --bg-2: #172a18;
+  --card: #f6f4ec;
+  --card-strong: #fdfcf7;
+  --accent: #e4a316;
+  --accent-strong: #c98a0a;
+  --accent-soft: #fbefd0;
+  --dark-chip: #213b22;
+  --border: #e2ddcc;
+  --edt-ink: #1a2e1b;
+}
+
+body {
+  font-family: "Noto Sans", "Trebuchet MS", sans-serif;
+  background:
+    radial-gradient(circle at 12% 15%, rgba(228, 163, 22, 0.16), transparent 35%),
+    radial-gradient(circle at 82% 5%, rgba(120, 170, 110, 0.14), transparent 30%),
+    linear-gradient(150deg, var(--bg-1), var(--bg-2) 62%, #0f1d10);
+}
+
+h1,
+h2,
+.countdown {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  letter-spacing: 0.6px;
+}
+
+.countdown {
+  font-weight: 700;
+  color: var(--edt-ink);
+  text-shadow: 0 2px 0 rgba(228, 163, 22, 0.25);
+}
+
+button,
+.music-btn,
+.music-btn-sm {
+  font-family: "Noto Sans", "Trebuchet MS", sans-serif;
+}
+
+/* Boutons principaux : or + texte vert (le blanc sur or n'est pas lisible) */
+button {
+  color: var(--edt-ink);
+}
+
+.secondary-btn,
+.music-btn,
+.music-btn-sm {
+  background: linear-gradient(160deg, #2f5531, #213b22);
+  color: #fff;
+}
+
+textarea:focus,
+.field-select:focus {
+  outline-color: rgba(228, 163, 22, 0.5);
+}
+
+.meta {
+  background: linear-gradient(160deg, var(--accent-soft), #fdf5e1);
+  color: #4a3500;
+  border-color: #efd590;
+}
+
+.player-card {
+  background: linear-gradient(180deg, #fbf9f1 0%, #f6f2e3 100%);
+}
+
+.music-track-bpm {
+  color: #6b4b00;
+}
+
+.brand-logo {
+  width: min(150px, 42%);
+}

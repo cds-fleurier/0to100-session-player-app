@@ -29,7 +29,9 @@ const els = {
   metronomeHint: document.getElementById("metronomeHint"),
   silentSwitchToggle: document.getElementById("silentSwitchToggle"),
 };
-const APP_VERSION = "v1.26.1";
+const APP_VERSION = "v1.27.0";
+// Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
+const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
 const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
@@ -827,7 +829,7 @@ async function loadSessionVoice() {
   try {
     const decoded = await Promise.all(
       manifest.sessions[id].map(async (clip) => {
-        const res = await fetch(`voice/${dir}/${clip}.m4a`);
+        const res = await fetch(`${ASSET_BASE}voice/${dir}/${clip}.m4a`);
         if (!res.ok) throw new Error(`clip ${clip} : ${res.status}`);
         return [clip, await decoder.decodeAudioData(await res.arrayBuffer())];
       })

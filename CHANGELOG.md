@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.27.0] - 2026-10-10
+
+- **Version École de Trail** du player (demande de Céline, pour ses élèves) : même player, page d'accueil aux couleurs EDT, sans la barre du hub 0 to 100 → https://cds-fleurier.github.io/ecole-de-trail-session-player/ . Générée par `tools/build-edt.cjs`, habillage dans `brands/ecole-de-trail/`.
+- `script.js` : `window.PLAYER_ASSET_BASE` (optionnel) préfixe le chemin des voix, pour une page servie depuis un autre dossier.
+
 ## [1.26.1] - 2026-10-10
 
 Réponses de Céline (coach École de trail) du 10/10 appliquées.
