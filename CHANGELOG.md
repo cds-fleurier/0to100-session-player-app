@@ -2,6 +2,17 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.26.1] - 2026-10-10
+
+Réponses de Céline (coach École de trail) du 10/10 appliquées.
+
+### Modifié
+- **C1S9** : les 2 min entre les blocs deviennent une **récup active** (marche ou trot), plus une pause. « Vers I4 » sur les 2 derniers tours au bloc 1, sur les **3 derniers** au bloc 2.
+- **Gammes EDT** (C1S9, C1S11) : 6 × (30 s de trot + 20 s de gamme) = 5 min — 2 talons-fesses, 2 montées de genoux, schtroumpf facile puis genou un peu plus haut.
+- **C1S11 validée** : boucle convertie en temps, 3 min (40 s climbers, 30 s de montée — 20 s « pars en I2, accélère progressivement » + la consigne technique, puis 10 s « tu dois être en I3, finis en I3 » —, 40 s fentes arrière + montée de genou, 1 min descente, 10 s mise en place), 7 boucles, une consigne par montée. Plus d'estimation ni d'option Rythme.
+- **C1S12** : pas de renfo après les 5 dernières minutes en I1 → corps de séance 41 min, 50 min avec la préparation.
+- Voix enregistrée régénérée.
+
 ## [1.26.0] - 2026-10-10
 
 Séances lues directement dans Nolio (Claude in Chrome sur le compte de l'utilisateur), lecture validée question par question avec l'utilisateur.

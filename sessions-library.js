@@ -108,24 +108,30 @@ function edtHomePrep({ balance = false } = {}) {
   ];
 }
 
-// Gammes simples EDT : 2 passages des 3 gammes, 50 s chacune (30 m + retour trotté) = 5 min.
+// Gammes simples EDT, découpage de Céline (coach EDT, 10/10) : 30 s de trot puis 20 s de
+// gamme, 6 fois — 2 talons-fesses, 2 montées de genoux, 2 schtroumpfs (le 2e genou plus haut) = 5 min.
 const EDT_GAMMES = {
   name: "Gammes simples",
-  rounds: 2,
-  roundLabel: "Passage",
-  intro: "Gammes simples, 5 minutes, 2 passages. Chaque gamme sur 30 mètres, puis retour en trottant.",
-  round: [
-    { name: "Talons-fesses, 30 m + retour trotté", spoken: "Talons-fesses", seconds: 50 },
-    { name: "Montées de genoux, 30 m + retour trotté", spoken: "Montées de genoux", seconds: 50 },
-    { name: "Schtroumpf, 30 m + retour trotté", spoken: "Schtroumpf", seconds: 50 },
-  ],
+  intro: "Gammes simples, 5 minutes. Tu alternes 30 secondes de trot et 20 secondes de gamme.",
+  steps: [
+    ["Talons-fesses", "Talons-fesses"],
+    ["Talons-fesses", "Talons-fesses"],
+    ["Montées de genoux", "Montées de genoux"],
+    ["Montées de genoux", "Montées de genoux"],
+    ["Schtroumpf facile", "Schtroumpf, facile"],
+    ["Schtroumpf, genou plus haut", "Schtroumpf, genou un peu plus haut"],
+  ].flatMap(([name, spoken]) => [
+    { kind: "step", name: "Trot", spoken: "Trottine", seconds: 30 },
+    { kind: "step", name, spoken, seconds: 20 },
+  ]),
 };
 
 // Corps « course à allures variables + 1 min de renfo après chaque portion » (C1S10, C1S12).
-function edtRunRenfoSteps(portions, renfo) {
-  return portions.flatMap(([seconds, name, spoken]) => [
+// `renfoAfterLast: false` : pas de renfo après la dernière portion (C1S12).
+function edtRunRenfoSteps(portions, renfo, { renfoAfterLast = true } = {}) {
+  return portions.flatMap(([seconds, name, spoken], i) => [
     { kind: "step", name, spoken, seconds, announceNext: true },
-    ...renfo.map((r) => ({ kind: "step", ...r })),
+    ...(renfoAfterLast || i < portions.length - 1 ? renfo.map((r) => ({ kind: "step", ...r })) : []),
   ]);
 }
 
@@ -940,9 +946,9 @@ const SESSION_LIBRARY = [
     id: "C1S9",
     date: "13/10/26",
     title: "C1S9 — Aller progressivement vers I3-I4, squats et climbers",
-    subtitle: "≈ 55 min · préparation 14 min, 10 min I1, gammes, 2 blocs de 8 à 9 min (renfo + 30 s I3→I4 + 20 s I2), 5 min I1",
+    subtitle: "≈ 55 min · préparation 14 min, 10 min I1, gammes, 2 blocs de 6-7 tours (renfo + 30 s I3→I4 + 20 s I2), 2 min récup active, 5 min I1",
     advice:
-      "Objectif : préparer les structures à aller vers la VMA. Terrain plat ou en légère montée, facile. Un tour = 10 squats tempo 2-0-1-0 (2 s à la descente) au bloc 1, 30 climbers au bloc 2, puis 30 s en I3 et 20 s de récup en I2. Sur les 2 derniers tours de chaque bloc, monte vers I4. 2 min de pause entre les blocs.",
+      "Objectif : préparer les structures à aller vers la VMA. Terrain plat ou en légère montée, facile. Un tour = 10 squats tempo 2-0-1-0 (2 s à la descente) au bloc 1, 30 climbers au bloc 2, puis 30 s en I3 et 20 s de récup en I2. Monte vers I4 sur les 2 derniers tours du bloc 1 et les 3 derniers du bloc 2. 2 min de récup active entre les blocs (marche ou trot).",
     options: [
       {
         key: "pace",
@@ -983,7 +989,7 @@ const SESSION_LIBRARY = [
         name: "Squats + I3",
         rounds: { option: "rounds" },
         intro:
-          "Bloc 1. À chaque tour : 10 squats, tempo 2, 0, 1, 0, deux secondes à la descente. Puis 30 secondes en intensité 3, et 20 secondes de récup en intensité 2. Sur la fin du bloc, tu montes vers l'intensité 4.",
+          "Bloc 1. À chaque tour : 10 squats, tempo 2, 0, 1, 0, deux secondes à la descente. Puis 30 secondes en intensité 3, et 20 secondes de récup en intensité 2. Sur les 2 derniers tours, tu montes vers l'intensité 4.",
         round: [
           { name: "10 squats (2-0-1-0)", spoken: "10 squats, deux secondes à la descente", seconds: 30, estimated: true },
           {
@@ -997,14 +1003,16 @@ const SESSION_LIBRARY = [
         ],
       },
       {
-        name: "Pause",
-        steps: [{ kind: "rest", name: "Pause", spoken: "Pause, tu arrêtes de courir", seconds: 120 }],
+        name: "Récup active",
+        steps: [
+          { kind: "step", name: "Récup active (marche ou trot)", spoken: "Récup active, marche ou trottine pour ne pas te refroidir", seconds: 120, announceNext: true },
+        ],
       },
       {
         name: "Climbers + I3",
         rounds: { option: "rounds" },
         intro:
-          "Bloc 2. À chaque tour : 30 climbers, puis 30 secondes en intensité 3, et 20 secondes de récup en intensité 2. Sur la fin du bloc, tu montes vers l'intensité 4.",
+          "Bloc 2. À chaque tour : 30 climbers, puis 30 secondes en intensité 3, et 20 secondes de récup en intensité 2. Sur les 3 derniers tours, tu montes vers l'intensité 4.",
         round: [
           { name: "30 climbers", spoken: "30 climbers", seconds: 30, estimated: true },
           {
@@ -1012,7 +1020,7 @@ const SESSION_LIBRARY = [
             spoken: "Course, intensité 3",
             seconds: 30,
             sayDuration: false,
-            lastRounds: { count: 2, name: "Course vers I4", spoken: "Course, monte vers intensité 4" },
+            lastRounds: { count: 3, name: "Course vers I4", spoken: "Course, monte vers intensité 4" },
           },
           { name: "Récup, course I2", spoken: "Récup, intensité 2", seconds: 20, sayDuration: false },
         ],
@@ -1068,15 +1076,15 @@ const SESSION_LIBRARY = [
     id: "C1S12",
     date: "20/10/26",
     title: "C1S12 — Pyramide d'allures jusqu'à I5, fentes et montée de genou",
-    subtitle: "≈ 51 min · préparation 9 min, 11 portions de course I1 → I5 → I1 avec 1 min de renfo après chacune",
+    subtitle: "≈ 50 min · préparation 9 min, 11 portions de course I1 → I5 → I1, 1 min de renfo entre chaque",
     advice:
-      "Endurance, chercher progressivement I4 puis I5. Terrain plat et facile. Après chaque portion de course : 1 min de renfo = 30 s de fente + montée de genou à gauche, puis 30 s à droite. Portions : 5 min I1, 4 min I2, 3 min I3, 2 min vers I4, 1 min vers I5, 1 min I2, 1 min vers I5, 2 min vers I4, 3 min I3, 4 min I2, 5 min I1. La séance se termine après le dernier renfo.",
+      "Endurance, chercher progressivement I4 puis I5. Terrain plat et facile. Entre deux portions de course : 1 min de renfo = 30 s de fente + montée de genou à gauche, puis 30 s à droite. Portions : 5 min I1, 4 min I2, 3 min I3, 2 min vers I4, 1 min vers I5, 1 min I2, 1 min vers I5, 2 min vers I4, 3 min I3, 4 min I2, 5 min I1. Pas de renfo après les 5 dernières minutes en I1 : la séance se termine là.",
     blocks: [
       { name: "Préparation (à la maison)", steps: edtHomePrep() },
       {
         name: "Corps de séance",
         intro:
-          "Corps de séance, 42 minutes. Tu alternes une portion de course et une minute de renfo : fente et montée de genou, 30 secondes à gauche, 30 secondes à droite.",
+          "Corps de séance, 41 minutes. Tu alternes une portion de course et une minute de renfo : fente et montée de genou, 30 secondes à gauche, 30 secondes à droite.",
         steps: edtRunRenfoSteps(
           [
             [300, "Course I1", "Course, intensité 1"],
@@ -1094,32 +1102,21 @@ const SESSION_LIBRARY = [
           [
             { name: "Fente + montée de genou gauche", spoken: "Fente et montée de genou, jambe gauche", seconds: 30 },
             { name: "Fente + montée de genou droite", spoken: "Jambe droite", seconds: 30 },
-          ]
+          ],
+          { renfoAfterLast: false }
         ),
       },
     ],
   },
   {
-    // PROVISOIRE (10/10) : 7 passages et I2 sur les 3 premiers / I3 ensuite, en attendant
-    // la réponse de Céline (coach EDT). Ordre des consignes = celui de la liste du coach.
+    // Validée par Céline (coach EDT) le 10/10 : boucle convertie en temps (3 min), 7 boucles,
+    // une consigne technique par montée (ordre de sa liste), I2 → I3 progressif à chaque montée.
     id: "C1S11",
     date: "30/10/26",
     title: "C1S11 — Technique de course en côte",
-    subtitle: "≈ 52 min · préparation 14 min, 10 min I1, gammes, 7 passages en côte (climbers, montée avec consigne technique, fentes, descente), 5 min I1",
+    subtitle: "≈ 55 min · préparation 14 min, 10 min I1, gammes, 7 boucles de 3 min en côte (climbers, montée I2 → I3 avec consigne technique, fentes, descente), 5 min I1",
     advice:
-      "Terrain : une petite côte de 5 à 10 %, facile, de 100 à 120 m (sinon une petite côte ou des escaliers). Un passage : 20 climbers en bas, montée avec une consigne technique (I2 sur les 3 premiers passages, I3 ensuite), 6 paires de fentes arrière + montée de genou en haut, descente relâchée I1-I2. Les durées sont estimées : règle l'option Rythme selon ta côte. Version provisoire, en attente de validation par la coach.",
-    options: [
-      {
-        key: "pace",
-        label: "Rythme sur les passages",
-        default: 1,
-        choices: [
-          { value: 1.25, label: "Tranquille" },
-          { value: 1, label: "Normal" },
-          { value: 0.8, label: "Rapide" },
-        ],
-      },
-    ],
+      "Terrain : une petite côte de 5 à 10 %, facile, de 100 à 120 m (sinon une petite côte ou des escaliers). Boucle de 3 min : 40 s de climbers en bas, 30 s de montée (pars en I2, accélère progressivement, en I3 au bout de 20 s et finis en I3) avec une consigne technique, 40 s de fentes arrière + montée de genou en haut (6 paires), 1 min de descente relâchée I1-I2, 10 s pour te remettre en place.",
     blocks: [
       { name: "Préparation (à la maison)", steps: edtHomePrep({ balance: true }) },
       {
@@ -1138,37 +1135,38 @@ const SESSION_LIBRARY = [
       {
         name: "Technique en côte",
         rounds: 7,
-        roundLabel: "Passage",
+        roundLabel: "Boucle",
         intro:
-          "Technique de course en côte, 7 passages. En bas, 20 climbers. Tu montes avec une consigne technique, en haut 6 paires de fentes arrière avec montée de genou, et tu redescends relâché.",
+          "Technique de course en côte, 7 boucles de 3 minutes. En bas, 20 climbers. Tu montes avec une consigne technique, en haut 6 paires de fentes arrière avec montée de genou, et tu redescends relâché.",
         round: [
-          { name: "20 climbers (en bas)", spoken: "En bas, 20 climbers", seconds: 20, estimated: true },
+          { name: "20 climbers (en bas)", spoken: "En bas, 20 climbers", seconds: 40 },
           {
-            label: "montée avec consigne (cadence · grandis-toi · bras · cadence + bras · cadence + grandis-toi · grandis-toi + bras · libre), I2 puis I3",
+            label: "30 s de montée I2 → I3 avec une consigne (cadence · grandis-toi · bras · cadence + bras · cadence + grandis-toi · grandis-toi + bras · libre)",
             name: [
-              "Montée I2 — cadence",
-              "Montée I2 — grandis-toi",
-              "Montée I2 — bras",
-              "Montée I3 — cadence + bras",
-              "Montée I3 — cadence + grandis-toi",
-              "Montée I3 — grandis-toi + bras",
-              "Montée I3 — libre",
+              "Montée I2 → I3 — cadence",
+              "Montée I2 → I3 — grandis-toi",
+              "Montée I2 → I3 — bras",
+              "Montée I2 → I3 — cadence + bras",
+              "Montée I2 → I3 — cadence + grandis-toi",
+              "Montée I2 → I3 — grandis-toi + bras",
+              "Montée I2 → I3 — libre",
             ],
             spoken: [
-              "Montée, intensité 2. Beaucoup de cadence, appuis brefs, le sol brûle",
-              "Montée, intensité 2. Grandis-toi, redresse-toi, regarde au loin",
-              "Montée, intensité 2. Exagère le travail des bras",
-              "Montée, intensité 3. Cadence et bras",
-              "Montée, intensité 3. Cadence, et grandis-toi",
-              "Montée, intensité 3. Grandis-toi, et les bras",
-              "Montée, intensité 3. Consigne libre",
+              "Montée. Pars en intensité 2 et accélère progressivement. Beaucoup de cadence, appuis brefs, le sol brûle",
+              "Montée. Pars en intensité 2 et accélère progressivement. Grandis-toi, redresse-toi, regarde au loin",
+              "Montée. Pars en intensité 2 et accélère progressivement. Exagère le travail des bras",
+              "Montée. Pars en intensité 2 et accélère progressivement. Cadence et bras",
+              "Montée. Pars en intensité 2 et accélère progressivement. Cadence, et grandis-toi",
+              "Montée. Pars en intensité 2 et accélère progressivement. Grandis-toi, et les bras",
+              "Montée. Pars en intensité 2 et accélère progressivement. Consigne libre",
             ],
-            seconds: 45,
-            estimated: true,
-            doneCue: "Arrivé en haut",
+            seconds: 20,
+            sayDuration: false,
           },
-          { name: "6 paires de fentes arrière + montée de genou", spoken: "6 paires de fentes arrière, avec montée de genou", seconds: 35, estimated: true },
-          { name: "Descente relâchée (I1-I2)", spoken: "Descente relâchée, facile", seconds: 60, estimated: true, doneCue: "Arrivé en bas" },
+          { name: "Montée en I3", spoken: "Tu dois être en intensité 3. Finis en intensité 3", seconds: 10, sayDuration: false },
+          { name: "6 paires de fentes arrière + montée de genou", spoken: "6 paires de fentes arrière, avec montée de genou", seconds: 40 },
+          { name: "Descente relâchée (I1-I2)", spoken: "Descente relâchée, facile", seconds: 60 },
+          { name: "Mise en place", spoken: "Mets-toi en place", seconds: 10, sayDuration: false },
         ],
       },
       {
