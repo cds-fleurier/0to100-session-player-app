@@ -2,6 +2,17 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.28.0] - 2026-10-15
+
+Cycle 2 (planning Nolio jusqu'au 13/11, lu le 14/10) et retours de Céline du 15/10.
+
+- **C1S11** : descente ramenée de 60 à 40 s (Céline avait compté large), boucle de 2 min 40, **8 boucles** au lieu de 7 (la 8e reprend « cadence »).
+- **C2S1** écrite d'après le Google Doc détaillé de Céline : nouvel échauffement du cycle 2 (`edtC2Warmup()`), gammes contrôle « arrêt bref tous les 5 appuis », 3 blocs tabata + EPIC 20-20 (`edtEpicBlock()`), 1 min de récup après chaque bloc.
+- **Option « Tabata en musique »** (C2S1) : chaque tabata devient une pause ; le player affiche un bouton vers un morceau « Tabata Songs » de 4 min 02 (Cake by the Ocean, Eye of the Tiger, Final Countdown) sur la plateforme choisie dans Musique, on revient sur Démarrer. 10 s « prépare-toi à courir » à la reprise.
+- **Option « Mode hiver »** (C2S1, C2S2, C2S3, note ADAPTATION HIVER des coachs) : chaise → squats, planche → climbers.
+- Nouvelles séances : **C2S2** (planche de face provisoire), **C2S3** (provisoire, circuit converti en tours estimés), **PAVEL** 12/18 min, **CORE** 3/4 tours.
+- Moteur : variantes par option génériques (`on: { <clé d'option>: {…} }` sur un step ou un bloc) ; `music` transmis aux checkpoints ; `sayDuration` respecté hors tours.
+
 ## [1.27.0] - 2026-10-10
 
 - **Version École de Trail** du player (demande de Céline, pour ses élèves) : même player, page d'accueil aux couleurs EDT, sans la barre du hub 0 to 100 → https://cds-fleurier.github.io/ecole-de-trail-session-player/ . Générée par `tools/build-edt.cjs`, habillage dans `brands/ecole-de-trail/`.

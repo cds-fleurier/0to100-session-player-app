@@ -9,6 +9,7 @@ const els = {
   countdown: document.getElementById("countdown"),
   current: document.getElementById("currentLabel"),
   next: document.getElementById("nextLabel"),
+  checkpointMusic: document.getElementById("checkpointMusic"),
   start: document.getElementById("startBtn"),
   pause: document.getElementById("pauseBtn"),
   reset: document.getElementById("resetBtn"),
@@ -29,7 +30,7 @@ const els = {
   metronomeHint: document.getElementById("metronomeHint"),
   silentSwitchToggle: document.getElementById("silentSwitchToggle"),
 };
-const APP_VERSION = "v1.27.0";
+const APP_VERSION = "v1.28.0";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
@@ -1366,8 +1367,21 @@ function enterCheckpoint(step) {
   pauseTimer();
 }
 
+// Pause « tabata en musique » : bouton vers le morceau, sur la plateforme choisie dans Musique.
+function renderCheckpointMusic(step) {
+  const link = els.checkpointMusic;
+  if (!link) return;
+  const music = step && step.type === "checkpoint" && step.music;
+  link.hidden = !music;
+  if (!music) return;
+  const platform = els.musicPlatform ? els.musicPlatform.value : "spotify";
+  link.href = platformUrl(platform, music.artist, music.title);
+  link.textContent = `▶ ${music.title} sur ${PLATFORM_LABELS[platform] || "Spotify"}`;
+}
+
 function renderPlayer() {
   const step = currentStep();
+  renderCheckpointMusic(step);
   if (!step) {
     els.phase.textContent = "Terminé";
     els.phase.className = "phase";

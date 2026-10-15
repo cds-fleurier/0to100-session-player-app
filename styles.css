@@ -541,3 +541,14 @@ body.focus-mode .player-card {
   }
 
 }
+
+/* Pause « tabata en musique » : bouton vers le morceau sous la consigne. */
+.checkpoint-music {
+  margin-top: 12px;
+  font-size: 15px;
+  padding: 12px 18px;
+}
+
+.checkpoint-music[hidden] {
+  display: none;
+}

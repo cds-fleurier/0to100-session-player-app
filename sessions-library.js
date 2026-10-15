@@ -135,6 +135,212 @@ function edtRunRenfoSteps(portions, renfo, { renfoAfterLast = true } = {}) {
   ]);
 }
 
+// Variantes par option : un nœud (step, bloc…) porte `on: { <clé d'option>: { champs remplacés } }`.
+// compileLibrarySession applique, pour chaque option active (valeur ≠ 0), les champs de cette clé.
+//
+// Option « Mode hiver » (note ADAPTATION HIVER des coachs EDT, 09/11) : pas de statique dans
+// le froid → la chaise devient des squats, la planche des climbers.
+const WINTER_OPTION = {
+  key: "winter",
+  label: "Mode hiver (froid)",
+  default: 0,
+  choices: [
+    { value: 0, label: "Non" },
+    { value: 1, label: "Oui : pas de chaise ni de planche" },
+  ],
+};
+
+function libraryApplyOptionVariants(node, active) {
+  if (Array.isArray(node)) return node.map((n) => libraryApplyOptionVariants(n, active));
+  if (!node || typeof node !== "object") return node;
+  const { on, ...rest } = node;
+  let merged = rest;
+  if (on) active.forEach((key) => { if (on[key]) merged = { ...merged, ...on[key] }; });
+  const out = {};
+  Object.keys(merged).forEach((k) => {
+    out[k] = libraryApplyOptionVariants(merged[k], active);
+  });
+  return out;
+}
+
+// Option « Tabata en musique » (C2S1, idée de Céline le 15/10) : chaque tabata devient une pause.
+// L'écran du player propose d'ouvrir un morceau « Tabata Songs » (4 min 02 = un tabata,
+// 8 × 20 s / 10 s, les changements sont dans la musique), on revient sur Démarrer.
+const TABATA_MUSIC_OPTION = {
+  key: "tabataMusic",
+  label: "Tabata",
+  default: 0,
+  choices: [
+    { value: 0, label: "Guidé par le player" },
+    { value: 1, label: "En musique (un morceau Tabata)" },
+  ],
+};
+
+const EDT_CHAISE_WINTER = { name: "Squats (hiver, à la place de la chaise)", spoken: "Squats, à la place de la chaise" };
+
+// Échauffement du cycle 2, détaillé par Céline (Google Doc « seances EDT dans le player », 15/10) :
+// préparation à la maison 12 min (pied-cheville, rotations, étirements actifs, équilibre), pause
+// « Sors », 10 min de course I1, 5 min de gammes contrôle.
+function edtC2Warmup() {
+  const balance = (side) => ({
+    name: `Équilibre ${side === "G" ? "pied gauche" : "pied droit"}, genou levé`,
+    spoken: side === "G" ? "Pied gauche, genou levé" : "Pied droit, genou levé",
+    seconds: 20,
+  });
+  return [
+    {
+      name: "Préparation (à la maison)",
+      steps: [
+        {
+          kind: "sequence",
+          name: "Pied-cheville",
+          intro: "Pied et cheville, 3 minutes, sur les deux pieds.",
+          items: [
+            { name: "Piano : gros orteil puis petits orteils", spoken: "Piano : lève le gros orteil, puis les petits", seconds: 20 },
+            { name: "Écarter et relâcher les orteils", spoken: "Écarte et relâche les orteils", seconds: 20 },
+            { name: "Griffer et relâcher les orteils", spoken: "Griffe et relâche les orteils", seconds: 20 },
+            { name: "Stepper sur place", spoken: "Stepper sur place", seconds: 20 },
+            { name: "Stepper avant-arrière (6 pas)", spoken: "Stepper avant, arrière, 6 pas", seconds: 40 },
+            { name: "Basculer à droite et à gauche", spoken: "Bascule à droite et à gauche", seconds: 20 },
+            { name: "Ton exercice préféré", spoken: "Refais ton exercice préféré", seconds: 40 },
+          ],
+        },
+        {
+          kind: "sequence",
+          name: "Rotations articulaires",
+          intro: "Rotations articulaires, 3 minutes.",
+          items: [
+            { name: "Rotations cheville gauche", spoken: "Cheville gauche", seconds: 30 },
+            { name: "Rotations cheville droite", spoken: "Cheville droite", seconds: 30 },
+            { name: "Rotations genou gauche", spoken: "Genou gauche", seconds: 30 },
+            { name: "Rotations genou droit", spoken: "Genou droit", seconds: 30 },
+            { name: "Rotations hanche gauche", spoken: "Hanche gauche", seconds: 30 },
+            { name: "Rotations hanche droite", spoken: "Hanche droite", seconds: 30 },
+          ],
+        },
+        {
+          kind: "sequence",
+          name: "Étirements actifs",
+          intro: "Étirements actifs, 3 minutes.",
+          items: [
+            { name: "Étirements actifs : mollets", seconds: 60 },
+            { name: "Étirements actifs : quadriceps gauche", spoken: "Quadriceps gauche", seconds: 30 },
+            { name: "Étirements actifs : quadriceps droit", spoken: "Quadriceps droit", seconds: 30 },
+            { name: "Étirements actifs : ischios gauche", spoken: "Ischios gauche", seconds: 30 },
+            { name: "Étirements actifs : ischios droit", spoken: "Ischios droit", seconds: 30 },
+          ],
+        },
+        {
+          kind: "sequence",
+          name: "Équilibre",
+          intro: "Équilibre avec montée de genou, 3 minutes.",
+          items: [
+            balance("G"), balance("D"), balance("G"), balance("D"),
+            { name: "Course sur place, cadence", spoken: "Course sur place, en cadence", seconds: 20, cadence: true },
+            balance("G"), balance("D"), balance("G"), balance("D"),
+          ],
+        },
+        {
+          kind: "checkpoint",
+          name: "Sortie",
+          instruction: "Préparation terminée. Sors, et appuie sur Démarrer dès que tu es dehors.",
+        },
+      ],
+    },
+    {
+      name: "Course facile",
+      steps: [
+        {
+          kind: "step",
+          name: "Course facile (I1)",
+          spoken: "Course facile, intensité 1. Tu peux papoter",
+          seconds: 600,
+          announceNext: true,
+        },
+      ],
+    },
+    {
+      name: "Gammes contrôle",
+      intro: "Gammes contrôle, 5 minutes. Tu alternes 20 secondes de course facile en cadence et 20 secondes de gamme.",
+      steps: [
+        ["Talons-fesses", "Talons-fesses"],
+        ["Talons-fesses, arrêt bref tous les 5 appuis", "Talons-fesses, arrêt bref tous les 5 appuis"],
+        ["Talons-fesses, arrêt bref tous les 5 appuis", "Talons-fesses, arrêt bref"],
+        ["Montées de genoux", "Montées de genoux"],
+        ["Montées de genoux, arrêt bref tous les 5 appuis", "Montées de genoux, arrêt bref tous les 5 appuis"],
+        ["Montées de genoux, arrêt bref tous les 5 appuis", "Montées de genoux, arrêt bref"],
+        ["Gammes libres, arrêt bref tous les 5 appuis", "Gammes libres, arrêt bref tous les 5 appuis"],
+      ]
+        .flatMap(([name, spoken]) => [
+          { kind: "step", name: "Course facile, cadence", spoken: "Course facile, en cadence", seconds: 20, cadence: true, sayDuration: false },
+          { kind: "step", name, spoken, seconds: 20, sayDuration: false },
+        ])
+        .concat([{ kind: "step", name: "Course facile, cadence", spoken: "Course facile, en cadence", seconds: 20, cadence: true, sayDuration: false }]),
+    },
+  ];
+}
+
+// C2S1, doc de Céline : un bloc = tabata 4 min (8 × 20 s / 10 s de récup : chaise, squats,
+// pont pelvien, climbers, 2 fois) + EPIC 20-20 6 min (9 × 20 s course facile / 20 s rapide)
+// + 1 min de récup (trotter ou marcher), y compris après le bloc 3. Le « rapide » change selon
+// le bloc : I3, progressivement I4, progressivement I5.
+function edtEpicBlock(n, fastName, fastSpoken, track) {
+  const tabata = [
+    { name: "Chaise", spoken: "Chaise", on: { winter: EDT_CHAISE_WINTER } },
+    { name: "Squats", spoken: "Squats" },
+    { name: "Pont pelvien", spoken: "Pont pelvien" },
+    { name: "Climbers", spoken: "Climbers" },
+  ];
+  const renfo = [...tabata, ...tabata].flatMap((ex, i) => [
+    { kind: "step", ...ex, name: `${ex.name} (${i + 1}/8)`, seconds: 20, sayDuration: false,
+      ...(ex.on ? { on: { winter: { ...ex.on.winter, name: `${ex.on.winter.name} (${i + 1}/8)` } } } : {}) },
+    { kind: "rest", name: i < 7 ? "Récup" : "Récup, prépare-toi à courir", seconds: 10 },
+  ]);
+  const epic = [];
+  for (let k = 1; k <= 9; k += 1) {
+    epic.push({
+      kind: "step",
+      name: `EPIC ${k}/9 — course facile`,
+      spoken: k === 1 ? "Course EPIC, 6 minutes. Course facile" : k === 9 ? "Facile, dernier" : "Facile",
+      seconds: 20,
+      sayDuration: false,
+    });
+    epic.push({ kind: "step", name: `EPIC ${k}/9 — ${fastName}`, spoken: fastSpoken, seconds: 20, sayDuration: false });
+  }
+  const order = "chaise, squats, pont pelvien, climbers, 2 fois";
+  const instruction = (exercises) =>
+    `Bloc ${n}, tabata en musique. Lance le morceau ${track.title}, une fois : ${exercises}, au rythme de la musique. Reviens ici et appuie sur Démarrer quand il est fini.`;
+  return [
+    {
+      name: `Tabata ${n}/3`,
+      intro: `Bloc ${n}. Tabata, 20 secondes d'effort, 10 secondes de récup.`,
+      steps: renfo,
+      on: {
+        tabataMusic: {
+          intro: undefined,
+          steps: [
+            {
+              kind: "checkpoint",
+              name: `Tabata en musique : ${track.title}`,
+              instruction: instruction(order),
+              music: track,
+              on: { winter: { instruction: instruction("squats à la place de la chaise, squats, pont pelvien, climbers, 2 fois") } },
+            },
+            { kind: "rest", name: "Récup, prépare-toi à courir", seconds: 10 },
+          ],
+        },
+      },
+    },
+    {
+      name: `EPIC ${n}/3`,
+      steps: [
+        ...epic,
+        { kind: "step", name: "Récup (trotter ou marcher)", spoken: "Récup, trotte ou marche", seconds: 60, announceNext: true },
+      ],
+    },
+  ];
+}
+
 const SESSION_LIBRARY = [
   {
     id: "C1S1",
@@ -1109,14 +1315,16 @@ const SESSION_LIBRARY = [
     ],
   },
   {
-    // Validée par Céline (coach EDT) le 10/10 : boucle convertie en temps (3 min), 7 boucles,
+    // Validée par Céline (coach EDT) le 10/10 : boucle convertie en temps, 7 boucles (8 depuis le 15/10 :
+    // descente ramenée de 60 à 40 s, elle avait compté large en testant → boucle de 2 min 40, 1 boucle de plus pour rester ~20 min ;
+    // la 8e reprend la 1re consigne, cadence),
     // une consigne technique par montée (ordre de sa liste), I2 → I3 progressif à chaque montée.
     id: "C1S11",
     date: "30/10/26",
     title: "C1S11 — Technique de course en côte",
-    subtitle: "≈ 55 min · préparation 14 min, 10 min I1, gammes, 7 boucles de 3 min en côte (climbers, montée I2 → I3 avec consigne technique, fentes, descente), 5 min I1",
+    subtitle: "≈ 55 min · préparation 14 min, 10 min I1, gammes, 8 boucles de 2 min 40 en côte (climbers, montée I2 → I3 avec consigne technique, fentes, descente), 5 min I1",
     advice:
-      "Terrain : une petite côte de 5 à 10 %, facile, de 100 à 120 m (sinon une petite côte ou des escaliers). Boucle de 3 min : 40 s de climbers en bas, 30 s de montée (pars en I2, accélère progressivement, en I3 au bout de 20 s et finis en I3) avec une consigne technique, 40 s de fentes arrière + montée de genou en haut (6 paires), 1 min de descente relâchée I1-I2, 10 s pour te remettre en place.",
+      "Terrain : une petite côte de 5 à 10 %, facile, de 100 à 120 m (sinon une petite côte ou des escaliers). Boucle de 2 min 40 : 40 s de climbers en bas, 30 s de montée (pars en I2, accélère progressivement, en I3 au bout de 20 s et finis en I3) avec une consigne technique, 40 s de fentes arrière + montée de genou en haut (6 paires), 40 s maximum de descente relâchée I1-I2, 10 s pour te remettre en place.",
     blocks: [
       { name: "Préparation (à la maison)", steps: edtHomePrep({ balance: true }) },
       {
@@ -1134,10 +1342,10 @@ const SESSION_LIBRARY = [
       EDT_GAMMES,
       {
         name: "Technique en côte",
-        rounds: 7,
+        rounds: 8,
         roundLabel: "Boucle",
         intro:
-          "Technique de course en côte, 7 boucles de 3 minutes. En bas, 20 climbers. Tu montes avec une consigne technique, en haut 6 paires de fentes arrière avec montée de genou, et tu redescends relâché.",
+          "Technique de course en côte, 8 boucles de 2 minutes 40. En bas, 20 climbers. Tu montes avec une consigne technique, en haut 6 paires de fentes arrière avec montée de genou, et tu redescends relâché.",
         round: [
           { name: "20 climbers (en bas)", spoken: "En bas, 20 climbers", seconds: 40 },
           {
@@ -1165,7 +1373,7 @@ const SESSION_LIBRARY = [
           },
           { name: "Montée en I3", spoken: "Tu dois être en intensité 3. Finis en intensité 3", seconds: 10, sayDuration: false },
           { name: "6 paires de fentes arrière + montée de genou", spoken: "6 paires de fentes arrière, avec montée de genou", seconds: 40 },
-          { name: "Descente relâchée (I1-I2)", spoken: "Descente relâchée, facile", seconds: 60 },
+          { name: "Descente relâchée (I1-I2)", spoken: "Descente relâchée, facile", seconds: 40 },
           { name: "Mise en place", spoken: "Mets-toi en place", seconds: 10, sayDuration: false },
         ],
       },
@@ -1173,6 +1381,216 @@ const SESSION_LIBRARY = [
         name: "Retour au calme",
         steps: [
           { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // Écrite d'après le Google Doc détaillé de Céline (coach EDT) du 15/10 (« seances EDT dans le player »).
+    id: "C2S1",
+    date: "03/11/26",
+    title: "C2S1 — Endurance de force et EPIC 20-20",
+    subtitle: "≈ 65 min · préparation 12 min, 10 min I1, gammes contrôle, 3 blocs (tabata 4 min + EPIC 20-20 6 min + 1 min récup), 5 min de retour au calme",
+    advice:
+      "Cycle 2 : endurance de force et intervalles courts à haute intensité. Terrain montée et plat, facile. Un bloc = 4 min de tabata (20 s d'effort, 10 s de récup : chaise, squats, pont pelvien, climbers, 2 fois), 6 min de course EPIC 20-20 (20 s de course facile, 20 s rapide), 1 min de récup en trottant ou en marchant. Le rapide : I3 au bloc 1, progressivement I4 au bloc 2, progressivement I5 au bloc 3. Retour au calme 5 min, en trottant ou en marchant. Option « Tabata en musique » : à chaque tabata, le player se met en pause et te propose un morceau Tabata (4 min, les changements 20 s / 10 s sont dans la musique) ; appuie sur Démarrer quand il est fini.",
+    options: [TABATA_MUSIC_OPTION, WINTER_OPTION],
+    blocks: [
+      ...edtC2Warmup(),
+      ...edtEpicBlock(1, "course I3", "Intensité 3", { artist: "Tabata Songs", title: "Cake by the Ocean (Tabata)" }),
+      ...edtEpicBlock(2, "progressivement I4", "Progressivement vers intensité 4", { artist: "Tabata Songs", title: "Eye of the Tiger (Tabata)" }),
+      ...edtEpicBlock(3, "progressivement I5", "Progressivement vers intensité 5", { artist: "Tabata Songs", title: "Final Countdown (Tabata)" }),
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Retour au calme (trotter ou marcher)", spoken: "Retour au calme, trotte ou marche", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // ⚠️ Planche « latérale active mains tape » : la vidéo du coach dit « planche active mains tape
+    // épaule » → encodée en planche de face, épaule opposée (question à Céline du 15/10).
+    id: "C2S2",
+    date: "06/11/26",
+    title: "C2S2 — Variations d'allures, planche et équilibre",
+    subtitle: "≈ 45 min · préparation 9 min, 10 portions de course I1 → I5 → I1 avec 1 min de renfo entre chaque",
+    advice:
+      "Terrain plat et facile. Entre deux portions de course : 1 min de renfo = 30 s de planche active en touchant l'épaule opposée avec la main, puis 30 s d'équilibre avec les bras en cadence (15 s pied gauche, 15 s pied droit). Portions : 3 min I1, 3 min I2, 3 min I3, 3 min I3, 3 min I4, 1 min I5, 3 min I4, 3 min I3, 3 min I2, 2 min I1. Pas de renfo après les 2 dernières minutes : la séance se termine là.",
+    options: [WINTER_OPTION],
+    blocks: [
+      { name: "Préparation (à la maison)", steps: edtHomePrep() },
+      {
+        name: "Corps de séance",
+        intro:
+          "Corps de séance, 36 minutes. Tu alternes une portion de course et une minute de renfo : 30 secondes de planche en touchant tes épaules, puis 30 secondes d'équilibre, les bras en cadence.",
+        on: { winter: {
+          intro:
+            "Corps de séance, 36 minutes. Tu alternes une portion de course et une minute de renfo : 30 secondes de climbers, puis 30 secondes d'équilibre, les bras en cadence.",
+        } },
+        steps: edtRunRenfoSteps(
+          [
+            [180, "Course I1", "Course, intensité 1"],
+            [180, "Course I2", "Course, intensité 2"],
+            [180, "Course I3", "Course, intensité 3"],
+            [180, "Course I3", "Course, intensité 3"],
+            [180, "Course I4", "Course, intensité 4"],
+            [60, "Course I5", "Course, intensité 5"],
+            [180, "Course I4", "Course, intensité 4"],
+            [180, "Course I3", "Course, intensité 3"],
+            [180, "Course I2", "Course, intensité 2"],
+            [120, "Course I1", "Course, intensité 1"],
+          ],
+          [
+            {
+              name: "Planche active, main → épaule opposée",
+              spoken: "Planche, touche l'épaule opposée avec la main",
+              seconds: 30,
+              on: { winter: { name: "Climbers (hiver, à la place de la planche)", spoken: "Climbers, à la place de la planche" } },
+            },
+            { name: "Équilibre pied gauche, bras en cadence", spoken: "Équilibre pied gauche, les bras en cadence", seconds: 15, cadence: true },
+            { name: "Équilibre pied droit, bras en cadence", spoken: "Pied droit", seconds: 15, cadence: true },
+          ],
+          { renfoAfterLast: false }
+        ),
+      },
+    ],
+  },
+  {
+    // ⚠️ PROVISOIRE : circuit « au temps global » de 35 min converti en tours (règle Céline du 10/10) ;
+    // durées estimées et distance de la descente en double appui en attente de Céline (15/10).
+    id: "C2S3",
+    date: "10/11/26",
+    title: "C2S3 — Circuit montée-descente (séance livre)",
+    subtitle: "≈ 65 min · préparation 12 min, 10 min I1, gammes contrôle, circuit montée-descente ~35 min, 5 min I1",
+    advice:
+      "Séance livre « Moins courir pour mieux courir ». Objectif : montées, descentes, technique de descente. Terrain montée et plat, facile. Un tour : 30 s de chaise + 15 squats tempo 1-0-1-0, 200 m de faux plat descendant (bassin engagé, hypercadence), remontée cool en I2, 20 squats tempo, descente en double appui, remontée cool en I2. Les durées sont estimées : règle le rythme, le nombre de tours s'ajuste pour garder ~35 min.",
+    options: [
+      {
+        key: "pace",
+        label: "Rythme sur le circuit",
+        default: 1,
+        choices: [
+          { value: 1.25, label: "Tranquille" },
+          { value: 1, label: "Normal" },
+          { value: 0.8, label: "Rapide" },
+        ],
+      },
+      WINTER_OPTION,
+    ],
+    blocks: [
+      // Même texte Nolio que la C2S1 → même échauffement détaillé (à confirmer par Céline).
+      ...edtC2Warmup(),
+      {
+        name: "Circuit montée-descente",
+        rounds: { target: 2100 },
+        intro:
+          "Circuit montée-descente, environ 35 minutes. À chaque tour : chaise et squats, faux plat descendant en hypercadence, remontée cool, squats, descente en double appui, remontée cool.",
+        round: [
+          { name: "Chaise", spoken: "Chaise, 30 secondes", seconds: 30, on: { winter: EDT_CHAISE_WINTER } },
+          { name: "15 squats (1-0-1-0)", spoken: "15 squats, tempo un, zéro, un, zéro", seconds: 30, estimated: true },
+          {
+            name: "200 m faux plat descendant — bassin engagé, hypercadence",
+            spoken: "200 mètres de faux plat descendant. Engage le bassin, hypercadence",
+            seconds: 60,
+            estimated: true,
+            cadence: true,
+          },
+          { name: "Remontée cool (I2)", spoken: "Remonte, cool, intensité 2", seconds: 90, estimated: true, doneCue: "Quand tu es en haut" },
+          { name: "20 squats (1-0-1-0)", spoken: "20 squats, tempo un, zéro, un, zéro", seconds: 40, estimated: true },
+          { name: "Descente en double appui", spoken: "Descente en double appui", seconds: 60, estimated: true },
+          { name: "Remontée cool (I2)", spoken: "Remonte, cool, intensité 2", seconds: 90, estimated: true, doneCue: "Quand tu es en haut" },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // PAVEL (musculation, kettlebell) : toutes les 30 s, 5 swings × 4, 1 min de récup,
+    // 5 pompes dynamiques × 4, 1 min de récup, en boucle pendant 12 ou 18 min.
+    id: "PAVEL",
+    date: "04/11/26",
+    title: "PAVEL — Swings et pompes",
+    subtitle: "12 ou 18 min · toutes les 30 s : 5 swings × 4, 1 min de récup, 5 pompes dynamiques × 4, 1 min de récup",
+    advice:
+      "À faire à jeun, après un petit échauffement de mobilité des hanches et du haut du corps. Toutes les 30 secondes : 5 swings, 4 fois, puis 1 min de récup ; 5 pompes dynamiques, 4 fois, puis 1 min de récup. Tu récupères le reste des 30 secondes.",
+    options: [
+      {
+        key: "cycles",
+        label: "Durée",
+        default: 2,
+        choices: [
+          { value: 2, label: "12 min" },
+          { value: 3, label: "18 min" },
+        ],
+      },
+    ],
+    blocks: [
+      {
+        name: "PAVEL",
+        rounds: { option: "cycles" },
+        roundLabel: "Cycle",
+        intro: "PAVEL. Toutes les 30 secondes, 5 swings, 4 fois. 1 minute de récup. Puis 5 pompes dynamiques, 4 fois, et 1 minute de récup.",
+        round: [
+          {
+            label: "4 × 30 s (5 swings)",
+            steps: [1, 2, 3, 4].map((k) => ({
+              name: `5 swings (${k}/4)`,
+              spoken: "5 swings",
+              seconds: 30,
+              sayDuration: false,
+            })),
+          },
+          { name: "Récup", spoken: "Récup", seconds: 60, announceNext: true },
+          {
+            label: "4 × 30 s (5 pompes dynamiques)",
+            steps: [1, 2, 3, 4].map((k) => ({
+              name: `5 pompes dynamiques (${k}/4)`,
+              spoken: "5 pompes dynamiques",
+              seconds: 30,
+              sayDuration: false,
+            })),
+          },
+          { name: "Récup", spoken: "Récup", seconds: 60, announceNext: true },
+        ],
+      },
+    ],
+  },
+  {
+    // CORE : le titre Nolio dit « 30s / 30s », le détail 20 s d'effort / 40 s de récup — on suit le détail.
+    id: "CORE",
+    date: "07/11/26",
+    title: "CORE — Climbers, superman, crunch",
+    subtitle: "9 ou 12 min · 3 exercices, 20 s d'effort / 40 s de récup, 3 ou 4 tours",
+    advice:
+      "Mountain climbers lents et contrôlés. Superman : pieds au sol, bras tendus vers l'avant, regarde le sol. Crunch : pieds au sol, genoux fléchis. 20 s d'effort, 40 s de récup.",
+    options: [
+      {
+        key: "tours",
+        label: "Tours",
+        default: 3,
+        choices: [
+          { value: 3, label: "3 tours (9 min)" },
+          { value: 4, label: "4 tours (12 min)" },
+        ],
+      },
+    ],
+    blocks: [
+      {
+        name: "Core",
+        rounds: { option: "tours" },
+        intro: "Gainage. 3 exercices, 20 secondes d'effort, 40 secondes de récup.",
+        round: [
+          { name: "Mountain climbers lents", spoken: "Mountain climbers, lents et contrôlés", seconds: 20 },
+          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false },
+          { name: "Superman", spoken: "Superman, pieds au sol, bras tendus, regarde le sol", seconds: 20 },
+          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false },
+          { name: "Crunch", spoken: "Crunch, pieds au sol, genoux fléchis", seconds: 20 },
+          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false },
         ],
       },
     ],
@@ -1205,6 +1623,8 @@ function libraryFormatDuration(seconds) {
 // dans le format que renderPlan / buildTimeline consomment.
 function compileLibrarySession(def, optionOverrides = {}) {
   const options = librarySessionOptionValues(def, optionOverrides);
+  const activeOptions = Object.keys(options).filter((k) => options[k]);
+  if (activeOptions.length) def = libraryApplyOptionVariants(def, activeOptions);
   const steps = [];
   const planLines = [];
 
@@ -1361,6 +1781,7 @@ function compileLibrarySession(def, optionOverrides = {}) {
           type: "checkpoint",
           name: item.name,
           instruction: item.instruction,
+          music: item.music,
           seconds: 0,
           blockName: block.name,
         });
@@ -1426,6 +1847,7 @@ function compileLibrarySession(def, optionOverrides = {}) {
         seconds: dur,
         cadence: Boolean(item.cadence),
         estimated: Boolean(item.estimated),
+        sayDuration: item.sayDuration,
         doneCue: item.doneCue,
         announceNext: Boolean(item.announceNext),
         intro: introFor(item.intro),
