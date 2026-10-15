@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.28.1] - 2026-10-16
+
+Réponses de Céline du 16/10.
+
+- C2S2 : planche de face, main qui tape l'épaule, confirmée (« latérale » était une erreur du titre Nolio).
+- C1S11 : 8e boucle en « cadence » validée.
+- Mode hiver validé, seulement par temps froid : libellé « Oui, il fait froid (moins de 10 °C) ».
+- C2S3 toujours provisoire (Céline vérifie) ; les incohérences de titres Nolio (circuit élastique 5x / 4 tours, CORE 30/30 / 20/40) sont remontées à Seb.
+
 ## [1.28.0] - 2026-10-15
 
 Cycle 2 (planning Nolio jusqu'au 13/11, lu le 14/10) et retours de Céline du 15/10.

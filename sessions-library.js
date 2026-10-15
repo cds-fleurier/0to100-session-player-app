@@ -139,14 +139,15 @@ function edtRunRenfoSteps(portions, renfo, { renfoAfterLast = true } = {}) {
 // compileLibrarySession applique, pour chaque option active (valeur ≠ 0), les champs de cette clé.
 //
 // Option « Mode hiver » (note ADAPTATION HIVER des coachs EDT, 09/11) : pas de statique dans
-// le froid → la chaise devient des squats, la planche des climbers.
+// le froid → la chaise devient des squats, la planche des climbers. Validée par Céline le 16/10 :
+// seulement s'il fait froid (« 10 degrés, ça passe »), autres remplacements à venir de sa part.
 const WINTER_OPTION = {
   key: "winter",
   label: "Mode hiver (froid)",
   default: 0,
   choices: [
     { value: 0, label: "Non" },
-    { value: 1, label: "Oui : pas de chaise ni de planche" },
+    { value: 1, label: "Oui, il fait froid (moins de 10 °C) : pas de chaise ni de planche" },
   ],
 };
 
@@ -1317,7 +1318,7 @@ const SESSION_LIBRARY = [
   {
     // Validée par Céline (coach EDT) le 10/10 : boucle convertie en temps, 7 boucles (8 depuis le 15/10 :
     // descente ramenée de 60 à 40 s, elle avait compté large en testant → boucle de 2 min 40, 1 boucle de plus pour rester ~20 min ;
-    // la 8e reprend la 1re consigne, cadence),
+    // la 8e reprend la 1re consigne, cadence — validé par Céline le 16/10),
     // une consigne technique par montée (ordre de sa liste), I2 → I3 progressif à chaque montée.
     id: "C1S11",
     date: "30/10/26",
@@ -1408,8 +1409,8 @@ const SESSION_LIBRARY = [
     ],
   },
   {
-    // ⚠️ Planche « latérale active mains tape » : la vidéo du coach dit « planche active mains tape
-    // épaule » → encodée en planche de face, épaule opposée (question à Céline du 15/10).
+    // Planche de face, main qui tape l'épaule : « latérale » dans le titre Nolio était une erreur
+    // (Céline, 16/10).
     id: "C2S2",
     date: "06/11/26",
     title: "C2S2 — Variations d'allures, planche et équilibre",
@@ -1457,7 +1458,7 @@ const SESSION_LIBRARY = [
   },
   {
     // ⚠️ PROVISOIRE : circuit « au temps global » de 35 min converti en tours (règle Céline du 10/10) ;
-    // durées estimées et distance de la descente en double appui en attente de Céline (15/10).
+    // durées estimées et distance de la descente en double appui : Céline vérifie (16/10).
     id: "C2S3",
     date: "10/11/26",
     title: "C2S3 — Circuit montée-descente (séance livre)",
