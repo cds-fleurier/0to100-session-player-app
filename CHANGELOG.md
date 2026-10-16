@@ -2,6 +2,16 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.29.0] - 2026-10-16
+
+Cycle 2 d'après le Google Doc de Céline (« seances EDT dans le player », mis à jour jusqu'à la C2S6) et ses corrections du 16/10.
+
+- **C2S3** finalisée : 7 tours chronométrés de 5 min (fin des durées estimées et de l'option Rythme), gammes en double appui (mini saut).
+- **C2S2** alignée sur le doc : mobilité de base détaillée, deux portions I2 au début, pas de renfo après la minute I5 (48 min).
+- Nouvelles séances **C2S4** (run et renfo, équilibres skieur / skater), **C2S5** (4 blocs tabata 3 min + EPIC 15-15, option Mode hiver) et **C2S6** (run et core). C2S4 le 14/11 ; C2S5 et C2S6 pas encore datées (en fin de liste).
+- Moteur : `edtC2Mobility()`, `EDT_SORTIE`, gammes de `edtC2Warmup()` en paramètre, `edtC2S5Block()` ; une portion de `edtRunRenfoSteps` peut sauter son renfo.
+- Sélecteur : les séances sans date passent en fin de liste.
+
 ## [1.28.1] - 2026-10-16
 
 Réponses de Céline du 16/10.

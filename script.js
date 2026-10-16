@@ -30,7 +30,7 @@ const els = {
   metronomeHint: document.getElementById("metronomeHint"),
   silentSwitchToggle: document.getElementById("silentSwitchToggle"),
 };
-const APP_VERSION = "v1.28.1";
+const APP_VERSION = "v1.29.0";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
@@ -1791,7 +1791,8 @@ function renderSessionOptions(def) {
 function populateSessionPicker() {
   if (!els.sessionPicker || typeof SESSION_LIBRARY === "undefined") return;
   // Tri par date du plan (jj/mm/aa), l'ordre du fichier n'a pas d'importance.
-  const dateKey = (d) => (d.date ? d.date.split("/").reverse().join("") : "");
+  // Séance pas encore datée (pas encore dans Nolio) : en fin de liste, dans l'ordre du fichier.
+  const dateKey = (d) => (d.date ? d.date.split("/").reverse().join("") : "999999");
   [...SESSION_LIBRARY].sort((a, b) => dateKey(a).localeCompare(dateKey(b))).forEach((def) => {
     const o = document.createElement("option");
     o.value = def.id;
