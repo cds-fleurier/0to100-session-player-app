@@ -2,6 +2,10 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.29.1] - 2026-10-26
+
+- Dates des séances **C2S5** (18/11/26) et **C2S6** (21/11/26) : elles prennent leur place dans le sélecteur, après la C2S4 (14/11).
+
 ## [1.29.0] - 2026-10-16
 
 Cycle 2 d'après le Google Doc de Céline (« seances EDT dans le player », mis à jour jusqu'à la C2S6) et ses corrections du 16/10.

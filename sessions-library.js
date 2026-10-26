@@ -1607,8 +1607,9 @@ const SESSION_LIBRARY = [
     ],
   },
   {
-    // Doc de Céline (16/10) + corrections du 16/10 (4 blocs, 10 × 15-15 partout). Date : pas encore dans Nolio.
+    // Doc de Céline (16/10) + corrections du 16/10 (4 blocs, 10 × 15-15 partout). Date donnée le 26/10.
     id: "C2S5",
+    date: "18/11/26",
     title: "C2S5 — Tabata et EPIC 15-15",
     subtitle: "≈ 68 min · préparation 12 min, 10 min I1, gammes, 4 blocs (tabata 3 min + EPIC 15-15 5 min + 1 min récup), 5 min de retour au calme",
     advice:
@@ -1641,8 +1642,9 @@ const SESSION_LIBRARY = [
     ],
   },
   {
-    // Doc de Céline (16/10). Date : pas encore dans Nolio.
+    // Doc de Céline (16/10). Date donnée le 26/10.
     id: "C2S6",
+    date: "21/11/26",
     title: "C2S6 — Run et core",
     subtitle: "≈ 60 min · mobilité 9 min, 5 min I1, 4 × (4 min 30 I2 + 30 s climbers, 4 min 30 I3 + 30 s bear tape), 5 min de retour au calme",
     advice:
