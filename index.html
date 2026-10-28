@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Coach Session Player</title>
-    <link rel="stylesheet" href="styles.css?v=1.29.1" />
+    <link rel="stylesheet" href="styles.css?v=1.30.0" />
   </head>
   <body>
     <main class="app">
@@ -64,6 +64,15 @@
             </select>
           </label>
           <p id="metronomeHint" class="setting-hint" hidden></p>
+          <label class="setting-row" for="musicPlatform">
+            <span>Écouter sur<small class="setting-sub">Morceaux des tabatas en musique</small></span>
+            <select id="musicPlatform" class="voice-picker">
+              <option value="spotify" selected>Spotify</option>
+              <option value="apple">Apple Music</option>
+              <option value="youtube">YouTube</option>
+              <option value="deezer">Deezer</option>
+            </select>
+          </label>
           <label class="setting-row">
             <span>Sonner en mode silencieux<small class="setting-sub">Coupe la musique des autres apps (iPhone)</small></span>
             <input type="checkbox" id="silentSwitchToggle" />
@@ -77,31 +86,20 @@
         <ol id="exerciseList"></ol>
       </section>
 
-      <section class="card music-card" id="musicCard" style="display:none">
-        <h2>Musique</h2>
-        <div class="field">
-          <label class="field-label" for="musicGenre">Genre</label>
-          <select id="musicGenre" class="field-select">
-            <option value="none" selected>Sans musique</option>
-            <option value="motown">Motown / Soul</option>
-            <option value="hiphop">Hip-hop</option>
-            <option value="electro">Électro</option>
-            <option value="rock">Rock</option>
-            <option value="lofi">Lo-fi / Ambiant</option>
-            <option value="myriam">🔥 Spécial Myriam</option>
-          </select>
+      <section class="card videos-card">
+        <h2>Vidéos des exercices</h2>
+        <div class="video-scope" role="radiogroup" aria-label="Vidéos à afficher">
+          <label class="video-scope-option">
+            <input type="radio" name="videoScope" value="session" checked />
+            <span>Voir les exercices de cette séance</span>
+          </label>
+          <label class="video-scope-option">
+            <input type="radio" name="videoScope" value="all" />
+            <span>Voir tous les exercices</span>
+          </label>
         </div>
-        <div class="field">
-          <label class="field-label" for="musicPlatform">Écouter sur</label>
-          <select id="musicPlatform" class="field-select">
-            <option value="spotify">Spotify</option>
-            <option value="apple">Apple Music</option>
-            <option value="youtube">YouTube</option>
-            <option value="deezer">Deezer</option>
-          </select>
-        </div>
-        <div id="musicTracklist" class="music-tracklist"></div>
-        <p class="music-hint">Lance ta musique d'abord, puis appuie sur Démarrer.</p>
+        <div id="videoList" class="video-list"></div>
+        <p id="videoCount" class="video-count"></p>
       </section>
 
       <section class="card player-card">
@@ -110,6 +108,7 @@
         <div class="countdown" id="countdown">00</div>
         <div class="now" id="currentLabel">Charge une séance</div>
         <div class="next" id="nextLabel"></div>
+        <button id="videoBtn" class="secondary-btn video-btn" hidden></button>
         <a id="checkpointMusic" class="music-btn checkpoint-music" target="_blank" rel="noopener" hidden></a>
 
         <div class="controls">
@@ -127,10 +126,25 @@
       </section>
     </main>
 
-    <script src="music-library.js?v=1.29.1"></script>
-    <script src="sessions-library.js?v=1.29.1"></script>
-    <script src="voice/manifest.js?v=1.29.1"></script>
-    <script src="script.js?v=1.29.1"></script>
+    <div id="videoOverlay" class="video-overlay" hidden>
+      <div class="video-sheet" role="dialog" aria-modal="true" aria-labelledby="videoTitle">
+        <div class="video-head">
+          <span id="videoTitle" class="video-title"></span>
+          <button id="videoClose" class="video-close" aria-label="Fermer la vidéo">✕</button>
+        </div>
+        <div id="videoTabs" class="video-tabs"></div>
+        <div id="videoFrame" class="video-frame"></div>
+        <div class="video-foot">
+          <span id="videoPauseNote" class="video-note"></span>
+          <a id="videoExternal" class="video-external" target="_blank" rel="noopener">Ouvrir ailleurs</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="sessions-library.js?v=1.30.0"></script>
+    <script src="videos.js?v=1.30.0"></script>
+    <script src="voice/manifest.js?v=1.30.0"></script>
+    <script src="script.js?v=1.30.0"></script>
     <!-- Barre d'onglets partagée de la team (hub) -->
     <script src="https://cds-fleurier.github.io/0to100-hub/nav.js" defer></script>
   </body>

@@ -20,21 +20,27 @@ const els = {
   appVersion: document.getElementById("appVersion"),
   voiceToggle: document.getElementById("voiceToggle"),
   voiceMode: document.getElementById("voiceMode"),
-  musicCard: document.getElementById("musicCard"),
-  musicGenre: document.getElementById("musicGenre"),
-  musicTracklist: document.getElementById("musicTracklist"),
   musicPlatform: document.getElementById("musicPlatform"),
   sessionPicker: document.getElementById("sessionPicker"),
   sessionOptions: document.getElementById("sessionOptions"),
   metronomeMode: document.getElementById("metronomeMode"),
   metronomeHint: document.getElementById("metronomeHint"),
   silentSwitchToggle: document.getElementById("silentSwitchToggle"),
+  videoList: document.getElementById("videoList"),
+  videoCount: document.getElementById("videoCount"),
+  videoBtn: document.getElementById("videoBtn"),
+  videoOverlay: document.getElementById("videoOverlay"),
+  videoTitle: document.getElementById("videoTitle"),
+  videoTabs: document.getElementById("videoTabs"),
+  videoFrame: document.getElementById("videoFrame"),
+  videoClose: document.getElementById("videoClose"),
+  videoPauseNote: document.getElementById("videoPauseNote"),
+  videoExternal: document.getElementById("videoExternal"),
 };
-const APP_VERSION = "v1.29.1";
+const APP_VERSION = "v1.30.0";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
-const MUSIC_PREF_KEY     = "sportSessionMusicGenre";
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
 const LIBRARY_OPT_PREFIX = "sportSessionLibraryOpt_";
 const METRONOME_PREF_KEY = "sportSessionMetronome";
@@ -52,15 +58,6 @@ function platformUrl(platform, artist, title) {
     default:        return `https://open.spotify.com/search/${q}`;
   }
 }
-
-const BPM_RANGES = {
-  motown:  { run: { min:  80, max: 145 }, renfo: { min: 100, max: 170 } },
-  hiphop:  { run: { min:  80, max: 175 }, renfo: { min:  90, max: 175 } },
-  electro: { run: { min: 110, max: 160 }, renfo: { min: 110, max: 160 } },
-  rock:    { run: { min:  90, max: 180 }, renfo: { min:  90, max: 180 } },
-  lofi:    { run: { min:  75, max: 100 }, renfo: { min:  75, max: 100 } },
-  myriam:  { run: { min: 175, max: 999 }, renfo: { min: 175, max: 999 } },
-};
 
 let sessionData = null;
 let timeline = [];
@@ -1149,81 +1146,6 @@ function calcSessionDuration(data) {
   return buildTimeline(data).reduce((sum, s) => sum + s.seconds, 0);
 }
 
-function buildPlaylist(genre, sessionType, totalSeconds) {
-  const range = (BPM_RANGES[genre] || BPM_RANGES.motown)[sessionType] || { min: 80, max: 180 };
-  const lib = typeof MUSIC_LIBRARY !== "undefined" ? MUSIC_LIBRARY : [];
-  let pool = lib.filter((t) => t.genres.includes(genre));
-  let candidates = pool.filter((t) => t.bpm >= range.min && t.bpm <= range.max);
-  if (candidates.length < 4) candidates = pool;
-  candidates = [...candidates].sort(() => Math.random() - 0.5);
-
-  const playlist = [];
-  let filled = 0;
-  const target = totalSeconds || 1800;
-
-  // Premier passage : couvre la durée cible
-  for (const track of candidates) {
-    playlist.push(track);
-    filled += track.duration;
-    if (filled >= target) break;
-  }
-
-  // Si la bibliothèque est épuisée avant la cible, boucle sur les candidats
-  if (filled < target && candidates.length > 0) {
-    let i = 0;
-    while (filled < target && playlist.length < 30) {
-      playlist.push(candidates[i % candidates.length]);
-      filled += candidates[i % candidates.length].duration;
-      i++;
-    }
-  }
-
-  return playlist;
-}
-
-function renderMusicLinks(data) {
-  const hasContent = data && ((data.exercises && data.exercises.length) || data.timelineSteps);
-  if (!hasContent) {
-    els.musicCard.style.display = "none";
-    return;
-  }
-  els.musicCard.style.display = "";
-  const genre = els.musicGenre.value;
-
-  if (genre === "none") {
-    els.musicTracklist.innerHTML = "";
-    return;
-  }
-
-  const isRunRenfo = !!(data.blocks && data.blocks.length);
-  const totalSeconds = calcSessionDuration(data);
-  const playlist = buildPlaylist(genre, isRunRenfo ? "run" : "renfo", totalSeconds);
-
-  if (!playlist.length) {
-    els.musicTracklist.innerHTML = `<p class="music-hint">Aucun titre disponible pour ce genre.</p>`;
-    return;
-  }
-
-  const platform    = els.musicPlatform.value;
-  const playlistMin = Math.round(playlist.reduce((s, t) => s + t.duration, 0) / 60);
-  const sessionMin  = Math.round(totalSeconds / 60);
-
-  const header = `<div class="music-tracklist-header">${playlist.length} titres · ~${playlistMin} min <span class="music-session-duration">(séance : ${sessionMin} min)</span></div>`;
-
-  const tracks = playlist.map((t) => {
-    const url = platformUrl(platform, t.artist, t.title);
-    return `<div class="music-track">
-      <div class="music-track-info">
-        <span class="music-track-name">${t.title} <span class="music-track-artist">— ${t.artist}</span></span>
-        <span class="music-track-bpm">${t.bpm} BPM</span>
-      </div>
-      <a href="${url}" target="_blank" rel="noopener" class="music-btn-sm">${PLATFORM_LABELS[platform]}</a>
-    </div>`;
-  }).join("");
-
-  els.musicTracklist.innerHTML = header + tracks;
-}
-
 function renderPlan(data) {
   const hasActiveRest = (data.exercises || []).some((ex) => ex.restLabel);
   const transitionNote = hasActiveRest
@@ -1253,6 +1175,146 @@ function renderPlan(data) {
       li.textContent = `${ex.name} - ${ex.work}s effort${restText}`;
       els.list.appendChild(li);
     });
+  }
+  renderVideoList(data);
+}
+
+// --- Vidéos des exercices (videos.js) ---------------------------------------
+let videoResumeAfterClose = false;
+
+function sessionVideoId() {
+  return sessionData && sessionData.libraryId ? sessionData.libraryId : null;
+}
+
+function videoScope() {
+  const checked = document.querySelector('input[name="videoScope"]:checked');
+  return checked ? checked.value : "session";
+}
+
+// Bloc « Vidéos des exercices » : celles de la séance choisie (dans l'ordre où
+// les exercices arrivent), ou tout le catalogue par ordre alphabétique.
+function renderVideoList(data) {
+  if (!els.videoList || typeof VIDEO_CATALOG === "undefined") return;
+  els.videoList.innerHTML = "";
+  if (els.videoCount) els.videoCount.textContent = "";
+  delete els.videoList.dataset.count;
+  els.videoList.classList.remove("has-more");
+  let keys;
+  if (videoScope() === "all") {
+    keys = Object.keys(VIDEO_CATALOG).sort((a, b) =>
+      VIDEO_CATALOG[a].title.localeCompare(VIDEO_CATALOG[b].title, "fr")
+    );
+  } else {
+    keys = data && data.libraryId ? videosForSession(data.libraryId, data.timelineSteps) : [];
+    if (!keys.length) {
+      const hint = document.createElement("p");
+      hint.className = "setting-hint";
+      hint.textContent = !data || !data.title || data.title === "-"
+        ? "Choisis une séance pour voir ses vidéos."
+        : data.libraryId
+        ? "Pas de vidéo pour cette séance."
+        : "Pas de vidéos pour une séance collée depuis Nolio.";
+      els.videoList.appendChild(hint);
+      return;
+    }
+  }
+  keys.forEach((key) => {
+    const btn = document.createElement("button");
+    btn.className = "video-chip";
+    btn.textContent = VIDEO_CATALOG[key].title;
+    btn.addEventListener("click", () => openVideo([key], 0));
+    els.videoList.appendChild(btn);
+  });
+  els.videoList.scrollTop = 0;
+  els.videoList.dataset.count = `${keys.length} vidéo${keys.length > 1 ? "s" : ""}`;
+  updateVideoListFade();
+}
+
+function updateVideoListFade() {
+  const list = els.videoList;
+  if (!list) return;
+  const more = list.scrollHeight - list.scrollTop - list.clientHeight > 4;
+  list.classList.toggle("has-more", more);
+  if (els.videoCount && list.dataset.count) {
+    els.videoCount.textContent = more ? `${list.dataset.count} · fais défiler ↓` : list.dataset.count;
+  }
+}
+
+// Vidéo à proposer sur l'écran du player : l'exercice en cours, ou pendant
+// une récup / transition / le décompte de départ, l'exercice qui arrive.
+function playerVideoTarget() {
+  const id = sessionVideoId();
+  if (!id || typeof videosForStep !== "function") return null;
+  const step = currentStep();
+  if (!step) return null;
+  if (idx === 0 && (preStartRemaining > 0 || preStartLaunching)) {
+    const keys = videosForStep(id, step);
+    return keys.length ? { keys, upcoming: true } : null;
+  }
+  if (step.type === "work") {
+    const keys = videosForStep(id, step);
+    return keys.length ? { keys, upcoming: false } : null;
+  }
+  const next = upcomingStep();
+  const keys = next ? videosForStep(id, next) : [];
+  return keys.length ? { keys, upcoming: true } : null;
+}
+
+function renderVideoButton() {
+  if (!els.videoBtn) return;
+  const target = playerVideoTarget();
+  els.videoBtn.hidden = !target;
+  if (!target) return;
+  const label = target.upcoming ? "▶ Voir le prochain exo" : "▶ Voir l'exo";
+  if (els.videoBtn.textContent !== label) els.videoBtn.textContent = label;
+  els.videoBtn.dataset.keys = target.keys.join(",");
+}
+
+function openVideo(keys, index) {
+  if (!keys.length || !els.videoOverlay) return;
+  // Le chrono s'arrête le temps de regarder, et repart à la fermeture.
+  videoResumeAfterClose = Boolean(timerId);
+  if (videoResumeAfterClose) pauseTimer();
+  els.videoPauseNote.textContent = videoResumeAfterClose ? "Chrono en pause, il repart quand tu fermes." : "";
+  els.videoTabs.innerHTML = "";
+  if (keys.length > 1) {
+    keys.forEach((key, k) => {
+      const tab = document.createElement("button");
+      tab.className = `video-tab${k === index ? " active" : ""}`;
+      tab.textContent = VIDEO_CATALOG[key].title;
+      tab.addEventListener("click", () => showVideo(keys, k));
+      els.videoTabs.appendChild(tab);
+    });
+  }
+  showVideo(keys, index);
+  els.videoOverlay.hidden = false;
+  document.body.classList.add("video-open");
+}
+
+function showVideo(keys, index) {
+  const video = VIDEO_CATALOG[keys[index]];
+  els.videoTitle.textContent = video.title;
+  [...els.videoTabs.children].forEach((tab, k) => tab.classList.toggle("active", k === index));
+  els.videoFrame.className = `video-frame ${videoIsPortrait(video.src) ? "portrait" : "landscape"}`;
+  els.videoFrame.innerHTML = "";
+  const iframe = document.createElement("iframe");
+  iframe.src = videoEmbedUrl(video.src);
+  iframe.title = video.title;
+  iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+  iframe.allowFullscreen = true;
+  els.videoFrame.appendChild(iframe);
+  els.videoExternal.href = videoWatchUrl(video.src);
+}
+
+function closeVideo() {
+  if (!els.videoOverlay || els.videoOverlay.hidden) return;
+  // Retirer l'iframe coupe le son de la vidéo.
+  els.videoFrame.innerHTML = "";
+  els.videoOverlay.hidden = true;
+  document.body.classList.remove("video-open");
+  if (videoResumeAfterClose) {
+    videoResumeAfterClose = false;
+    startTimer();
   }
 }
 
@@ -1382,6 +1444,7 @@ function renderCheckpointMusic(step) {
 function renderPlayer() {
   const step = currentStep();
   renderCheckpointMusic(step);
+  renderVideoButton();
   if (!step) {
     els.phase.textContent = "Terminé";
     els.phase.className = "phase";
@@ -1738,6 +1801,7 @@ function resetTimer() {
     ? "Démarrage imminent"
     : "Charge une séance";
   els.next.textContent = timeline[0] ? `Premier exercice: ${timeline[0].name}` : "";
+  renderVideoButton();
 }
 
 // --- Bibliothèque de séances ------------------------------------------------
@@ -1824,10 +1888,10 @@ function parseAndLoad() {
     remaining = 0;
     stopTimer();
     renderPlan({ title: "-", advice: "", rounds: 0, exercises: [] });
-    renderMusicLinks(null);
     els.start.disabled = true;
     els.pause.disabled = true;
     els.reset.disabled = true;
+    renderVideoButton();
     els.phase.textContent = "Pret";
     els.phase.className = "phase";
     els.countdown.textContent = "00";
@@ -1842,7 +1906,6 @@ function parseAndLoad() {
       ? compileLibrarySession(libraryDef, libraryOptionOverrides(libraryDef))
       : parseSession(rawText);
     renderPlan(sessionData);
-    renderMusicLinks(sessionData);
     timeline = buildTimeline(sessionData);
     idx = 0;
     remaining = timeline[0].seconds;
@@ -1860,6 +1923,7 @@ function parseAndLoad() {
     els.countdown.textContent = formatSeconds(preStartRemaining);
     els.current.textContent = "Démarrage imminent";
     els.next.textContent = `Premier exercice: ${timeline[0].name}`;
+    renderVideoButton();
 
     setStatus(libraryDef ? `Séance ${libraryDef.id} chargée. Appuie sur Demarrer.` : "Séance chargée. Appuie sur Demarrer.");
     updateMetronomeHint();
@@ -1870,10 +1934,10 @@ function parseAndLoad() {
     idx = 0;
     remaining = 0;
     renderPlan({ title: "-", advice: "", rounds: 0, exercises: [] });
-    renderMusicLinks(null);
     els.start.disabled = true;
     els.pause.disabled = true;
     els.reset.disabled = true;
+    renderVideoButton();
     els.phase.textContent = "Pret";
     els.countdown.textContent = "00";
     els.current.textContent = "Charge une séance";
@@ -1893,18 +1957,34 @@ els.reset.addEventListener("click", resetTimer);
 els.focusModeBtn.addEventListener("click", toggleFocusMode);
 els.wakeLockBtn.addEventListener("click", toggleWakeLock);
 els.skipBlockBtn.addEventListener("click", skipToNextBlock);
+if (els.videoBtn) {
+  els.videoBtn.addEventListener("click", () => {
+    const keys = (els.videoBtn.dataset.keys || "").split(",").filter(Boolean);
+    openVideo(keys, 0);
+  });
+  els.videoClose.addEventListener("click", closeVideo);
+  els.videoOverlay.addEventListener("click", (e) => {
+    if (e.target === els.videoOverlay) closeVideo();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeVideo();
+  });
+}
 els.voiceToggle.addEventListener("change", updateVoiceControlsState);
 els.voiceMode.addEventListener("change", () => {
   localStorage.setItem(VOICE_PREF_KEY, els.voiceMode.value);
   loadSessionVoice();
 });
-els.musicGenre.addEventListener("change", () => {
-  localStorage.setItem(MUSIC_PREF_KEY, els.musicGenre.value);
-  renderMusicLinks(sessionData);
-});
 els.musicPlatform.addEventListener("change", () => {
   localStorage.setItem(PLATFORM_PREF_KEY, els.musicPlatform.value);
-  renderMusicLinks(sessionData);
+  renderCheckpointMusic(currentStep());
+});
+if (els.videoList) {
+  els.videoList.addEventListener("scroll", updateVideoListFade, { passive: true });
+  window.addEventListener("resize", updateVideoListFade);
+}
+document.querySelectorAll('input[name="videoScope"]').forEach((radio) => {
+  radio.addEventListener("change", () => renderVideoList(sessionData));
 });
 if (els.sessionPicker) {
   els.sessionPicker.addEventListener("change", () => {
@@ -1948,10 +2028,9 @@ const storedVoicePreference = localStorage.getItem(VOICE_PREF_KEY);
 if (storedVoicePreference === "male" || storedVoicePreference === "female") {
   els.voiceMode.value = storedVoicePreference;
 }
-const storedMusicPref = localStorage.getItem(MUSIC_PREF_KEY);
-if (storedMusicPref && els.musicGenre) els.musicGenre.value = storedMusicPref;
 const storedPlatformPref = localStorage.getItem(PLATFORM_PREF_KEY);
 if (storedPlatformPref && els.musicPlatform) els.musicPlatform.value = storedPlatformPref;
+renderVideoList(sessionData);
 updateVoiceControlsState();
 if (window.speechSynthesis) {
   window.speechSynthesis.getVoices();

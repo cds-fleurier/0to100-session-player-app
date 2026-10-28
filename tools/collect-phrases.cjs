@@ -87,7 +87,7 @@ function makeContext(spoken) {
   ctx.window = ctx;
   ctx.globalThis = ctx;
   vm.createContext(ctx);
-  for (const file of ["music-library.js", "sessions-library.js", "script.js"]) {
+  for (const file of ["sessions-library.js", "script.js"]) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx, { filename: file });
   }
   // La voix est coupée côté DOM stub : on capte le texte à la source.

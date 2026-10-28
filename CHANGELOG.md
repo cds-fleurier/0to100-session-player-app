@@ -2,6 +2,17 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.30.0] - 2026-10-28
+
+Vidéos de démonstration des exercices, demandées par la team.
+
+- **36 vidéos** relevées dans les séances Nolio (section « Liens vidéos » du coach, septembre → novembre) : 35 YouTube, 1 Vimeo, 3 reels Instagram (séance CORE). Catalogue dans `videos.js`.
+- **Bloc « Vidéos des exercices »** (à la place du bloc Musique) : choix « Voir les exercices de cette séance » (par défaut, dans l'ordre de la séance) ou « Voir tous les exercices » (catalogue complet, par ordre alphabétique).
+- **Player** : bouton « ▶ Voir l'exo » sur l'exercice en cours, « ▶ Voir le prochain exo » pendant une récup, une transition ou le décompte de départ.
+- La vidéo s'ouvre par-dessus le player (pas de nouvel onglet) : le chrono se met en pause et repart à la fermeture ; fermer coupe le son de la vidéo. Plusieurs vidéos pour un exercice → onglets. Lien « Ouvrir ailleurs » en secours.
+- **Bloc « Musique » supprimé** (suggestions de morceaux par genre, plus utilisé) avec `music-library.js`. Le choix « Écouter sur » (Spotify / Apple Music / YouTube / Deezer) passe dans les **Réglages** : il sert aux pauses « tabata en musique » de la C2S1. Le choix déjà enregistré est conservé.
+- Association exercice → vidéo par le nom du step ; si plusieurs vidéos collent, on garde celles que le coach a mises dans la séance.
+
 ## [1.29.1] - 2026-10-26
 
 - Dates des séances **C2S5** (18/11/26) et **C2S6** (21/11/26) : elles prennent leur place dans le sélecteur, après la C2S4 (14/11).

@@ -34,6 +34,8 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 - Option de voix `Femme` / `Homme` (préférence sauvegardée)
 - Mode `Focus` (affichage grand écran centré sur le player)
 - Option `Écran actif` (Wake Lock) activée par défaut pour éviter la mise en veille pendant la séance ; si l'iPhone la refuse, elle est redemandée au retour sur la page et au prochain toucher, sans message d'erreur
+- **Vidéos des exercices** : bloc avec les vidéos de la séance (ou de tous les exercices) et bouton « ▶ Voir l'exo » dans le player — voir § Vidéos des exercices
+- Réglage « Écouter sur » (Spotify / Apple Music / YouTube / Deezer) pour les morceaux des tabatas en musique
 - Se mélange à la musique d'une autre app (Apple Music, Spotify…) par défaut ; option « Sonner en mode silencieux » pour l'usage sans musique
 - Compatibilités mobile renforcées (iOS Safari / Android Chrome)
 - Interface customisée dans l'univers du challenge 0 to 100
@@ -111,6 +113,17 @@ node tools/generate-voice.cjs    # enregistre les phrases nouvelles (say, Audrey
 ```
 
 Toute modification d'un texte parlé (`spoken`, `intro`, `instruction`, libellés de `script.js`) impose la même regénération ; sinon la phrase repasse par la synthèse vocale du navigateur (et coupe la musique sur iPhone). Le générateur est incrémental et supprime les fichiers orphelins.
+
+## Vidéos des exercices
+
+`videos.js` (chargé après `sessions-library.js`) :
+
+- `VIDEO_CATALOG` : une entrée par vidéo (`title`, `src` = `yt:<id>` / `vimeo:<id>/<hash>` / `ig:<id reel>`, `match` = regex sur le nom du step affiché). Renommer un step peut lui faire perdre sa vidéo : relancer le contrôle ci-dessous.
+- `NOLIO_SESSION_VIDEOS` : les vidéos que le coach a mises dans chaque séance Nolio (section « Liens vidéos » en bas des explications). Sert à départager quand plusieurs vidéos collent à un même step (ex. deux vidéos « équilibre montée de genou »).
+- `videosForStep(sessionId, step)` / `videosForSession(sessionId, steps)` : utilisées par le bloc « Vidéos des exercices » (choix « cette séance » / « tous les exercices ») et le Player (bouton « ▶ Voir l'exo »).
+- Format : la plupart des vidéos sont des Shorts (portrait) ; les vidéos paysage sont listées dans `LANDSCAPE_VIDEOS`.
+
+**Ajouter les vidéos d'une nouvelle séance** : ouvrir la séance dans Nolio, relever les liens de « Liens vidéos », ajouter au catalogue celles qui manquent, puis la ligne de la séance dans `NOLIO_SESSION_VIDEOS`. Les séances collées depuis Nolio (hors bibliothèque) n'ont pas de vidéos.
 
 ## Format de séance attendu (exemple)
 
