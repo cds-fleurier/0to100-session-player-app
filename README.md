@@ -49,7 +49,7 @@ Ouvrir le fichier `index.html` dans le navigateur.
 ### Option 2: serveur local
 
 ```bash
-cd /Users/cds/agents-codex/sport-session-player
+cd /Users/cds/Projets/0to100/session-player
 python3 -m http.server 8000
 ```
 
