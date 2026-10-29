@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.31.0] - 2026-10-29
+
+Fin du cycle 2 : 8 nouvelles séances écrites par Céline, et plus de vidéos.
+
+- **C2S7 → C2S14** (Google Doc de Céline du 28/10, réponses du 29/10) : circuit capacité aérobie en côte, run et renfo plio, circuit en côte (séance livre), run et renfo équilibres, PMA en côte, pyramide avec équilibres, technique de descente, simulation trail (84 min). Pas encore de date dans Nolio : elles se rangent en fin de sélecteur.
+- Échauffement du cycle 2 : peut prendre un équilibre skieur (C2S13) et des gammes en côte (C2S11) ou en descente (C2S13).
+- **Vidéos** : catalogue passé de 39 à 62 vidéos, avec les liens des nouvelles séances et le Google Doc « vidéos exos » de Céline : talons-fesses, montées de genoux, schtroumpf, jambes tendues, stepper, bascule du pied, descentes (cadence, engagement, double appui), jumping jacks, balistique, squats jumps, skater croisé, swings et pompes de la séance PAVEL.
+- Voix : 118 nouvelles phrases enregistrées. `tools/collect-phrases.cjs` charge `videos.js` et simule `window.addEventListener` (cassé depuis la 1.30.0, le site n'était pas touché).
+
 ## [1.30.0] - 2026-10-28
 
 Vidéos de démonstration des exercices, demandées par la team.

@@ -37,7 +37,7 @@ const els = {
   videoPauseNote: document.getElementById("videoPauseNote"),
   videoExternal: document.getElementById("videoExternal"),
 };
-const APP_VERSION = "v1.30.0";
+const APP_VERSION = "v1.31.0";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
