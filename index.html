@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Coach Session Player</title>
-    <link rel="stylesheet" href="styles.css?v=1.30.0" />
+    <link rel="stylesheet" href="styles.css?v=1.31.0" />
   </head>
   <body>
     <main class="app">
@@ -83,6 +83,14 @@
       <section class="card plan-card">
         <h2>Plan</h2>
         <div id="sessionMeta" class="meta"></div>
+        <div id="watchExport" class="watch-export" hidden>
+          <button id="watchBtn" class="secondary-btn">⌚ Exporter pour Apple Watch</button>
+          <p class="setting-hint">
+            Ouvre le fichier sur ton iPhone et ajoute la séance à ta montre (app Exercice, course
+            extérieure). Préparation à la maison comprise : à « Sors ! », passe à l'étape suivante
+            une fois dehors.
+          </p>
+        </div>
         <ol id="exerciseList"></ol>
       </section>
 
@@ -141,10 +149,11 @@
       </div>
     </div>
 
-    <script src="sessions-library.js?v=1.30.0"></script>
-    <script src="videos.js?v=1.30.0"></script>
-    <script src="voice/manifest.js?v=1.30.0"></script>
-    <script src="script.js?v=1.30.0"></script>
+    <script src="sessions-library.js?v=1.31.0"></script>
+    <script src="videos.js?v=1.31.0"></script>
+    <script src="voice/manifest.js?v=1.31.0"></script>
+    <script src="watch-export.js?v=1.31.0"></script>
+    <script src="script.js?v=1.31.0"></script>
     <!-- Barre d'onglets partagée de la team (hub) -->
     <script src="https://cds-fleurier.github.io/0to100-hub/nav.js" defer></script>
   </body>

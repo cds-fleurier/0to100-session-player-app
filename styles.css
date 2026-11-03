@@ -706,3 +706,14 @@ body.video-open #hub-nav {
     max-height: 70vh;
   }
 }
+
+/* Export Apple Watch (plan) */
+.watch-export {
+  margin: 10px 0 4px;
+  display: grid;
+  gap: 4px;
+}
+
+.watch-export .setting-hint {
+  border-bottom: 0;
+}

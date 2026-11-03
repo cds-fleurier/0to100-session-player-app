@@ -36,8 +36,10 @@ const els = {
   videoClose: document.getElementById("videoClose"),
   videoPauseNote: document.getElementById("videoPauseNote"),
   videoExternal: document.getElementById("videoExternal"),
+  watchExport: document.getElementById("watchExport"),
+  watchBtn: document.getElementById("watchBtn"),
 };
-const APP_VERSION = "v1.30.0";
+const APP_VERSION = "v1.31.0";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
@@ -1804,6 +1806,32 @@ function resetTimer() {
   renderVideoButton();
 }
 
+// --- Export Apple Watch (watch-export.js) ------------------------------------
+function renderWatchExport() {
+  if (!els.watchExport || typeof buildWatchPlan !== "function") return;
+  els.watchExport.hidden = !(sessionData && timeline.length && watchSessionHasRun(timeline));
+}
+
+async function exportForAppleWatch() {
+  if (!sessionData || !timeline.length) return;
+  els.watchBtn.disabled = true;
+  try {
+    // import() veut une URL complète (« vendor/… » seul n'est pas résolu).
+    const moduleUrl = new URL(`${ASSET_BASE}vendor/workoutkit/encode.js?v=${APP_VERSION.slice(1)}`, document.baseURI);
+    const { toBlob } = await import(moduleUrl.href);
+    const url = URL.createObjectURL(toBlob(buildWatchPlan(sessionData, timeline)));
+    const a = Object.assign(document.createElement("a"), { href: url, download: watchFileName(sessionData) });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch (err) {
+    setStatus(`Export Apple Watch impossible : ${err.message}`, true);
+  } finally {
+    els.watchBtn.disabled = false;
+  }
+}
+
 // --- Bibliothèque de séances ------------------------------------------------
 function selectedLibrarySession() {
   const id = els.sessionPicker ? els.sessionPicker.value : "";
@@ -1892,6 +1920,7 @@ function parseAndLoad() {
     els.pause.disabled = true;
     els.reset.disabled = true;
     renderVideoButton();
+    renderWatchExport();
     els.phase.textContent = "Pret";
     els.phase.className = "phase";
     els.countdown.textContent = "00";
@@ -1924,6 +1953,7 @@ function parseAndLoad() {
     els.current.textContent = "Démarrage imminent";
     els.next.textContent = `Premier exercice: ${timeline[0].name}`;
     renderVideoButton();
+    renderWatchExport();
 
     setStatus(libraryDef ? `Séance ${libraryDef.id} chargée. Appuie sur Demarrer.` : "Séance chargée. Appuie sur Demarrer.");
     updateMetronomeHint();
@@ -1938,6 +1968,7 @@ function parseAndLoad() {
     els.pause.disabled = true;
     els.reset.disabled = true;
     renderVideoButton();
+    renderWatchExport();
     els.phase.textContent = "Pret";
     els.countdown.textContent = "00";
     els.current.textContent = "Charge une séance";
@@ -1957,6 +1988,7 @@ els.reset.addEventListener("click", resetTimer);
 els.focusModeBtn.addEventListener("click", toggleFocusMode);
 els.wakeLockBtn.addEventListener("click", toggleWakeLock);
 els.skipBlockBtn.addEventListener("click", skipToNextBlock);
+if (els.watchBtn) els.watchBtn.addEventListener("click", exportForAppleWatch);
 if (els.videoBtn) {
   els.videoBtn.addEventListener("click", () => {
     const keys = (els.videoBtn.dataset.keys || "").split(",").filter(Boolean);

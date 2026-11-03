@@ -9,6 +9,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 ## Fonctionnalités
 
 - **Séances intégrées** (sélecteur « Séance ») : des séances 0 to 100 décrites dans `sessions-library.js`, disponibles pour tous sans rien coller. Voir § Séances intégrées.
+- **Export Apple Watch** : bouton qui télécharge la séance en `.workout` pour l'app Exercice. Voir § Export Apple Watch.
 - Collage d'une séance en texte libre
 - Bouton `Coller ma séance depuis Nolio` (lecture du presse-papiers)
 - Parsing automatique des exercices, durées, récupérations et nombre de tours
@@ -125,6 +126,15 @@ Toute modification d'un texte parlé (`spoken`, `intro`, `instruction`, libellé
 
 **Ajouter les vidéos d'une nouvelle séance** : ouvrir la séance dans Nolio, relever les liens de « Liens vidéos », ajouter au catalogue celles qui manquent, puis la ligne de la séance dans `NOLIO_SESSION_VIDEOS`. Les séances collées depuis Nolio (hors bibliothèque) n'ont pas de vidéos.
 
+## Export Apple Watch (v1.31.0)
+
+Bouton « ⌚ Exporter pour Apple Watch » dans le Plan, visible quand la séance chargée contient de la course.
+
+- `watch-export.js` : timeline du player → plan « custom » WorkoutKit (JSON). Checkpoint = étape sans durée (on la passe à la main sur la montre), récups et transitions = « recovery », le reste = « work ». WorkoutKit n'imbrique pas les répétitions : on aplatit puis on regroupe les motifs répétés en blocs à N tours (`watchBlocks`).
+- `vendor/workoutkit/encode.js` : encodeur du format binaire `.workout` (`@bibixx/workoutkit` 0.2.0, MIT, fichier `dist/encode.js` copié tel quel). Pas de spec Apple publique : une mise à jour de watchOS peut casser le format → mettre à jour ce fichier depuis npm.
+- Côté coureur : télécharger le fichier, l'ouvrir sur l'iPhone (iOS 17+), « ajouter à la montre ». Testé : Apple Watch Ultra 3 / watchOS 26.6 / iOS 26.6.2 (03/11/2026).
+- Garmin : prototype `.FIT` (SDK officiel Garmin) généré à part, pas encore testé ; import par câble USB dans `GARMIN/NewFiles` seulement.
+
 ## Format de séance attendu (exemple)
 
 ```text
@@ -155,6 +165,7 @@ et détecte aussi le nombre de tours (`X TOURS`).
 - Web Speech API (voix navigateur)
 - Web Audio API (bips)
 - AudioSession API (catégorie audio `ambient` ou `playback` sur iOS)
+- `@bibixx/workoutkit` (encodeur `.workout`, copié dans `vendor/`, pour l'export Apple Watch)
 
 ## Son sur iPhone
 
