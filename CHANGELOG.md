@@ -6,7 +6,7 @@ Toutes les évolutions notables du projet sont documentées ici.
 
 Export Apple Watch, demandé par Jonathan (testé et validé sur Apple Watch Ultra 3, watchOS 26.6, avec la C2S1).
 
-- **Bouton « ⌚ Exporter pour Apple Watch »** dans le Plan : télécharge la séance chargée en fichier `.workout`, à ouvrir sur l'iPhone pour l'ajouter à l'app Exercice de la montre (course extérieure, séance personnalisée).
+- **Bouton « ⌚ Exporter pour Apple Watch »** en bas du premier bloc, sous les Réglages (discret pour ceux qui n’ont pas de montre) : télécharge la séance chargée en fichier `.workout`, à ouvrir sur l'iPhone pour l'ajouter à l'app Exercice de la montre (course extérieure, séance personnalisée).
 - **Une seule séance, préparation à la maison comprise** : le checkpoint « Sortie » devient une étape sans durée (« Sors ! Étape suivante une fois dehors ») qu'on passe à la main sur la montre.
 - Les répétitions sont regroupées (tabata ×2, EPIC 20-20 ×9…), noms des étapes sans compteur (« Chaise » au lieu de « Chaise (1/8) »). Les options de séance (mode hiver, tabata en musique) sont prises en compte.
 - Seulement les séances avec de la course : pas de bouton pour PAVEL, CORE ni les séances renfo collées depuis Nolio.

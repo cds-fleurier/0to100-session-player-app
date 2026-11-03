@@ -128,7 +128,7 @@ Toute modification d'un texte parlé (`spoken`, `intro`, `instruction`, libellé
 
 ## Export Apple Watch (v1.31.0)
 
-Bouton « ⌚ Exporter pour Apple Watch » dans le Plan, visible quand la séance chargée contient de la course.
+Bouton « ⌚ Exporter pour Apple Watch » en bas du premier bloc (sous les Réglages), visible quand la séance chargée contient de la course.
 
 - `watch-export.js` : timeline du player → plan « custom » WorkoutKit (JSON). Checkpoint = étape sans durée (on la passe à la main sur la montre), récups et transitions = « recovery », le reste = « work ». WorkoutKit n'imbrique pas les répétitions : on aplatit puis on regroupe les motifs répétés en blocs à N tours (`watchBlocks`).
 - `vendor/workoutkit/encode.js` : encodeur du format binaire `.workout` (`@bibixx/workoutkit` 0.2.0, MIT, fichier `dist/encode.js` copié tel quel). Pas de spec Apple publique : une mise à jour de watchOS peut casser le format → mettre à jour ce fichier depuis npm.
