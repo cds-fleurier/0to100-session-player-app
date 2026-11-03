@@ -39,7 +39,7 @@ const els = {
   watchExport: document.getElementById("watchExport"),
   watchBtn: document.getElementById("watchBtn"),
 };
-const APP_VERSION = "v1.31.0";
+const APP_VERSION = "v1.31.1";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
@@ -1178,7 +1178,40 @@ function renderPlan(data) {
       els.list.appendChild(li);
     });
   }
+  renderPlanMusic(data);
   renderVideoList(data);
+}
+
+// Morceaux « tabata en musique » dans le Plan : à ouvrir (ou télécharger) avant de sortir,
+// pas seulement au moment de la pause dans le Player.
+function renderPlanMusic(data) {
+  const old = els.list.querySelector(".plan-music");
+  if (old) old.remove();
+  if (!data) return;
+  const tracks = (data.timelineSteps || []).filter((s) => s.type === "checkpoint" && s.music).map((s) => s.music);
+  const def = data.libraryId && typeof librarySessionById === "function" ? librarySessionById(data.libraryId) : null;
+  const offersMusic = def && (def.options || []).some((o) => o.key === "tabataMusic");
+  if (!tracks.length && !offersMusic) return;
+  const li = document.createElement("li");
+  li.className = "plan-music";
+  if (!tracks.length) {
+    li.textContent = "🎵 Tabatas en musique possibles : choisis « En musique » dans l'option Tabata ci-dessus.";
+  } else {
+    const platform = els.musicPlatform ? els.musicPlatform.value : "spotify";
+    const head = document.createElement("span");
+    head.textContent = `🎵 Morceaux des tabatas (sur ${PLATFORM_LABELS[platform] || "Spotify"}, à télécharger avant de sortir si tu n'as pas de réseau) :`;
+    li.appendChild(head);
+    tracks.forEach((t, i) => {
+      const a = document.createElement("a");
+      a.className = "music-btn plan-music-link";
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.href = platformUrl(platform, t.artist, t.title);
+      a.textContent = `▶ Bloc ${i + 1} · ${t.title}`;
+      li.appendChild(a);
+    });
+  }
+  els.list.prepend(li);
 }
 
 // --- Vidéos des exercices (videos.js) ---------------------------------------
@@ -2010,6 +2043,7 @@ els.voiceMode.addEventListener("change", () => {
 els.musicPlatform.addEventListener("change", () => {
   localStorage.setItem(PLATFORM_PREF_KEY, els.musicPlatform.value);
   renderCheckpointMusic(currentStep());
+  renderPlanMusic(sessionData);
 });
 if (els.videoList) {
   els.videoList.addEventListener("scroll", updateVideoListFade, { passive: true });

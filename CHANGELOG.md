@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.31.1] - 2026-11-03
+
+Remontée de l'équipe : avec « Écouter sur », on ne trouvait aucun lien vers les morceaux des tabatas en musique (le bouton n'apparaissait que dans le Player, au moment de la pause, et seulement avec l'option « En musique »).
+
+- **Morceaux listés en haut du Plan** quand l'option Tabata est sur « En musique » : un bouton par bloc (« ▶ Bloc 1 · Cake by the Ocean (Tabata) »…) vers la plateforme choisie dans « Écouter sur », avec le conseil de les télécharger avant de sortir. Les liens suivent le changement de plateforme.
+- Quand la séance propose l'option mais qu'elle est sur « Guidé par le player », le Plan l'indique (« Tabatas en musique possibles : choisis « En musique » dans l'option Tabata »).
+- Sous « Écouter sur » : précise que ça concerne l'option Tabata de la C2S1, morceaux listés dans le Plan.
+- Le bouton dans le Player, à la pause tabata, reste.
+
 ## [1.31.0] - 2026-11-03
 
 Export Apple Watch, demandé par Jonathan (testé et validé sur Apple Watch Ultra 3, watchOS 26.6, avec la C2S1).
