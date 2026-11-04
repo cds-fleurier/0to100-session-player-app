@@ -2,6 +2,14 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.32.0] - 2026-11-04
+
+Demande de l'équipe : pouvoir revenir en arrière dans les exercices.
+
+- **Bouton « ⏪ RWD »** à gauche de FWD, comme sur un lecteur de musique : après plus de 3 s d'exercice, il reprend l'exercice en cours au début ; sinon (début d'exercice, récup, transition, pause) il revient à l'exercice précédent, annoncé à la voix comme avec FWD.
+- Le timer garde son état (en cours ou en pause). Une fois la séance terminée, RWD revient au dernier exercice, en pause : Démarrer pour le refaire.
+- **Boutons du player fixes** (remontée de l'équipe : selon la longueur du titre de l'exercice, sur 1, 2 ou plus de lignes, les boutons bougeaient et on tapait Pause en visant FWD). Titre de l'exercice en hauteur fixe (3 lignes, police réduite automatiquement si le texte est plus long, ex. consigne du tabata en musique), « Ensuite » sur 2 lignes maxi, compte à rebours en hauteur fixe. Les boutons qui apparaissent selon l'étape (« ▶ Voir l'exo », morceau du tabata en musique) passent **sous** Démarrer / Pause / Reset / RWD / FWD. Vérifié sur toutes les étapes de C2S1, PAVEL et CORE : FWD ne bouge plus d'un pixel.
+
 ## [1.31.1] - 2026-11-03
 
 Remontée de l'équipe : avec « Écouter sur », on ne trouvait aucun lien vers les morceaux des tabatas en musique (le bouton n'apparaissait que dans le Player, au moment de la pause, et seulement avec l'option « En musique »).

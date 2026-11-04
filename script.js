@@ -17,6 +17,7 @@ const els = {
   wakeLockBtn: document.getElementById("wakeLockBtn"),
   wakeLockHint: document.getElementById("wakeLockHint"),
   skipBlockBtn: document.getElementById("skipBlockBtn"),
+  rewindBtn: document.getElementById("rewindBtn"),
   appVersion: document.getElementById("appVersion"),
   voiceToggle: document.getElementById("voiceToggle"),
   voiceMode: document.getElementById("voiceMode"),
@@ -39,7 +40,7 @@ const els = {
   watchExport: document.getElementById("watchExport"),
   watchBtn: document.getElementById("watchBtn"),
 };
-const APP_VERSION = "v1.31.1";
+const APP_VERSION = "v1.32.0";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
@@ -1454,6 +1455,65 @@ function skipToNextBlock() {
   announceStepStart(timeline[idx]);
 }
 
+// Titre de l'exercice : hauteur fixe (styles.css), on réduit la police jusqu'à ce que
+// le texte tienne, pour que les boutons du player restent toujours au même endroit.
+function fitPlayerText(el, minPx) {
+  if (!el) return;
+  el.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollHeight > el.clientHeight + 1 && size > minPx) {
+    size -= 1;
+    el.style.fontSize = `${size}px`;
+  }
+}
+
+if (els.current && typeof MutationObserver === "function") {
+  new MutationObserver(() => fitPlayerText(els.current, 12)).observe(els.current, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  });
+  if (typeof window.addEventListener === "function") {
+    window.addEventListener("resize", () => fitPlayerText(els.current, 12));
+  }
+}
+
+// RWD, comme un lecteur de musique : après 3 s d'exercice, on reprend l'exercice
+// en cours au début ; sinon (ou pendant une récup, une transition, une pause), on
+// revient à l'exercice précédent. Marche aussi une fois la séance terminée.
+const REWIND_RESTART_S = 3;
+
+function rewindStep() {
+  if (!timeline.length) return;
+  const step = currentStep();
+  const ended = !step;
+  const from = Math.min(idx, timeline.length);
+  let target = -1;
+  if (step && step.type === "work" && step.seconds - remaining > REWIND_RESTART_S) {
+    target = idx;
+  } else {
+    for (let i = from - 1; i >= 0; i -= 1) {
+      if (timeline[i].type === "work") { target = i; break; }
+    }
+    if (target === -1 && step && step.type === "work") target = idx;
+  }
+  if (target === -1) return;
+
+  idx = target;
+  remaining = timeline[idx].seconds;
+  lastCountdownCall = null;
+  prepareAnnounced = false;
+  preStartLaunching = false;
+  if (ended) {
+    // Séance finie : le timer est arrêté, on repart en pause sur l'exercice.
+    paused = true;
+    els.start.disabled = false;
+    els.pause.disabled = true;
+  }
+  renderPlayer();
+  announceStepStart(timeline[idx]);
+}
+
 // Checkpoint atteint : le player se met en pause, la reprise se fait sur Démarrer.
 function enterCheckpoint(step) {
   remaining = 0;
@@ -2021,6 +2081,7 @@ els.reset.addEventListener("click", resetTimer);
 els.focusModeBtn.addEventListener("click", toggleFocusMode);
 els.wakeLockBtn.addEventListener("click", toggleWakeLock);
 els.skipBlockBtn.addEventListener("click", skipToNextBlock);
+if (els.rewindBtn) els.rewindBtn.addEventListener("click", rewindStep);
 if (els.watchBtn) els.watchBtn.addEventListener("click", exportForAppleWatch);
 if (els.videoBtn) {
   els.videoBtn.addEventListener("click", () => {

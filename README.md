@@ -21,6 +21,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
   - détection RUN & RENFO même sans le libellé explicite (course + renfo)
   - renfo détecté sur d'autres exercices (planche, ponts, gainage, etc.)
   - bouton `FWD bloc` pour sauter directement au bloc suivant
+  - bouton `RWD` (v1.32.0) : reprend l'exercice en cours s'il a démarré depuis plus de 3 s, sinon revient à l'exercice précédent
   - formats secondes avec guillemets acceptés (ex: `30"`)
   - `rounds` en anglais accepté (ex: `4 rounds`)
   - la voix annonce uniquement le nom d'exercice (sans précisions techniques)
