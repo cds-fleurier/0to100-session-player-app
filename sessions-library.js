@@ -1817,6 +1817,35 @@ const SESSION_LIBRARY = [
   },
 ];
 
+// Séances qui reviennent dans Nolio (PAVEL, CORE…) : une entrée de plus dans le
+// sélecteur par date, même contenu, durée par défaut de ce jour-là. Id = "<id>-jj-mm".
+const LIBRARY_REPEATS = [
+  { of: "PAVEL", date: "11/11/26", options: { cycles: 2 } },
+  { of: "PAVEL", date: "15/11/26", options: { cycles: 3 } },
+  { of: "PAVEL", date: "20/11/26", options: { cycles: 3 } },
+  { of: "CORE", date: "22/11/26", options: { tours: 4 } },
+];
+
+LIBRARY_REPEATS.forEach(({ of, date, options }) => {
+  const base = SESSION_LIBRARY.find((s) => s.id === of);
+  if (!base) return;
+  const opts = (base.options || []).map((o) =>
+    options && options[o.key] != null ? { ...o, default: options[o.key] } : o
+  );
+  const chosen = opts.map((o) => o.choices.find((c) => c.value === o.default)).filter(Boolean);
+  // « 12 min » ou « 4 tours (12 min) » → la durée du jour en tête du sous-titre.
+  const dur = chosen.map((c) => (c.label.match(/\(([^)]+)\)/) || [, c.label])[1]).join(" · ");
+  const [, ...restSub] = base.subtitle.split(" · ");
+  SESSION_LIBRARY.push({
+    ...base,
+    id: `${of}-${date.slice(0, 5).replace("/", "-")}`,
+    date,
+    subtitle: dur ? [dur, ...restSub].join(" · ") : base.subtitle,
+    options: opts,
+    repeatOf: of,
+  });
+});
+
 function librarySessionById(id) {
   return SESSION_LIBRARY.find((s) => s.id === id) || null;
 }

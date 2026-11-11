@@ -77,7 +77,9 @@ function videosForStep(sessionId, step) {
   const name = step.name.trim();
   const candidates = Object.keys(VIDEO_CATALOG).filter((key) => VIDEO_CATALOG[key].match.test(name));
   if (!candidates.length) return [];
-  const coach = NOLIO_SESSION_VIDEOS[sessionId] || [];
+  // Séance répétée (PAVEL-11-11…) : mêmes vidéos que la séance d'origine.
+  const def = typeof librarySessionById === "function" ? librarySessionById(sessionId) : null;
+  const coach = NOLIO_SESSION_VIDEOS[(def && def.repeatOf) || sessionId] || [];
   const preferred = candidates.filter((key) => coach.includes(key));
   return preferred.length ? preferred : candidates;
 }
