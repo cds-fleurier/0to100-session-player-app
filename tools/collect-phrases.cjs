@@ -33,6 +33,12 @@ function stubElement() {
       return child;
     },
     append() {},
+    remove() {},
+    insertAdjacentElement() {},
+    insertBefore(c) { return c; },
+    prepend() {},
+    before() {},
+    after() {},
     replaceChildren() {},
     setAttribute() {},
     removeAttribute() {},
@@ -83,11 +89,13 @@ function makeContext(spoken) {
     URL: { createObjectURL: () => "" },
     Blob: function Blob() {},
     fetch: () => Promise.reject(new Error("no fetch")),
+    addEventListener() {},
+    removeEventListener() {},
   };
   ctx.window = ctx;
   ctx.globalThis = ctx;
   vm.createContext(ctx);
-  for (const file of ["sessions-library.js", "script.js"]) {
+  for (const file of ["sessions-library.js", "videos.js", "script.js"]) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx, { filename: file });
   }
   // La voix est coupée côté DOM stub : on capte le texte à la source.

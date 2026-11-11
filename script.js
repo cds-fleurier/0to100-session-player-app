@@ -40,7 +40,7 @@ const els = {
   watchExport: document.getElementById("watchExport"),
   watchBtn: document.getElementById("watchBtn"),
 };
-const APP_VERSION = "v1.32.0";
+const APP_VERSION = "v1.33.0";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
@@ -1365,6 +1365,14 @@ function upcomingStep() {
   return timeline[idx + 1] || null;
 }
 
+// Récup passive : step « rest » non actif (corde à sauter = actif), ou step de
+// séance bibliothèque nommé « Récup… » (PAVEL, CORE les déclarent en work).
+function isRecoveryStep(step) {
+  if (!step) return false;
+  if (step.type === "rest") return !step.active;
+  return step.type === "work" && /^r[ée]cup/i.test(step.name || "");
+}
+
 function nextIsWork() {
   const next = upcomingStep();
   return Boolean(next && next.type === "work");
@@ -1734,6 +1742,20 @@ function tick() {
 
   // Step estimé (distance, répétitions) : pas de décompte final, il mettrait la
   // pression à qui n'a pas fini. Le step suivant s'annonce par « Quand tu as fini ».
+  // Décompte qui débouche sur une récup (PAVEL, CORE…) : « Récup dans » à T-6,
+  // sinon les chiffres font croire à une nouvelle répétition.
+  if (
+    step.type === "work" &&
+    !step.estimated &&
+    step.seconds >= 10 &&
+    remaining === 6 &&
+    lastCountdownCall !== 6 &&
+    isRecoveryStep(upcomingStep())
+  ) {
+    lastCountdownCall = 6;
+    speak("Récup dans", voiceClipsReady);
+  }
+
   if (step.type === "work" && !step.estimated && remaining <= 5 && remaining > 0 && lastCountdownCall !== remaining) {
     lastCountdownCall = remaining;
     speak(String(remaining), voiceClipsReady);

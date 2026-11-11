@@ -1568,7 +1568,57 @@ const SESSION_LIBRARY = [
     ],
   },
   {
-    // Doc de Céline (16/10). Date connue le 16/10, pas encore dans Nolio.
+    // Nolio 12/11 : « 5x CIRCUIT SPÉ ELASTIQUE 30/30 (ROUGE) (Copie) » + « Jog 10' @ Z1 enchaîner après renfo ».
+    // Le titre dit 5x, le détail 4 tours : on suit le détail. La récup du squat élastique manque
+    // dans le tableau ; avec elle, 4 × 8 min + 3 × 1 min + 10 min = 45 min, la durée Nolio.
+    // Récups d'exercice en alternance récup / corde à sauter (corde = step de travail).
+    id: "CIRCUIT-ELASTIQUE",
+    date: "12/11/26",
+    title: "CIRCUIT — Élastique 30/30 + 10 min I1",
+    subtitle: "45 min · élastique rouge · 4 tours de 8 exercices de 30 s, récup ou corde à sauter de 30 s entre, 1 min entre les tours, puis 10 min de course I1",
+    advice:
+      "Matériel : élastique rouge (Elast'iring) et corde à sauter. Chaque exercice dure 30 s, suivi de 30 s de récup ou de corde à sauter, en alternance. 1 min de récup entre les tours. Puis enchaîne 10 min de course très facile.",
+    options: [WINTER_OPTION],
+    blocks: [
+      {
+        name: "Circuit élastique",
+        rounds: 4,
+        restBetweenRounds: 60,
+        intro: "Circuit élastique, 4 tours. 30 secondes par exercice, puis 30 secondes de récup ou de corde à sauter.",
+        round: [
+          { name: "Squat élastique", spoken: "Squat élastique", seconds: 30 },
+          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
+          { name: "Squat latéral", spoken: "Squat latéral", seconds: 30 },
+          { name: "Corde à sauter", spoken: "Corde à sauter", seconds: 30 },
+          { name: "Bear tape main", spoken: "Bear tape main", seconds: 30 },
+          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
+          { name: "Montée sur pointe de pied sur marche, droite", spoken: "Montée sur pointe de pied sur la marche, pied droit", seconds: 30 },
+          { name: "Corde à sauter", spoken: "Corde à sauter", seconds: 30 },
+          { name: "Montée sur pointe de pied sur marche, gauche", spoken: "Montée sur pointe de pied sur la marche, pied gauche", seconds: 30 },
+          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
+          {
+            name: "Planche avec élastique",
+            spoken: "Planche avec élastique",
+            seconds: 30,
+            on: { winter: { name: "Climbers (hiver, à la place de la planche)", spoken: "Climbers, à la place de la planche" } },
+          },
+          { name: "Corde à sauter", spoken: "Corde à sauter", seconds: 30 },
+          { name: "Montée de genou élastique, droite", spoken: "Montée de genou avec élastique, jambe droite", seconds: 30 },
+          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
+          { name: "Montée de genou élastique, gauche", spoken: "Montée de genou avec élastique, jambe gauche", seconds: 30 },
+          { name: "Corde à sauter", spoken: "Corde à sauter", seconds: 30 },
+        ],
+      },
+      {
+        name: "Course",
+        steps: [
+          { kind: "step", name: "Course I1 (très facile)", spoken: "Enchaîne avec la course, très facile, intensité 1", seconds: 600 },
+        ],
+      },
+    ],
+  },
+  {
+    // Doc de Céline (16/10). Date confirmée dans Nolio (relu le 11/11 : « 4 à 5 fois », on garde 5).
     id: "C2S4",
     date: "14/11/26",
     title: "C2S4 — Run et renfo, équilibres",
@@ -1730,13 +1780,14 @@ const SESSION_LIBRARY = [
     ],
   },
   {
-    // CORE : le titre Nolio dit « 30s / 30s », le détail 20 s d'effort / 40 s de récup — on suit le détail.
+    // CORE : Nolio dit maintenant 30 s / 30 s dans le titre ET le détail (relu le 11/11 ;
+    // avant : détail 20 s / 40 s, coquille corrigée par Seb).
     id: "CORE",
     date: "07/11/26",
     title: "CORE — Climbers, superman, crunch",
-    subtitle: "9 ou 12 min · 3 exercices, 20 s d'effort / 40 s de récup, 3 ou 4 tours",
+    subtitle: "9 ou 12 min · 3 exercices, 30 s d'effort / 30 s de récup, 3 ou 4 tours",
     advice:
-      "Mountain climbers lents et contrôlés. Superman : pieds au sol, bras tendus vers l'avant, regarde le sol. Crunch : pieds au sol, genoux fléchis. 20 s d'effort, 40 s de récup.",
+      "Mountain climbers lents et contrôlés. Superman : pieds au sol, bras tendus vers l'avant, regarde le sol. Crunch : pieds au sol, genoux fléchis. 30 s d'effort, 30 s de récup.",
     options: [
       {
         key: "tours",
@@ -1752,14 +1803,14 @@ const SESSION_LIBRARY = [
       {
         name: "Core",
         rounds: { option: "tours" },
-        intro: "Gainage. 3 exercices, 20 secondes d'effort, 40 secondes de récup.",
+        intro: "Gainage. 3 exercices, 30 secondes d'effort, 30 secondes de récup.",
         round: [
-          { name: "Mountain climbers lents", spoken: "Mountain climbers, lents et contrôlés", seconds: 20 },
-          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false },
-          { name: "Superman", spoken: "Superman, pieds au sol, bras tendus, regarde le sol", seconds: 20 },
-          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false },
-          { name: "Crunch", spoken: "Crunch, pieds au sol, genoux fléchis", seconds: 20 },
-          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false },
+          { name: "Mountain climbers lents", spoken: "Mountain climbers, lents et contrôlés", seconds: 30 },
+          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
+          { name: "Superman", spoken: "Superman, pieds au sol, bras tendus, regarde le sol", seconds: 30 },
+          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
+          { name: "Crunch", spoken: "Crunch, pieds au sol, genoux fléchis", seconds: 30 },
+          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
         ],
       },
     ],

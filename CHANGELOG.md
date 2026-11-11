@@ -2,6 +2,16 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.33.0] - 2026-11-11
+
+Remontée de Charles sur PAVEL + séances relues dans Nolio jusqu'au 22/11.
+
+- **Décompte avant une récup** : à la fin de la 4e répétition de PAVEL, le décompte 5-4-3-2-1 laissait croire qu'une nouvelle répétition arrivait. Quand l'exercice débouche sur une récup, le player dit maintenant « Récup dans… 5, 4, 3, 2, 1 ». Vaut pour toutes les séances (CORE, circuits, récups entre les blocs), pas pour la corde à sauter (récup active).
+- **Nouvelle séance `CIRCUIT-ELASTIQUE` (12/11)** : circuit élastique 30/30, 4 tours de 8 exercices avec récup ou corde à sauter en alternance, 1 min entre les tours, puis 10 min de course I1. 45 min, la durée annoncée dans Nolio.
+- **CORE en 30 s / 30 s** : Nolio a été corrigé (titre et détail disent désormais 30/30). Durées inchangées : 9 ou 12 min.
+- C2S4, C2S5, C2S6 et PAVEL relus dans Nolio : rien à changer (C2S5 : Nolio dit encore 3 blocs, le player garde les 4 blocs confirmés par Céline le 16/10).
+- Outil `tools/collect-phrases.cjs` réparé (DOM simulé incomplet), voix régénérée.
+
 ## [1.32.0] - 2026-11-04
 
 Demande de l'équipe : pouvoir revenir en arrière dans les exercices.
