@@ -40,7 +40,7 @@ const els = {
   watchExport: document.getElementById("watchExport"),
   watchBtn: document.getElementById("watchBtn"),
 };
-const APP_VERSION = "v1.33.0";
+const APP_VERSION = "v1.33.1";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 

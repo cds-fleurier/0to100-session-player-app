@@ -1569,15 +1569,16 @@ const SESSION_LIBRARY = [
   },
   {
     // Nolio 12/11 : « 5x CIRCUIT SPÉ ELASTIQUE 30/30 (ROUGE) (Copie) » + « Jog 10' @ Z1 enchaîner après renfo ».
-    // Le titre dit 5x, le détail 4 tours : on suit le détail. La récup du squat élastique manque
-    // dans le tableau ; avec elle, 4 × 8 min + 3 × 1 min + 10 min = 45 min, la durée Nolio.
+    // Le titre dit 5x, le détail 4 tours : on suit le détail. Pas de récup entre squat élastique et
+    // squat latéral : ils s'enchaînent (Charles, 12/11 — ce n'était pas un oubli du tableau).
+    // 4 × 7 min 30 + 3 × 1 min + 10 min = 43 min (Nolio annonce 45).
     // Récups d'exercice en alternance récup / corde à sauter (corde = step de travail).
     id: "CIRCUIT-ELASTIQUE",
     date: "12/11/26",
     title: "CIRCUIT — Élastique 30/30 + 10 min I1",
-    subtitle: "45 min · élastique rouge · 4 tours de 8 exercices de 30 s, récup ou corde à sauter de 30 s entre, 1 min entre les tours, puis 10 min de course I1",
+    subtitle: "43 min · élastique rouge · 4 tours de 8 exercices de 30 s (les 2 squats enchaînés), puis récup ou corde à sauter de 30 s, 1 min entre les tours, puis 10 min de course I1",
     advice:
-      "Matériel : élastique rouge (Elast'iring) et corde à sauter. Chaque exercice dure 30 s, suivi de 30 s de récup ou de corde à sauter, en alternance. 1 min de récup entre les tours. Puis enchaîne 10 min de course très facile.",
+      "Matériel : élastique rouge (Elast'iring) et corde à sauter. Chaque exercice dure 30 s. Squat élastique et squat latéral s'enchaînent sans pause ; après chacun des autres exercices, 30 s de récup ou de corde à sauter, en alternance. 1 min de récup entre les tours. Puis enchaîne 10 min de course très facile.",
     options: [WINTER_OPTION],
     blocks: [
       {
@@ -1587,8 +1588,7 @@ const SESSION_LIBRARY = [
         intro: "Circuit élastique, 4 tours. 30 secondes par exercice, puis 30 secondes de récup ou de corde à sauter.",
         round: [
           { name: "Squat élastique", spoken: "Squat élastique", seconds: 30 },
-          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
-          { name: "Squat latéral", spoken: "Squat latéral", seconds: 30 },
+          { name: "Squat latéral", spoken: "Enchaîne : squat latéral", seconds: 30 },
           { name: "Corde à sauter", spoken: "Corde à sauter", seconds: 30 },
           { name: "Bear tape main", spoken: "Bear tape main", seconds: 30 },
           { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },

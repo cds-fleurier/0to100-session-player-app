@@ -2,6 +2,10 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.33.1] - 2026-11-12
+
+- **Circuit élastique (12/11)** : squat élastique et squat latéral s'enchaînent sans pause (remontée de Charles). La récup ajoutée après le squat élastique en v1.33.0 était une erreur d'interprétation du tableau Nolio. Séance : 43 min (4 tours de 7 min 30, 1 min entre les tours, 10 min de course I1).
+
 ## [1.33.0] - 2026-11-11
 
 Remontée de Charles sur PAVEL + séances relues dans Nolio jusqu'au 22/11.
