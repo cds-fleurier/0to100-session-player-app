@@ -165,6 +165,36 @@ function libraryApplyOptionVariants(node, active) {
   return out;
 }
 
+// Échauffement PAVEL 9' (Nolio, PAVEL du 25/11 et du 28/11). Durées du coach ; les répétitions
+// tiennent dans le temps donné (« environ 15'' » par série de 5).
+const PAVEL_WARMUP = [
+  { kind: "step", name: "Hip hinge (à genoux, debout ou avec un balai)", spoken: "Hip hinge. Flexion, extension de hanche, à genoux, debout ou avec un balai", seconds: 40 },
+  { kind: "step", name: "Pont fessier iso, talons décollés (1/2)", spoken: "Pont fessier, talons décollés, tiens", seconds: 20 },
+  { kind: "step", name: "Repos", spoken: "Repos", seconds: 20, sayDuration: false },
+  { kind: "step", name: "Pont fessier iso, talons décollés (2/2)", spoken: "Pont fessier, talons décollés, tiens", seconds: 20 },
+  { kind: "step", name: "Repos", spoken: "Repos", seconds: 20, sayDuration: false },
+  { kind: "step", name: "Pont dynamique explosif × 3 (genou poitrine 3 s, pont 2 s, redescente 5 s, 10 s de repos)", spoken: "Pont dynamique explosif, 3 fois. Genou poitrine 3 secondes, pont 2 secondes, redescente 5 secondes, puis 10 secondes de repos", seconds: 60 },
+  { kind: "step", name: "Bird dog, bras gauche + jambe droite (5 × 5 s)", spoken: "4 pattes, bird dog. Bras gauche et jambe droite, 5 fois 5 secondes", seconds: 30 },
+  { kind: "step", name: "Bird dog, bras droit + jambe gauche (5 × 5 s)", spoken: "Inverse, bras droit et jambe gauche", seconds: 30 },
+  { kind: "step", name: "Éducatifs pompes × 3 (à genoux, descente en 5 s, étirement 10 s)", spoken: "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons", seconds: 45 },
+  { kind: "step", name: "Soulevé de terre × 5", spoken: "Soulevé de terre, 5 fois", seconds: 75 },
+  { kind: "step", name: "Tirage × 5", spoken: "Tirage, 5 fois", seconds: 75 },
+  { kind: "step", name: "Dead swing × 5", spoken: "Dead swing, 5 fois", seconds: 105 },
+];
+
+// WOD KB FORCE : 3 séries d'un exercice, récup réglable entre les séries (pas après la dernière
+// du dernier exercice).
+function wodForceBlock(name, steps, last = false) {
+  const out = [];
+  for (let k = 1; k <= 3; k += 1) {
+    steps.forEach((st) => out.push({ kind: "step", ...st, name: `${st.name} — série ${k}/3` }));
+    if (!(last && k === 3)) {
+      out.push({ kind: "step", name: "Récup", spoken: "Récup", secondsFrom: "wodRest", announceNext: true });
+    }
+  }
+  return { name, intro: `${name}, 3 séries.`, steps: out };
+}
+
 // Option « Tabata en musique » (C2S1, idée de Céline le 15/10) : chaque tabata devient une pause.
 // L'écran du player propose d'ouvrir un morceau « Tabata Songs » (4 min 02 = un tabata,
 // 8 × 20 s / 10 s, les changements sont dans la musique), on revient sur Démarrer.
@@ -266,12 +296,57 @@ const EDT_GAMMES_C2S5 = [
   ["Gammes libres", "Gammes libres"],
 ];
 
-function edtC2Warmup(gammes = EDT_GAMMES_C2S1) {
-  const balance = (side) => ({
-    name: `Équilibre ${side === "G" ? "pied gauche" : "pied droit"}, genou levé`,
-    spoken: side === "G" ? "Pied gauche, genou levé" : "Pied droit, genou levé",
-    seconds: 20,
-  });
+// C2S11 : gammes en côte, 3 min (20 s de gamme en montée, 40 s de trot en redescendant).
+const EDT_GAMMES_COTE = {
+  name: "Gammes en côte",
+  intro: "Gammes en côte, 3 minutes. 20 secondes de gamme en montée, 40 secondes de trot en redescendant.",
+  steps: [
+    ["Talons-fesses en côte", "Talons-fesses, en montée"],
+    ["Montées de genoux en côte", "Montées de genoux, en montée"],
+    ["Schtroumpf en côte", "Schtroumpf, en montée"],
+  ].flatMap(([name, spoken]) => [
+    { kind: "step", name, spoken, seconds: 20, sayDuration: false },
+    { kind: "step", name: "Trot en descente", spoken: "Redescends en trottant", seconds: 40, sayDuration: false },
+  ]),
+};
+
+// C2S13 : gammes contrôle en descente, 10 min (40 s de course facile en cadence en montée,
+// 20 s de gamme en descente, 10 fois).
+const EDT_GAMMES_DESCENTE = {
+  name: "Gammes contrôle en descente",
+  intro: "Gammes contrôle en descente, 10 minutes. 40 secondes de course facile en cadence en montée, puis 20 secondes de gamme en descente.",
+  steps: [
+    ["Talons-fesses en descente", "Talons-fesses, en descente"],
+    ["Talons-fesses, arrêt bref tous les 5 appuis, en descente", "Talons-fesses, arrêt bref tous les 5 appuis"],
+    ["Talons-fesses, double appui (mini saut) tous les 5 appuis, en descente", "Talons-fesses, double appui tous les 5 appuis"],
+    ["Montées de genoux en descente", "Montées de genoux, en descente"],
+    ["Montées de genoux, arrêt bref tous les 5 appuis, en descente", "Montées de genoux, arrêt bref tous les 5 appuis"],
+    ["Montées de genoux, double appui (mini saut) tous les 5 appuis, en descente", "Montées de genoux, double appui tous les 5 appuis"],
+    ["Gammes libres, arrêt bref tous les 5 appuis, en descente", "Gammes libres, arrêt bref tous les 5 appuis"],
+    ["Talons-fesses, double appui tous les 5 appuis, en descente", "Talons-fesses, double appui"],
+    ["Montées de genoux, double appui tous les 5 appuis, en descente", "Montées de genoux, double appui"],
+    ["Course jambes tendues en descente", "Course jambes tendues, en descente"],
+  ].flatMap(([name, spoken]) => [
+    { kind: "step", name: "Course facile en montée, cadence", spoken: "Course facile en montée, en cadence", seconds: 40, cadence: true, sayDuration: false },
+    { kind: "step", name, spoken, seconds: 20, sayDuration: false },
+  ]),
+};
+
+// `gammes` : les 7 gammes [nom, phrase] du découpage 20 s / 20 s, ou un bloc complet
+// (EDT_GAMMES_COTE, EDT_GAMMES_DESCENTE). `balance: "skieur"` : équilibre skieur (C2S13).
+function edtC2Warmup(gammes = EDT_GAMMES_C2S1, { balance: balanceKind = "mg" } = {}) {
+  const skieur = balanceKind === "skieur";
+  const balance = (side) => skieur
+    ? {
+        name: `Équilibre skieur, ${side === "G" ? "pied gauche" : "pied droit"}`,
+        spoken: side === "G" ? "Skieur, pied gauche" : "Skieur, pied droit",
+        seconds: 20,
+      }
+    : {
+        name: `Équilibre ${side === "G" ? "pied gauche" : "pied droit"}, genou levé`,
+        spoken: side === "G" ? "Pied gauche, genou levé" : "Pied droit, genou levé",
+        seconds: 20,
+      };
   return [
     {
       name: "Préparation (à la maison)",
@@ -280,7 +355,7 @@ function edtC2Warmup(gammes = EDT_GAMMES_C2S1) {
         {
           kind: "sequence",
           name: "Équilibre",
-          intro: "Équilibre avec montée de genou, 3 minutes.",
+          intro: skieur ? "Équilibre skieur, 3 minutes." : "Équilibre avec montée de genou, 3 minutes.",
           items: [
             balance("G"), balance("D"), balance("G"), balance("D"),
             { name: "Course sur place, cadence", spoken: "Course sur place, en cadence", seconds: 20, cadence: true },
@@ -302,7 +377,7 @@ function edtC2Warmup(gammes = EDT_GAMMES_C2S1) {
         },
       ],
     },
-    {
+    Array.isArray(gammes) ? {
       name: "Gammes contrôle",
       intro: "Gammes contrôle, 5 minutes. Tu alternes 20 secondes de course facile en cadence et 20 secondes de gamme.",
       steps: gammes
@@ -311,7 +386,7 @@ function edtC2Warmup(gammes = EDT_GAMMES_C2S1) {
           { kind: "step", name, spoken, seconds: 20, sayDuration: false },
         ])
         .concat([{ kind: "step", name: "Course facile, cadence", spoken: "Course facile, en cadence", seconds: 20, cadence: true, sayDuration: false }]),
-    },
+    } : gammes,
   ];
 }
 
@@ -1729,6 +1804,364 @@ const SESSION_LIBRARY = [
     ],
   },
   {
+    // Doc de Céline (« Cycle 2 spé », 28/10). Nolio (relu le 13/11) : 24/11, même circuit écrit en
+    // distances / répétitions (« corps de séance 30' ») — on garde le découpage chronométré de Céline.
+    id: "C2S7",
+    date: "24/11/26",
+    title: "C2S7 — Circuit capacité aérobie en côte",
+    subtitle: "≈ 60 min · préparation 12 min, 10 min I1, gammes double appui, 7 tours de 4 min en côte et descente, 5 min de retour au calme",
+    advice:
+      "Trouve une côte. Un tour de 4 min, en partant du bas : 20 s de montées de genoux sur place, 10 s de course en cadence en montée (I3), 50 s de fentes avant tempo 2-0-1-0 (2 s pour descendre, 1 s pour monter, en alternant gauche et droite), 20 s de marche en amplitude en montée (I3), 20 s de squats tempo 1-0-1-0, 30 s de course I4 en montée, puis 1 min 30 de descente facile, concentré sur la technique (cadence, engagement). 7 tours. Retour au calme 5 min.",
+    blocks: [
+      ...edtC2Warmup(EDT_GAMMES_C2S3),
+      {
+        name: "Circuit en côte",
+        rounds: 7,
+        intro: "Circuit en côte, 7 tours de 4 minutes. Place-toi en bas de la côte.",
+        round: [
+          { name: "Montées de genoux sur place", spoken: "Montées de genoux sur place", seconds: 20 },
+          { name: "Course en cadence en montée (I3)", spoken: "Course en cadence, en montée, intensité 3", seconds: 10, cadence: true, sayDuration: false },
+          { name: "Fentes avant tempo 2-0-1-0 (alterner G et D)", spoken: "Fentes avant, 2 secondes pour descendre, 1 pour monter. Alterne gauche et droite", seconds: 50 },
+          { name: "Marche en amplitude en montée (I3)", spoken: "Marche en amplitude, en montée, intensité 3", seconds: 20 },
+          { name: "Squats tempo 1-0-1-0", spoken: "Squats, une seconde pour descendre, une pour monter", seconds: 20 },
+          { name: "Course I4 en montée", spoken: "Course en montée, intensité 4", seconds: 30 },
+          { name: "Descente facile, technique (cadence, engagement)", spoken: "Descente facile. Concentre-toi sur la technique : cadence, engagement", seconds: 90, announceNext: true },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Retour au calme (trotter ou marcher)", spoken: "Retour au calme, trotte ou marche", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // Doc de Céline (28/10) + retour au calme ajouté le 29/10 (oubli dans le doc, il est dans Nolio).
+    id: "C2S8",
+    date: "27/11/26",
+    title: "C2S8 — Run et renfo plio",
+    subtitle: "≈ 54 min · mobilité 9 min, 3 min I1 + rotations de hanches, 3 × (5 min I1 + hanches et jumping jacks, 5 min I2 + balistique et montées de genoux), 5 min de retour au calme",
+    advice:
+      "Après 3 min en I1 : 1 min de rotations de hanches. Puis 3 fois : 5 min en I1, 30 s de rotations de hanches et 30 s de jumping jacks ; 5 min en I2, 30 s de mobilité balistique et 30 s de montées de genoux sur place. Retour au calme 5 min en I1.",
+    blocks: [
+      { name: "Mobilité (à la maison)", steps: [...edtC2Mobility(), EDT_SORTIE] },
+      {
+        name: "Mise en route",
+        steps: [
+          { kind: "step", name: "Course I1", spoken: "Course, intensité 1", seconds: 180, announceNext: true },
+          { kind: "step", name: "Rotations de hanches", spoken: "Rotations de hanches", seconds: 60 },
+        ],
+      },
+      {
+        name: "Run et plio",
+        rounds: 3,
+        intro: "3 fois : 5 minutes en intensité 1, hanches et jumping jacks ; 5 minutes en intensité 2, balistique et montées de genoux.",
+        round: [
+          { name: "Course I1", spoken: "Course, intensité 1", seconds: 300, announceNext: true },
+          { name: "Rotations de hanches", spoken: "Rotations de hanches", seconds: 30 },
+          { name: "Jumping jacks", spoken: "Jumping jacks", seconds: 30 },
+          { name: "Course I2", spoken: "Course, intensité 2", seconds: 300, announceNext: true },
+          { name: "Mobilité balistique", spoken: "Mobilité balistique", seconds: 30 },
+          { name: "Montées de genoux sur place", spoken: "Montées de genoux sur place", seconds: 30 },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // Doc de Céline (28/10). Séance du livre « Moins courir pour mieux courir ».
+    // Nolio : 01/12 (« C2 S9 SEANCE LIVRE P108 », circuit 25' en distances) — découpage de Céline gardé.
+    id: "C2S9",
+    date: "01/12/26",
+    title: "C2S9 — Circuit en côte (séance livre)",
+    subtitle: "≈ 57 min · préparation 12 min, 10 min I1, gammes double appui, 7 tours de 3 min 30 en côte, 5 min de retour au calme",
+    advice:
+      "Trouve une côte. Un tour de 3 min 30, en partant du bas : 30 s de climbers, 10 s de course en cadence en côte (« courir léger », I3), 20 s de marche en fentes en côte, 10 s de course en cadence (I3), 20 s de squats sautés sur place, 30 s de course en I5 en côte, 1 min 30 de descente facile en cadence. 7 tours (24 min 30). Retour au calme 5 min en I1.",
+    blocks: [
+      ...edtC2Warmup(EDT_GAMMES_C2S3),
+      {
+        name: "Circuit en côte",
+        rounds: 7,
+        intro: "Circuit en côte, 7 tours de 3 minutes 30. Place-toi en bas de la côte.",
+        round: [
+          { name: "Climbers (en bas)", spoken: "En bas, climbers", seconds: 30 },
+          { name: "Course en cadence en côte, courir léger (I3)", spoken: "Course en cadence, cours léger, intensité 3", seconds: 10, cadence: true, sayDuration: false },
+          { name: "Fentes marchées en côte", spoken: "Marche en fentes", seconds: 20 },
+          { name: "Course en cadence en côte, courir léger (I3)", spoken: "Course en cadence, cours léger", seconds: 10, cadence: true, sayDuration: false },
+          { name: "Squats jumps sur place", spoken: "Squats sautés, sur place", seconds: 20 },
+          { name: "Course I5 en côte", spoken: "Course en côte, intensité 5", seconds: 30 },
+          { name: "Descente facile en cadence", spoken: "Descente facile, en cadence", seconds: 90, cadence: true, announceNext: true },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // Doc de Céline (28/10). Le lien vidéo du retour au calme (« FENTE MG 2 ») est une erreur :
+    // on alterne fente arrière + montée de genou (après l'I2) et équilibre montée de genou (Céline, 29/10).
+    id: "C2S10",
+    date: "05/12/26",
+    title: "C2S10 — Run et renfo, équilibres",
+    subtitle: "≈ 54 min · mobilité 9 min, 2 × (3 min I1 + mobilité), 4 × (3 min I2 + équilibre fente, 3 min I3 + équilibre montée de genou), 5 min de retour au calme",
+    advice:
+      "3 min en I1 puis 1 min de mobilité épaules et tronc ; 3 min en I1 puis 1 min de mobilité du pied (stepper). Puis 4 fois : 3 min en I2 et 1 min d'équilibre fente arrière + montée de genou (en alternant gauche et droite), 3 min en I3 et 1 min d'équilibre avec montée de genou (30 s gauche, 30 s droite). Retour au calme 5 min en I1.",
+    blocks: [
+      { name: "Mobilité (à la maison)", steps: [...edtC2Mobility(), EDT_SORTIE] },
+      {
+        name: "Mise en route",
+        steps: [
+          { kind: "step", name: "Course I1", spoken: "Course, intensité 1", seconds: 180, announceNext: true },
+          { kind: "step", name: "Mobilité épaules et tronc", spoken: "Mobilité des épaules et du tronc", seconds: 60 },
+          { kind: "step", name: "Course I1", spoken: "Course, intensité 1", seconds: 180, announceNext: true },
+          { kind: "step", name: "Mobilité du pied : stepper", spoken: "Mobilité du pied, stepper", seconds: 60 },
+        ],
+      },
+      {
+        name: "Run et équilibres",
+        rounds: 4,
+        intro: "4 fois : 3 minutes en intensité 2 et équilibre fente, 3 minutes en intensité 3 et équilibre avec montée de genou.",
+        round: [
+          { name: "Course I2", spoken: "Course, intensité 2", seconds: 180, announceNext: true },
+          { name: "Équilibre fente arrière + montée de genou (alterner G et D)", spoken: "Équilibre, fente arrière et montée de genou. Alterne gauche et droite", seconds: 60 },
+          { name: "Course I3", spoken: "Course, intensité 3", seconds: 180, announceNext: true },
+          { name: "Équilibre pied gauche, montée de genou", spoken: "Équilibre pied gauche, montée de genou", seconds: 30 },
+          { name: "Équilibre pied droit, montée de genou", spoken: "Pied droit", seconds: 30 },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // Doc de Céline (28/10) + 30 s de battement avant le corps de séance (Céline, 29/10).
+    id: "C2S11",
+    title: "C2S11 — PMA en côte",
+    subtitle: "≈ 61 min · préparation 12 min, 10 min I1, gammes en côte, 2 blocs de 6 montées de 35 s en I4-I5, 5 min de retour au calme",
+    advice:
+      "Côte moyenne. Une première montée de 35 s en I4-I5 : pose ton cône là où tu arrives, tu iras jusqu'à cette marque à chaque fois. Bloc 1, 6 fois : 45 s de fentes avant alternées, montée en I4-I5 jusqu'au cône, 1 min de descente en t'engageant mais en restant relâché. 2 min de récup. Bloc 2, 6 fois : pareil avec 35 s de climbers à la place des fentes. Retour au calme 5 min en I1.",
+    blocks: [
+      ...edtC2Warmup(EDT_GAMMES_COTE),
+      {
+        name: "Repérage du cône",
+        steps: [
+          { kind: "step", name: "Mise en place au pied de la côte", spoken: "Mets-toi en place au pied de la côte, avec ton cône", seconds: 30 },
+          { kind: "step", name: "Course I4-I5 en côte : pose ton cône", spoken: "Course en côte, intensité 4 à 5. Pose ton cône là où tu arrives", seconds: 35 },
+          { kind: "step", name: "Récup (redescends)", spoken: "Récup, redescends", seconds: 60, announceNext: true },
+        ],
+      },
+      {
+        name: "Bloc 1 : fentes",
+        rounds: 6,
+        intro: "Bloc 1, 6 fois : fentes avant, montée jusqu'au cône, descente engagée.",
+        round: [
+          { name: "Fentes avant alternées", spoken: "Fentes avant, en alternant", seconds: 45 },
+          { name: "Course I4-I5 en côte jusqu'au cône", spoken: "Monte jusqu'au cône, intensité 4 à 5", seconds: 35 },
+          { name: "Descente engagée mais relâchée", spoken: "Descente. Engage-toi, mais reste relâché", seconds: 60, announceNext: true },
+        ],
+      },
+      {
+        name: "Récup",
+        steps: [
+          { kind: "step", name: "Récup (trotter ou marcher)", spoken: "Récup, trotte ou marche", seconds: 120, announceNext: true },
+        ],
+      },
+      {
+        name: "Bloc 2 : climbers",
+        rounds: 6,
+        intro: "Bloc 2, 6 fois : climbers, montée jusqu'au cône, descente engagée.",
+        round: [
+          { name: "Climbers", spoken: "Climbers", seconds: 35 },
+          { name: "Course I4-I5 en côte jusqu'au cône", spoken: "Monte jusqu'au cône, intensité 4 à 5", seconds: 35 },
+          { name: "Descente engagée mais relâchée", spoken: "Descente. Engage-toi, mais reste relâché", seconds: 60, announceNext: true },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // Doc de Céline (28/10). Équilibre aussi après la minute en I5 (Céline, 29/10), pas comme la C2S2.
+    id: "C2S12",
+    title: "C2S12 — Run et renfo, équilibres (pyramide)",
+    subtitle: "≈ 60 min · mobilité 9 min, 11 portions de course I1 → I5 → I1 avec 1 min d'équilibre entre chaque",
+    advice:
+      "Après chaque portion de course, 1 min d'équilibre (30 s gauche, 30 s droite), dans l'ordre : montée de genou, skieur, skater. Portions : 5 min I1, 4 min I2, 4 min I2, 4 min I3, 4 min I3, 3 min I4, 1 min I5, 3 min I4, 4 min I3, 4 min I2, 5 min I1. Pas d'équilibre après les 5 dernières minutes : la séance se termine là.",
+    blocks: [
+      { name: "Mobilité (à la maison)", steps: [...edtC2Mobility(), EDT_SORTIE] },
+      {
+        name: "Corps de séance",
+        intro: "Corps de séance, 51 minutes. Après chaque portion de course, une minute d'équilibre : montée de genou, skieur, puis skater.",
+        steps: [
+          [300, 1], [240, 2], [240, 2], [240, 3], [240, 3], [180, 4], [60, 5], [180, 4], [240, 3], [240, 2], [300, 1],
+        ].flatMap(([seconds, i], k, all) => {
+          const balance = [
+            ["Équilibre pied gauche, montée de genou", "Équilibre pied gauche, montée de genou", "Équilibre pied droit, montée de genou"],
+            ["Équilibre skieur, pied gauche", "Équilibre skieur, pied gauche", "Équilibre skieur, pied droit"],
+            ["Équilibre skater, pied gauche", "Équilibre skater, pied gauche", "Équilibre skater, pied droit"],
+          ][k % 3];
+          return [
+            { kind: "step", name: `Course I${i}`, spoken: `Course, intensité ${i}`, seconds, announceNext: true },
+            ...(k < all.length - 1
+              ? [
+                  { kind: "step", name: balance[0], spoken: balance[1], seconds: 30 },
+                  { kind: "step", name: balance[2], spoken: "Pied droit", seconds: 30 },
+                ]
+              : []),
+          ];
+        }),
+      },
+    ],
+  },
+  {
+    // Doc de Céline (28/10) : échauffement des S9/S11 avec équilibre skieur et gammes en descente
+    // (10 min) ; 10 tours de 2 min 30 (3 fois la série skieur / skater / skater croisé, puis un tour libre).
+    id: "C2S13",
+    title: "C2S13 — Technique de descente",
+    subtitle: "≈ 62 min · préparation 12 min, 10 min I1, gammes en descente 10 min, 10 tours de 2 min 30 en côte, 5 min de retour au calme",
+    advice:
+      "Trouve une côte. Un tour de 2 min 30 : 30 s de climbers en bas, 40 s de course facile en côte (I2), 40 s d'équilibre en haut (20 s gauche, 20 s droite), 20 s de descente avec une consigne technique, 20 s de course facile pour boucler. Équilibre et consigne changent à chaque tour : skieur et hypercadence, skater et engagement, skater croisé et double appui, 3 fois ; le 10e tour, équilibre et consigne au choix. Retour au calme 5 min en I1.",
+    blocks: (() => {
+      const balances = ["skieur", "skater", "skater croisé"];
+      const descents = [
+        ["Descente avec hypercadence", "Descente, hypercadence"],
+        ["Descente avec engagement", "Descente, avec engagement"],
+        ["Descente en double appui", "Descente, en double appui"],
+      ];
+      const tours = Array.from({ length: 10 }, (_, k) => k);
+      const pick = (k, list, libre) => (k === 9 ? libre : list[k % 3]);
+      return [
+        ...edtC2Warmup(EDT_GAMMES_DESCENTE, { balance: "skieur" }),
+        {
+          name: "Technique de descente",
+          rounds: 10,
+          intro: "Technique de descente, 10 tours de 2 minutes 30. Place-toi en bas de la côte.",
+          round: [
+            { name: "Climbers (en bas)", spoken: "En bas, climbers", seconds: 30 },
+            { name: "Course facile en côte (I2)", spoken: "Course facile en côte, intensité 2", seconds: 40 },
+            {
+              label: "20 s d'équilibre en haut, pied gauche (skieur · skater · skater croisé · au choix au 10e tour)",
+              name: tours.map((k) => `Équilibre ${pick(k, balances, "au choix")}, pied gauche`),
+              spoken: tours.map((k) => `En haut, équilibre ${pick(k, balances, "au choix")}, pied gauche`),
+              seconds: 20,
+            },
+            {
+              label: "20 s pied droit",
+              name: tours.map((k) => `Équilibre ${pick(k, balances, "au choix")}, pied droit`),
+              spoken: "Pied droit",
+              seconds: 20,
+            },
+            {
+              label: "20 s de descente (hypercadence · engagement · double appui · consigne libre au 10e tour)",
+              name: tours.map((k) => pick(k, descents, ["Descente, consigne technique libre", ""])[0]),
+              spoken: tours.map((k) => pick(k, descents, ["", "Descente, consigne technique au choix"])[1]),
+              seconds: 20,
+            },
+            { name: "Bouclage : course facile", spoken: "Boucle en course facile", seconds: 20 },
+          ],
+        },
+        {
+          name: "Retour au calme",
+          steps: [
+            { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+          ],
+        },
+      ];
+    })(),
+  },
+  {
+    // Doc de Céline (28/10) + descriptif du 29/10 : 7 × (9 min de course + 35 s de climbers
+    // + 25 s de squats tempo) = 70 min, puis 5 min de retour au calme en I1.
+    id: "C2S14",
+    title: "C2S14 — Simulation trail",
+    subtitle: "≈ 84 min · mobilité 9 min, rando-course 70 min en I1-I2 avec renfo toutes les 10 min, 5 min de retour au calme",
+    advice:
+      "Rando-course facile en I1-I2. Toutes les 10 min : 35 s de climbers (environ 30) et 25 s de squats tempo 1-0-1-0 (environ 10). 7 fois. Retour au calme 5 min en I1.",
+    blocks: [
+      { name: "Mobilité (à la maison)", steps: [...edtC2Mobility(), EDT_SORTIE] },
+      {
+        name: "Rando-course",
+        rounds: 7,
+        intro: "Rando-course, 7 fois 10 minutes : 9 minutes facile, puis climbers et squats.",
+        round: [
+          { name: "Rando-course facile (I1-I2)", spoken: "Rando-course facile, intensité 1 à 2", seconds: 540, announceNext: true },
+          { name: "Climbers (environ 30)", spoken: "Climbers, une trentaine", seconds: 35 },
+          { name: "Squats tempo 1-0-1-0 (environ 10)", spoken: "10 squats, une seconde pour descendre, une pour monter", seconds: 25 },
+        ],
+      },
+      {
+        name: "Retour au calme",
+        steps: [
+          { kind: "step", name: "Course facile (I1)", spoken: "Retour au calme, course facile, intensité 1", seconds: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    // Nolio 03/12 « WOD KB FORCE » (1 h 15 annoncée). Répétitions en tempo 3-0-1-0 : steps estimés
+    // (pas de décompte), récup entre séries réglable (le coach dit 2 à 3 min). Pas de plio.
+    id: "WOD-KB-FORCE",
+    date: "03/12/26",
+    title: "WOD KB — Force (squat bulgare, deadlift roumain, gobelet)",
+    subtitle: "≈ 40 min · échauffement 5 tours, puis 3 × 3 séries de 6 en tempo 3-0-1-0, 2 à 3 min de récup",
+    advice:
+      "Tempo 3-0-1-0 : 3 s pour descendre, pas de pause, 1 s pour remonter. Échauffement 5 tours : 10 air squats, 20 good mornings, 30 s de planche, 30 s de superman. Puis 3 séries de 6 squats bulgares par jambe, 3 séries de 6 deadlifts roumains par jambe, 3 séries de 6 squats gobelet, avec 2 à 3 min de récup entre les séries. Les répétitions sont à ton rythme : le player passe à la suite sans décompte.",
+    options: [
+      {
+        key: "wodRest",
+        label: "Récup entre séries",
+        default: 150,
+        choices: [
+          { value: 120, label: "2 min" },
+          { value: 150, label: "2 min 30" },
+          { value: 180, label: "3 min" },
+        ],
+      },
+    ],
+    blocks: [
+      {
+        name: "Échauffement",
+        rounds: 5,
+        intro: "Échauffement, 5 tours : air squats, good mornings, planche, superman.",
+        round: [
+          { name: "10 air squats", spoken: "10 air squats", seconds: 25, estimated: true },
+          { name: "20 good mornings", spoken: "20 good mornings", seconds: 40, estimated: true },
+          { name: "Planche", spoken: "Planche", seconds: 30 },
+          { name: "Superman", spoken: "Superman", seconds: 30 },
+        ],
+      },
+      wodForceBlock("Squat bulgare", [
+        { name: "6 squats bulgares, jambe droite (tempo 3-0-1-0)", spoken: "6 squats bulgares, jambe droite. 3 secondes pour descendre, 1 pour monter", seconds: 35, estimated: true },
+        { name: "6 squats bulgares, jambe gauche (tempo 3-0-1-0)", spoken: "Jambe gauche, 6 squats bulgares", seconds: 35, estimated: true },
+      ]),
+      wodForceBlock("Deadlift roumain", [
+        { name: "6 deadlifts roumains, jambe droite (tempo 3-0-1-0)", spoken: "6 deadlifts roumains, jambe droite. 3 secondes pour descendre, 1 pour monter", seconds: 35, estimated: true },
+        { name: "6 deadlifts roumains, jambe gauche (tempo 3-0-1-0)", spoken: "Jambe gauche, 6 deadlifts roumains", seconds: 35, estimated: true },
+      ]),
+      wodForceBlock("Squat gobelet", [
+        { name: "6 squats gobelet (tempo 3-0-1-0)", spoken: "6 squats gobelet. 3 secondes pour descendre, 1 pour monter", seconds: 35, estimated: true },
+      ], true),
+    ],
+  },
+  {
     // PAVEL (musculation, kettlebell) : toutes les 30 s, 5 swings × 4, 1 min de récup,
     // 5 pompes dynamiques × 4, 1 min de récup, en boucle pendant 12 ou 18 min.
     id: "PAVEL",
@@ -1747,8 +2180,23 @@ const SESSION_LIBRARY = [
           { value: 3, label: "18 min" },
         ],
       },
+      {
+        key: "pavelWarmup",
+        label: "Échauffement PAVEL 9 min",
+        default: 0,
+        choices: [
+          { value: 0, label: "Non" },
+          { value: 1, label: "Oui" },
+        ],
+      },
     ],
     blocks: [
+      {
+        // Échauffement PAVEL 9' (Nolio, à partir du 25/11). Bloc vide si l'option est sur « Non ».
+        name: "Échauffement PAVEL",
+        steps: [],
+        on: { pavelWarmup: { steps: PAVEL_WARMUP } },
+      },
       {
         name: "PAVEL",
         rounds: { option: "cycles" },
@@ -1780,14 +2228,13 @@ const SESSION_LIBRARY = [
     ],
   },
   {
-    // CORE : Nolio dit maintenant 30 s / 30 s dans le titre ET le détail (relu le 11/11 ;
-    // avant : détail 20 s / 40 s, coquille corrigée par Seb).
+    // CORE : selon le jour, Nolio donne 20 s / 40 s (07/11, 06/12) ou 30 s / 30 s (22/11) → option.
     id: "CORE",
     date: "07/11/26",
     title: "CORE — Climbers, superman, crunch",
-    subtitle: "9 ou 12 min · 3 exercices, 30 s d'effort / 30 s de récup, 3 ou 4 tours",
+    subtitle: "9 ou 12 min · 3 exercices, 20 s / 40 s ou 30 s / 30 s, 3 ou 4 tours",
     advice:
-      "Mountain climbers lents et contrôlés. Superman : pieds au sol, bras tendus vers l'avant, regarde le sol. Crunch : pieds au sol, genoux fléchis. 30 s d'effort, 30 s de récup.",
+      "Mountain climbers lents et contrôlés. Superman : pieds au sol, bras tendus vers l'avant, regarde le sol. Crunch : pieds au sol, genoux fléchis. Effort et récup selon le jour : 20 s / 40 s ou 30 s / 30 s.",
     options: [
       {
         key: "tours",
@@ -1798,19 +2245,29 @@ const SESSION_LIBRARY = [
           { value: 4, label: "4 tours (12 min)" },
         ],
       },
+      {
+        key: "core3030",
+        label: "Effort / récup",
+        default: 0,
+        choices: [
+          { value: 0, label: "20 s / 40 s" },
+          { value: 1, label: "30 s / 30 s" },
+        ],
+      },
     ],
     blocks: [
       {
         name: "Core",
         rounds: { option: "tours" },
-        intro: "Gainage. 3 exercices, 30 secondes d'effort, 30 secondes de récup.",
+        intro: "Gainage. 3 exercices, 20 secondes d'effort, 40 secondes de récup.",
+        on: { core3030: { intro: "Gainage. 3 exercices, 30 secondes d'effort, 30 secondes de récup." } },
         round: [
-          { name: "Mountain climbers lents", spoken: "Mountain climbers, lents et contrôlés", seconds: 30 },
-          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
-          { name: "Superman", spoken: "Superman, pieds au sol, bras tendus, regarde le sol", seconds: 30 },
-          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
-          { name: "Crunch", spoken: "Crunch, pieds au sol, genoux fléchis", seconds: 30 },
-          { name: "Récup", spoken: "Récup", seconds: 30, announceNext: true, sayDuration: false },
+          { name: "Mountain climbers lents", spoken: "Mountain climbers, lents et contrôlés", seconds: 20, on: { core3030: { seconds: 30 } } },
+          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false, on: { core3030: { seconds: 30 } } },
+          { name: "Superman", spoken: "Superman, pieds au sol, bras tendus, regarde le sol", seconds: 20, on: { core3030: { seconds: 30 } } },
+          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false, on: { core3030: { seconds: 30 } } },
+          { name: "Crunch", spoken: "Crunch, pieds au sol, genoux fléchis", seconds: 20, on: { core3030: { seconds: 30 } } },
+          { name: "Récup", spoken: "Récup", seconds: 40, announceNext: true, sayDuration: false, on: { core3030: { seconds: 30 } } },
         ],
       },
     ],
@@ -1823,10 +2280,13 @@ const LIBRARY_REPEATS = [
   { of: "PAVEL", date: "11/11/26", options: { cycles: 2 } },
   { of: "PAVEL", date: "15/11/26", options: { cycles: 3 } },
   { of: "PAVEL", date: "20/11/26", options: { cycles: 3 } },
-  { of: "CORE", date: "22/11/26", options: { tours: 4 } },
+  { of: "CORE", date: "22/11/26", options: { tours: 4, core3030: 1 }, label: "12 min, 30 s / 30 s" },
+  { of: "PAVEL", date: "25/11/26", options: { cycles: 2, pavelWarmup: 1 }, label: "21 min avec échauffement" },
+  { of: "PAVEL", date: "28/11/26", options: { cycles: 3, pavelWarmup: 1 }, label: "27 min avec échauffement" },
+  { of: "CORE", date: "06/12/26", options: { tours: 3, core3030: 0 }, label: "9 min, 20 s / 40 s" },
 ];
 
-LIBRARY_REPEATS.forEach(({ of, date, options }) => {
+LIBRARY_REPEATS.forEach(({ of, date, options, label }) => {
   const base = SESSION_LIBRARY.find((s) => s.id === of);
   if (!base) return;
   const opts = (base.options || []).map((o) =>
@@ -1834,7 +2294,8 @@ LIBRARY_REPEATS.forEach(({ of, date, options }) => {
   );
   const chosen = opts.map((o) => o.choices.find((c) => c.value === o.default)).filter(Boolean);
   // « 12 min » ou « 4 tours (12 min) » → la durée du jour en tête du sous-titre.
-  const dur = chosen.map((c) => (c.label.match(/\(([^)]+)\)/) || [, c.label])[1]).join(" · ");
+  // Libellé imposé, sinon la durée tirée de la 1re option (« 4 tours (12 min) » → « 12 min »).
+  const dur = label || (chosen[0] ? (chosen[0].label.match(/\(([^)]+)\)/) || [, chosen[0].label])[1] : "");
   const [, ...restSub] = base.subtitle.split(" · ");
   SESSION_LIBRARY.push({
     ...base,
@@ -1874,6 +2335,8 @@ function compileLibrarySession(def, optionOverrides = {}) {
   const options = librarySessionOptionValues(def, optionOverrides);
   const activeOptions = Object.keys(options).filter((k) => options[k]);
   if (activeOptions.length) def = libraryApplyOptionVariants(def, activeOptions);
+  // Bloc rendu vide par une option (échauffement PAVEL sur « Non ») : on l'enlève du plan.
+  def = { ...def, blocks: def.blocks.filter((b) => b.round || (b.steps && b.steps.length)) };
   const steps = [];
   const planLines = [];
 

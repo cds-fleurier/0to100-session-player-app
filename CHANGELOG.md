@@ -2,6 +2,16 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.34.0] - 2026-11-13
+
+Plannings Nolio mis à jour jusqu'au 06/12.
+
+- **C2S7 → C2S14 publiées** (préparées le 29/10 d'après le doc de Céline, voir plus bas) et datées d'après Nolio : C2S7 le 24/11, C2S8 le 27/11, C2S9 le 01/12, C2S10 le 05/12. C2S11 → C2S14 pas encore dans Nolio : en fin de sélecteur, sans date. Nolio écrit les circuits C2S7 et C2S9 en distances et répétitions ; on garde le découpage chronométré validé par Céline.
+- **PAVEL avec échauffement 9 min** : nouvelle option (hip hinge, pont fessier iso, pont dynamique, bird dog, éducatifs pompes, soulevé de terre, tirage, dead swing), activée par défaut sur les PAVEL du 25/11 (21 min) et du 28/11 (27 min).
+- **CORE : 20 s / 40 s ou 30 s / 30 s** selon le jour (nouvelle option) : 20/40 le 07/11 et le 06/12, 30/30 le 22/11. Nouvelle entrée CORE du 06/12 (3 tours).
+- **Nouvelle séance `WOD-KB-FORCE` (03/12)** : échauffement 5 tours (air squats, good mornings, planche, superman), puis 3 séries de 6 squats bulgares par jambe, 6 deadlifts roumains par jambe, 6 squats gobelet, en tempo 3-0-1-0 ; récup entre séries réglable 2 min / 2 min 30 / 3 min. Répétitions à ton rythme (pas de décompte). ≈ 40 min.
+- Voix : 608 phrases par voix.
+
 ## [1.33.1] - 2026-11-12
 
 - **Circuit élastique (12/11)** : squat élastique et squat latéral s'enchaînent sans pause (remontée de Charles). La récup ajoutée après le squat élastique en v1.33.0 était une erreur d'interprétation du tableau Nolio. Séance : 43 min (4 tours de 7 min 30, 1 min entre les tours, 10 min de course I1).
@@ -43,6 +53,14 @@ Export Apple Watch, demandé par Jonathan (testé et validé sur Apple Watch Ult
 - Les répétitions sont regroupées (tabata ×2, EPIC 20-20 ×9…), noms des étapes sans compteur (« Chaise » au lieu de « Chaise (1/8) »). Les options de séance (mode hiver, tabata en musique) sont prises en compte.
 - Seulement les séances avec de la course : pas de bouton pour PAVEL, CORE ni les séances renfo collées depuis Nolio.
 - Format `.workout` sans spec publique : encodage par `@bibixx/workoutkit` 0.2.0 (MIT, rétro-ingénierie), copié dans `vendor/workoutkit/` et chargé seulement au clic. Traduction timeline → plan dans `watch-export.js`.
+### Préparé le 29/10, gardé de côté, publié en 1.34.0
+
+Fin du cycle 2 : 8 nouvelles séances écrites par Céline, et plus de vidéos.
+
+- **C2S7 → C2S14** (Google Doc de Céline du 28/10, réponses du 29/10) : circuit capacité aérobie en côte, run et renfo plio, circuit en côte (séance livre), run et renfo équilibres, PMA en côte, pyramide avec équilibres, technique de descente, simulation trail (84 min). Pas encore de date dans Nolio : elles se rangent en fin de sélecteur.
+- Échauffement du cycle 2 : peut prendre un équilibre skieur (C2S13) et des gammes en côte (C2S11) ou en descente (C2S13).
+- **Vidéos** : catalogue passé de 39 à 62 vidéos, avec les liens des nouvelles séances et le Google Doc « vidéos exos » de Céline : talons-fesses, montées de genoux, schtroumpf, jambes tendues, stepper, bascule du pied, descentes (cadence, engagement, double appui), jumping jacks, balistique, squats jumps, skater croisé, swings et pompes de la séance PAVEL.
+- Voix : 118 nouvelles phrases enregistrées. `tools/collect-phrases.cjs` charge `videos.js` et simule `window.addEventListener` (cassé depuis la 1.30.0, le site n'était pas touché).
 
 ## [1.30.0] - 2026-10-28
 
