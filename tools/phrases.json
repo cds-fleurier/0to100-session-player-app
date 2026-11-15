@@ -137,7 +137,7 @@
     "Cycle 1. 5 swings.",
     "Cycle 2. 5 swings.",
     "Cycle 3. 5 swings.",
-    "Dead swing, 5 fois. une minute 45.",
+    "Dead swing, 5 fois, environ 20 secondes chacun. une minute 45.",
     "Deadlift roumain, 3 séries.",
     "Demi-squat statique. 30 secondes.",
     "Descente facile, en cadence. une minute 30.",
@@ -402,7 +402,7 @@
     "Schtroumpf.",
     "Skieur, pied droit. 20 secondes.",
     "Skieur, pied gauche. 20 secondes.",
-    "Soulevé de terre, 5 fois. une minute 15.",
+    "Soulevé de terre, 5 fois, environ 15 secondes chacun. une minute 15.",
     "Squat bulgare, 3 séries.",
     "Squat gobelet, 3 séries.",
     "Squats sautés, sur place. 20 secondes.",
@@ -431,7 +431,7 @@
     "Talons-fesses. 20 secondes.",
     "Technique de course en côte, 8 boucles de 2 minutes 40. En bas, 20 climbers. Tu montes avec une consigne technique, en haut 6 paires de fentes arrière avec montée de genou, et tu redescends relâché.",
     "Technique de descente, 10 tours de 2 minutes 30. Place-toi en bas de la côte.",
-    "Tirage, 5 fois. une minute 15.",
+    "Tirage, 5 fois, environ 15 secondes chacun. une minute 15.",
     "Tour 1. 10 air squats.",
     "Tour 1. 10 squats, deux secondes à la descente.",
     "Tour 1. 30 climbers.",
@@ -576,7 +576,7 @@
     "Tu dois être en intensité 3. Finis en intensité 3.",
     "Écarte et relâche les orteils. 20 secondes.",
     "Échauffement, 5 tours : air squats, good mornings, planche, superman.",
-    "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes.",
+    "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes.",
     "Équilibre avec montée de genou, 3 minutes.",
     "Équilibre pied droit, cadence des bras. 20 secondes.",
     "Équilibre pied droit, genou gauche levé. 20 secondes.",
@@ -1948,7 +1948,7 @@
       "Cycle 1. 5 swings.",
       "Cycle 2. 5 swings.",
       "Cycle 3. 5 swings.",
-      "Dead swing, 5 fois. une minute 45.",
+      "Dead swing, 5 fois, environ 20 secondes chacun. une minute 45.",
       "Hip hinge. Flexion, extension de hanche, à genoux, debout ou avec un balai. 40 secondes.",
       "Inverse, bras droit et jambe gauche. 30 secondes.",
       "PAVEL. Toutes les 30 secondes, 5 swings, 4 fois. 1 minute de récup. Puis 5 pompes dynamiques, 4 fois, et 1 minute de récup.",
@@ -1959,10 +1959,10 @@
       "Repos.",
       "Récup dans",
       "Récup. une minute.",
-      "Soulevé de terre, 5 fois. une minute 15.",
+      "Soulevé de terre, 5 fois, environ 15 secondes chacun. une minute 15.",
       "Séance terminée. Bravo.",
-      "Tirage, 5 fois. une minute 15.",
-      "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
+      "Tirage, 5 fois, environ 15 secondes chacun. une minute 15.",
+      "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
     ],
     "CORE": [
       "1",
@@ -2003,7 +2003,7 @@
       "Cycle 1. 5 swings.",
       "Cycle 2. 5 swings.",
       "Cycle 3. 5 swings.",
-      "Dead swing, 5 fois. une minute 45.",
+      "Dead swing, 5 fois, environ 20 secondes chacun. une minute 45.",
       "Hip hinge. Flexion, extension de hanche, à genoux, debout ou avec un balai. 40 secondes.",
       "Inverse, bras droit et jambe gauche. 30 secondes.",
       "PAVEL. Toutes les 30 secondes, 5 swings, 4 fois. 1 minute de récup. Puis 5 pompes dynamiques, 4 fois, et 1 minute de récup.",
@@ -2014,10 +2014,10 @@
       "Repos.",
       "Récup dans",
       "Récup. une minute.",
-      "Soulevé de terre, 5 fois. une minute 15.",
+      "Soulevé de terre, 5 fois, environ 15 secondes chacun. une minute 15.",
       "Séance terminée. Bravo.",
-      "Tirage, 5 fois. une minute 15.",
-      "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
+      "Tirage, 5 fois, environ 15 secondes chacun. une minute 15.",
+      "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
     ],
     "PAVEL-15-11": [
       "1",
@@ -2031,7 +2031,7 @@
       "Cycle 1. 5 swings.",
       "Cycle 2. 5 swings.",
       "Cycle 3. 5 swings.",
-      "Dead swing, 5 fois. une minute 45.",
+      "Dead swing, 5 fois, environ 20 secondes chacun. une minute 45.",
       "Hip hinge. Flexion, extension de hanche, à genoux, debout ou avec un balai. 40 secondes.",
       "Inverse, bras droit et jambe gauche. 30 secondes.",
       "PAVEL. Toutes les 30 secondes, 5 swings, 4 fois. 1 minute de récup. Puis 5 pompes dynamiques, 4 fois, et 1 minute de récup.",
@@ -2042,10 +2042,10 @@
       "Repos.",
       "Récup dans",
       "Récup. une minute.",
-      "Soulevé de terre, 5 fois. une minute 15.",
+      "Soulevé de terre, 5 fois, environ 15 secondes chacun. une minute 15.",
       "Séance terminée. Bravo.",
-      "Tirage, 5 fois. une minute 15.",
-      "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
+      "Tirage, 5 fois, environ 15 secondes chacun. une minute 15.",
+      "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
     ],
     "PAVEL-20-11": [
       "1",
@@ -2059,7 +2059,7 @@
       "Cycle 1. 5 swings.",
       "Cycle 2. 5 swings.",
       "Cycle 3. 5 swings.",
-      "Dead swing, 5 fois. une minute 45.",
+      "Dead swing, 5 fois, environ 20 secondes chacun. une minute 45.",
       "Hip hinge. Flexion, extension de hanche, à genoux, debout ou avec un balai. 40 secondes.",
       "Inverse, bras droit et jambe gauche. 30 secondes.",
       "PAVEL. Toutes les 30 secondes, 5 swings, 4 fois. 1 minute de récup. Puis 5 pompes dynamiques, 4 fois, et 1 minute de récup.",
@@ -2070,10 +2070,10 @@
       "Repos.",
       "Récup dans",
       "Récup. une minute.",
-      "Soulevé de terre, 5 fois. une minute 15.",
+      "Soulevé de terre, 5 fois, environ 15 secondes chacun. une minute 15.",
       "Séance terminée. Bravo.",
-      "Tirage, 5 fois. une minute 15.",
-      "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
+      "Tirage, 5 fois, environ 15 secondes chacun. une minute 15.",
+      "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
     ],
     "CORE-22-11": [
       "1",
@@ -2114,7 +2114,7 @@
       "Cycle 1. 5 swings.",
       "Cycle 2. 5 swings.",
       "Cycle 3. 5 swings.",
-      "Dead swing, 5 fois. une minute 45.",
+      "Dead swing, 5 fois, environ 20 secondes chacun. une minute 45.",
       "Hip hinge. Flexion, extension de hanche, à genoux, debout ou avec un balai. 40 secondes.",
       "Inverse, bras droit et jambe gauche. 30 secondes.",
       "PAVEL. Toutes les 30 secondes, 5 swings, 4 fois. 1 minute de récup. Puis 5 pompes dynamiques, 4 fois, et 1 minute de récup.",
@@ -2125,10 +2125,10 @@
       "Repos.",
       "Récup dans",
       "Récup. une minute.",
-      "Soulevé de terre, 5 fois. une minute 15.",
+      "Soulevé de terre, 5 fois, environ 15 secondes chacun. une minute 15.",
       "Séance terminée. Bravo.",
-      "Tirage, 5 fois. une minute 15.",
-      "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
+      "Tirage, 5 fois, environ 15 secondes chacun. une minute 15.",
+      "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
     ],
     "PAVEL-28-11": [
       "1",
@@ -2142,7 +2142,7 @@
       "Cycle 1. 5 swings.",
       "Cycle 2. 5 swings.",
       "Cycle 3. 5 swings.",
-      "Dead swing, 5 fois. une minute 45.",
+      "Dead swing, 5 fois, environ 20 secondes chacun. une minute 45.",
       "Hip hinge. Flexion, extension de hanche, à genoux, debout ou avec un balai. 40 secondes.",
       "Inverse, bras droit et jambe gauche. 30 secondes.",
       "PAVEL. Toutes les 30 secondes, 5 swings, 4 fois. 1 minute de récup. Puis 5 pompes dynamiques, 4 fois, et 1 minute de récup.",
@@ -2153,10 +2153,10 @@
       "Repos.",
       "Récup dans",
       "Récup. une minute.",
-      "Soulevé de terre, 5 fois. une minute 15.",
+      "Soulevé de terre, 5 fois, environ 15 secondes chacun. une minute 15.",
       "Séance terminée. Bravo.",
-      "Tirage, 5 fois. une minute 15.",
-      "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
+      "Tirage, 5 fois, environ 15 secondes chacun. une minute 15.",
+      "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes."
     ],
     "CORE-06-12": [
       "1",

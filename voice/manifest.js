@@ -142,7 +142,7 @@ window.VOICE_MANIFEST = {
   "Cycle 1. 5 swings.": "fa30eaabb793",
   "Cycle 2. 5 swings.": "a1928f7cfa75",
   "Cycle 3. 5 swings.": "083efb9e7341",
-  "Dead swing, 5 fois. une minute 45.": "ebcd69312c11",
+  "Dead swing, 5 fois, environ 20 secondes chacun. une minute 45.": "a9894cea72cc",
   "Deadlift roumain, 3 séries.": "379ad5c1adbf",
   "Demi-squat statique. 30 secondes.": "d73f1283e647",
   "Descente facile, en cadence. une minute 30.": "47ab3172135d",
@@ -407,7 +407,7 @@ window.VOICE_MANIFEST = {
   "Schtroumpf.": "50fa08bd7174",
   "Skieur, pied droit. 20 secondes.": "d4367adbe24a",
   "Skieur, pied gauche. 20 secondes.": "e55fb863acc4",
-  "Soulevé de terre, 5 fois. une minute 15.": "c6f560004a8d",
+  "Soulevé de terre, 5 fois, environ 15 secondes chacun. une minute 15.": "4f14b397f116",
   "Squat bulgare, 3 séries.": "0a7f9368572d",
   "Squat gobelet, 3 séries.": "e576a462d06e",
   "Squats sautés, sur place. 20 secondes.": "f44e0c2d057c",
@@ -436,7 +436,7 @@ window.VOICE_MANIFEST = {
   "Talons-fesses. 20 secondes.": "6985b9dcc2a1",
   "Technique de course en côte, 8 boucles de 2 minutes 40. En bas, 20 climbers. Tu montes avec une consigne technique, en haut 6 paires de fentes arrière avec montée de genou, et tu redescends relâché.": "3f5c6c8b588d",
   "Technique de descente, 10 tours de 2 minutes 30. Place-toi en bas de la côte.": "5d1856427ab8",
-  "Tirage, 5 fois. une minute 15.": "2d7ba1e7726b",
+  "Tirage, 5 fois, environ 15 secondes chacun. une minute 15.": "0d0c40c84503",
   "Tour 1. 10 air squats.": "7231b3673931",
   "Tour 1. 10 squats, deux secondes à la descente.": "5b0fd72cfe6e",
   "Tour 1. 30 climbers.": "29b1cf1e557d",
@@ -581,7 +581,7 @@ window.VOICE_MANIFEST = {
   "Tu dois être en intensité 3. Finis en intensité 3.": "13c26db19a5c",
   "Écarte et relâche les orteils. 20 secondes.": "58981ed295f8",
   "Échauffement, 5 tours : air squats, good mornings, planche, superman.": "69d9144d894b",
-  "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes.": "116424dd82bf",
+  "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons. 45 secondes.": "80b2ee25b3c4",
   "Équilibre avec montée de genou, 3 minutes.": "036d0e9d6260",
   "Équilibre pied droit, cadence des bras. 20 secondes.": "aee9050aa871",
   "Équilibre pied droit, genou gauche levé. 20 secondes.": "e452a3f4da49",
@@ -1953,7 +1953,7 @@ window.VOICE_MANIFEST = {
    "fa30eaabb793",
    "a1928f7cfa75",
    "083efb9e7341",
-   "ebcd69312c11",
+   "a9894cea72cc",
    "e58db1616d64",
    "9f7f47f59179",
    "6e285260f9f3",
@@ -1964,10 +1964,10 @@ window.VOICE_MANIFEST = {
    "8f9e98a6e81a",
    "85e60204c0c5",
    "792266702a74",
-   "c6f560004a8d",
+   "4f14b397f116",
    "6ce2b088191d",
-   "2d7ba1e7726b",
-   "116424dd82bf"
+   "0d0c40c84503",
+   "80b2ee25b3c4"
   ],
   "CORE": [
    "356a192b7913",
@@ -2008,7 +2008,7 @@ window.VOICE_MANIFEST = {
    "fa30eaabb793",
    "a1928f7cfa75",
    "083efb9e7341",
-   "ebcd69312c11",
+   "a9894cea72cc",
    "e58db1616d64",
    "9f7f47f59179",
    "6e285260f9f3",
@@ -2019,10 +2019,10 @@ window.VOICE_MANIFEST = {
    "8f9e98a6e81a",
    "85e60204c0c5",
    "792266702a74",
-   "c6f560004a8d",
+   "4f14b397f116",
    "6ce2b088191d",
-   "2d7ba1e7726b",
-   "116424dd82bf"
+   "0d0c40c84503",
+   "80b2ee25b3c4"
   ],
   "PAVEL-15-11": [
    "356a192b7913",
@@ -2036,7 +2036,7 @@ window.VOICE_MANIFEST = {
    "fa30eaabb793",
    "a1928f7cfa75",
    "083efb9e7341",
-   "ebcd69312c11",
+   "a9894cea72cc",
    "e58db1616d64",
    "9f7f47f59179",
    "6e285260f9f3",
@@ -2047,10 +2047,10 @@ window.VOICE_MANIFEST = {
    "8f9e98a6e81a",
    "85e60204c0c5",
    "792266702a74",
-   "c6f560004a8d",
+   "4f14b397f116",
    "6ce2b088191d",
-   "2d7ba1e7726b",
-   "116424dd82bf"
+   "0d0c40c84503",
+   "80b2ee25b3c4"
   ],
   "PAVEL-20-11": [
    "356a192b7913",
@@ -2064,7 +2064,7 @@ window.VOICE_MANIFEST = {
    "fa30eaabb793",
    "a1928f7cfa75",
    "083efb9e7341",
-   "ebcd69312c11",
+   "a9894cea72cc",
    "e58db1616d64",
    "9f7f47f59179",
    "6e285260f9f3",
@@ -2075,10 +2075,10 @@ window.VOICE_MANIFEST = {
    "8f9e98a6e81a",
    "85e60204c0c5",
    "792266702a74",
-   "c6f560004a8d",
+   "4f14b397f116",
    "6ce2b088191d",
-   "2d7ba1e7726b",
-   "116424dd82bf"
+   "0d0c40c84503",
+   "80b2ee25b3c4"
   ],
   "CORE-22-11": [
    "356a192b7913",
@@ -2119,7 +2119,7 @@ window.VOICE_MANIFEST = {
    "fa30eaabb793",
    "a1928f7cfa75",
    "083efb9e7341",
-   "ebcd69312c11",
+   "a9894cea72cc",
    "e58db1616d64",
    "9f7f47f59179",
    "6e285260f9f3",
@@ -2130,10 +2130,10 @@ window.VOICE_MANIFEST = {
    "8f9e98a6e81a",
    "85e60204c0c5",
    "792266702a74",
-   "c6f560004a8d",
+   "4f14b397f116",
    "6ce2b088191d",
-   "2d7ba1e7726b",
-   "116424dd82bf"
+   "0d0c40c84503",
+   "80b2ee25b3c4"
   ],
   "PAVEL-28-11": [
    "356a192b7913",
@@ -2147,7 +2147,7 @@ window.VOICE_MANIFEST = {
    "fa30eaabb793",
    "a1928f7cfa75",
    "083efb9e7341",
-   "ebcd69312c11",
+   "a9894cea72cc",
    "e58db1616d64",
    "9f7f47f59179",
    "6e285260f9f3",
@@ -2158,10 +2158,10 @@ window.VOICE_MANIFEST = {
    "8f9e98a6e81a",
    "85e60204c0c5",
    "792266702a74",
-   "c6f560004a8d",
+   "4f14b397f116",
    "6ce2b088191d",
-   "2d7ba1e7726b",
-   "116424dd82bf"
+   "0d0c40c84503",
+   "80b2ee25b3c4"
   ],
   "CORE-06-12": [
    "356a192b7913",

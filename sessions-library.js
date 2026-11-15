@@ -176,10 +176,10 @@ const PAVEL_WARMUP = [
   { kind: "step", name: "Pont dynamique explosif × 3 (genou poitrine 3 s, pont 2 s, redescente 5 s, 10 s de repos)", spoken: "Pont dynamique explosif, 3 fois. Genou poitrine 3 secondes, pont 2 secondes, redescente 5 secondes, puis 10 secondes de repos", seconds: 60 },
   { kind: "step", name: "Bird dog, bras gauche + jambe droite (5 × 5 s)", spoken: "4 pattes, bird dog. Bras gauche et jambe droite, 5 fois 5 secondes", seconds: 30 },
   { kind: "step", name: "Bird dog, bras droit + jambe gauche (5 × 5 s)", spoken: "Inverse, bras droit et jambe gauche", seconds: 30 },
-  { kind: "step", name: "Éducatifs pompes × 3 (à genoux, descente en 5 s, étirement 10 s)", spoken: "Éducatifs pompes, 3 fois. À genoux, descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons", seconds: 45 },
-  { kind: "step", name: "Soulevé de terre × 5", spoken: "Soulevé de terre, 5 fois", seconds: 75 },
-  { kind: "step", name: "Tirage × 5", spoken: "Tirage, 5 fois", seconds: 75 },
-  { kind: "step", name: "Dead swing × 5", spoken: "Dead swing, 5 fois", seconds: 105 },
+  { kind: "step", name: "Éducatifs pompes × 3 (gainage à genoux, pieds décollés, descente en 5 s, étirement 10 s)", spoken: "Éducatifs pompes, 3 fois. Gainage à genoux, pieds décollés. Descends en 5 secondes, remonte tranquille, puis étire-toi, fesses vers les talons", seconds: 45 },
+  { kind: "step", name: "Soulevé de terre × 5 (environ 15 s chacun)", spoken: "Soulevé de terre, 5 fois, environ 15 secondes chacun", seconds: 75 },
+  { kind: "step", name: "Tirage × 5 (environ 15 s chacun)", spoken: "Tirage, 5 fois, environ 15 secondes chacun", seconds: 75 },
+  { kind: "step", name: "Dead swing × 5 (environ 20 s chacun)", spoken: "Dead swing, 5 fois, environ 20 secondes chacun", seconds: 105 },
 ];
 
 // WOD KB FORCE : 3 séries d'un exercice, récup réglable entre les séries (pas après la dernière
@@ -2167,9 +2167,9 @@ const SESSION_LIBRARY = [
     id: "PAVEL",
     date: "04/11/26",
     title: "PAVEL — Swings et pompes",
-    subtitle: "12 ou 18 min · toutes les 30 s : 5 swings × 4, 1 min de récup, 5 pompes dynamiques × 4, 1 min de récup",
+    subtitle: "21 ou 27 min avec l'échauffement · toutes les 30 s : 5 swings × 4, 1 min de récup, 5 pompes dynamiques × 4, 1 min de récup",
     advice:
-      "À faire à jeun, après un petit échauffement de mobilité des hanches et du haut du corps. Toutes les 30 secondes : 5 swings, 4 fois, puis 1 min de récup ; 5 pompes dynamiques, 4 fois, puis 1 min de récup. Tu récupères le reste des 30 secondes.",
+      "À faire à jeun. L'échauffement PAVEL de 9 min (Céline) est inclus. Toutes les 30 secondes : 5 swings, 4 fois, puis 1 min de récup ; 5 pompes dynamiques, 4 fois, puis 1 min de récup. Tu récupères le reste des 30 secondes.",
     options: [
       {
         key: "cycles",
@@ -2183,7 +2183,7 @@ const SESSION_LIBRARY = [
       {
         key: "pavelWarmup",
         label: "Échauffement PAVEL 9 min",
-        default: 0,
+        default: 1,
         choices: [
           { value: 0, label: "Non" },
           { value: 1, label: "Oui" },
@@ -2192,7 +2192,8 @@ const SESSION_LIBRARY = [
     ],
     blocks: [
       {
-        // Échauffement PAVEL 9' (Nolio, à partir du 25/11). Bloc vide si l'option est sur « Non ».
+        // Échauffement PAVEL 9' (doc de Céline et Nolio) : systématique sur tous les PAVEL depuis le 15/11
+        // (demande de Charles). Bloc vide si l'option est sur « Non ».
         name: "Échauffement PAVEL",
         steps: [],
         on: { pavelWarmup: { steps: PAVEL_WARMUP } },
@@ -2277,12 +2278,12 @@ const SESSION_LIBRARY = [
 // Séances qui reviennent dans Nolio (PAVEL, CORE…) : une entrée de plus dans le
 // sélecteur par date, même contenu, durée par défaut de ce jour-là. Id = "<id>-jj-mm".
 const LIBRARY_REPEATS = [
-  { of: "PAVEL", date: "11/11/26", options: { cycles: 2 } },
-  { of: "PAVEL", date: "15/11/26", options: { cycles: 3 } },
-  { of: "PAVEL", date: "20/11/26", options: { cycles: 3 } },
+  { of: "PAVEL", date: "11/11/26", options: { cycles: 2 }, label: "21 min avec échauffement" },
+  { of: "PAVEL", date: "15/11/26", options: { cycles: 3 }, label: "27 min avec échauffement" },
+  { of: "PAVEL", date: "20/11/26", options: { cycles: 3 }, label: "27 min avec échauffement" },
   { of: "CORE", date: "22/11/26", options: { tours: 4, core3030: 1 }, label: "12 min, 30 s / 30 s" },
-  { of: "PAVEL", date: "25/11/26", options: { cycles: 2, pavelWarmup: 1 }, label: "21 min avec échauffement" },
-  { of: "PAVEL", date: "28/11/26", options: { cycles: 3, pavelWarmup: 1 }, label: "27 min avec échauffement" },
+  { of: "PAVEL", date: "25/11/26", options: { cycles: 2 }, label: "21 min avec échauffement" },
+  { of: "PAVEL", date: "28/11/26", options: { cycles: 3 }, label: "27 min avec échauffement" },
   { of: "CORE", date: "06/12/26", options: { tours: 3, core3030: 0 }, label: "9 min, 20 s / 40 s" },
 ];
 

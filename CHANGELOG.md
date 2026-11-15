@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.34.1] - 2026-11-15
+
+### Modifié
+- **PAVEL : l'échauffement PAVEL de 9 min est systématique** (demande de Charles, contenu identique au doc de Céline du 11/11). L'option reste dans le menu (« Non » pour s'en passer). Tous les PAVEL datés font 21 min (12 min de travail) ou 27 min (18 min) : 11/11, 15/11, 20/11, 25/11, 28/11.
+- Échauffement : précisions du doc ajoutées à la voix : « gainage à genoux, pieds décollés » pour les éducatifs pompes, rythme d'environ 15 s par soulevé de terre et par tirage, environ 20 s par dead swing.
+
 ## [1.34.0] - 2026-11-13
 
 Plannings Nolio mis à jour jusqu'au 06/12.
