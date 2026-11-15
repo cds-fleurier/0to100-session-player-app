@@ -38,7 +38,7 @@ const VIDEO_CATALOG = {
   plancheVentrale:    { title: "Planche ventrale", src: "yt:hqd6t1pyjQc", match: /^Planche ventrale/ },
   plancheTape:        { title: "Planche, main tape épaule", src: "yt:LpCXWpNdvuQ", match: /^Planche active/ },
   bears:              { title: "Bear tape", src: "yt:t7t3siFR4wk", match: /^Bear tape/ },
-  pontPelvien:        { title: "Pont pelvien dynamique", src: "yt:pE09XdzGVGw", match: /^Pont pelvien/ },
+  pontPelvien:        { title: "Pont pelvien dynamique", src: "yt:pE09XdzGVGw", match: /^Pont pelvien|^Pont dynamique/ },
   superman:           { title: "Superman", src: "yt:gz4fEDW2KKs", match: /^Superman/ },
   supermanCore:       { title: "Superman (pieds au sol)", src: "ig:CsJiZJ-NYb_", match: /^Superman/ },
   crunch:             { title: "Crunch, pieds au sol", src: "ig:Cr08E8QNV6q", match: /^Crunch/ },
@@ -70,7 +70,9 @@ const VIDEO_CATALOG = {
   stepperAvantArriere:{ title: "Stepper avant-arrière", src: "yt:5IePTGDS78I", match: /^Stepper avant/ },
   piedBascule:        { title: "Pied : bascule", src: "yt:dV3Cub9kD7E", match: /^Basculer/ },
   stepperEchauff:     { title: "Mobilité du pied : stepper", src: "yt:cxadDuSrYIg", match: /^Mobilité du pied : stepper/ },
-  swing:              { title: "Préparation swing et PAVEL", src: "yt:3EgNsBuctD4", match: /swings/ },
+  swing:              { title: "Préparation swing et PAVEL", src: "yt:3EgNsBuctD4", match: /\bswings?\b/i },
+  hipHinge:           { title: "Éducatif swing : hip hinge", src: "yt:uILDsdXA6_Q", match: /^Hip hinge/ },
+  pontStatique:       { title: "Pont pelvien statique", src: "yt:yL7OAZnFBzc", match: /^Pont fessier iso/ },
   pompesPavel:        { title: "Pompes pour PAVEL", src: "yt:VTORv6nqHQk", match: /pompes/ },
 };
 

@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.34.2] - 2026-11-15
+
+### Ajouté
+- **Vidéos de l'échauffement PAVEL**, tirées du doc vidéos de Céline : « Éducatif swing : hip hinge » (hip hinge), « Pont pelvien statique » (pont fessier iso), pont pelvien dynamique (pont dynamique explosif), préparation swing (dead swing, la règle couvre maintenant « swing » au singulier). Pas de vidéo dans le doc pour le bird dog, le soulevé de terre et le tirage.
+
 ## [1.34.1] - 2026-11-15
 
 ### Modifié
