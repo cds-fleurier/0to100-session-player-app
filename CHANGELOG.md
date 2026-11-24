@@ -2,6 +2,37 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.37.0] - 2026-11-24
+
+Corrections de la revue du 24/11 (sécurité, fiabilité, mobile). Aucune phrase prononcée modifiée ni ajoutée (`tools/collect-phrases.cjs` : 608 phrases, inchangé).
+
+### Sécurité
+- **Mode « Coller depuis Nolio »** : le titre, les conseils et le sous-titre du Plan étaient injectés en `innerHTML` ; un texte collé contenant une balise (`<img onerror=…>`) s'exécutait. Le bloc est maintenant construit avec `createElement` + `textContent` (compatible avec le faux DOM de l'appli iPhone). Les autres `innerHTML` restants ne font que vider des conteneurs.
+
+### Fiabilité
+- **Démarrer attend les voix** (séances de la bibliothèque) : bouton désactivé avec la progression (« Voix… 60 % ») tant que les clips chargent, 15 s au plus (au-delà, le chargement continue en fond). Avant, un Démarrer trop rapide lançait la synthèse vocale, qui coupe Apple Music sur iPhone.
+- Chargement en `Promise.allSettled`, **2 nouvelles tentatives par clip** (téléchargement + décodage, délai d'abandon 8 s) ; un clip manquant ne fait passer en synthèse vocale **que sa phrase**, plus toute la séance.
+- **Changer de voix en pleine séance** : l'ancienne voix reste active jusqu'à ce que la nouvelle soit chargée, puis bascule d'un coup (avant : synthèse vocale pendant le chargement).
+- **Clips décodés à 22 050 Hz** (leur fréquence d'origine) au lieu de 44,1 kHz : deux fois moins de mémoire. Repli 44,1 kHz si le navigateur refuse.
+- **Chrono sur l'heure réelle** (`Date.now()`) : après un écran verrouillé ou un onglet gelé, le temps écoulé était jeté et la séance reprenait là où elle s'était figée. Il est maintenant **rattrapé en silence** (`catchUp`) : les étapes écoulées sont sautées sans annonce, seule l'étape où l'on retombe est annoncée, et une ligne discrète l'indique sous les boutons (« ⏱ 1 min 35 rattrapées pendant la mise en veille », 30 s). Un checkpoint atteint pendant la veille arrête le rattrapage (pause comme d'habitude).
+- **Reprise après rechargement** : étape, temps restant, options et date notés à chaque étape, à chaque pause et quand la page passe en arrière-plan (`sportSessionProgress`). Au rechargement, si une séance du jour était en cours depuis moins de 3 h : « C2S7 commencée tout à l'heure. Reprendre au bloc N ? » (Reprendre / Non merci). La reprise se fait en pause, Démarrer redit l'étape en cours. Séances de la bibliothèque seulement.
+- `localStorage` passe par un helper `store` (try/catch) : navigation privée ou stockage bloqué ne cassent plus le chargement.
+
+### Ergonomie
+- **Reset protégé** : premier appui = « Recommencer ? » (bouton rouge) pendant 3 s, second appui = reset. Pas de `confirm()` (absent de l'appli iPhone). Reset direct si rien n'a démarré.
+- **Sur téléphone, la carte Player passe en tête** dès qu'une séance est chargée (elle était tout en bas, après les réglages, le plan et 70 % d'écran de vidéos), logo réduit, nom de la séance + lien « Changer de séance » qui remonte au sélecteur.
+- **Boutons du player plus grands sur téléphone** : 56 px de haut, Démarrer / Pause / Reset sur une ligne, RWD / FWD dessous.
+- **Séance proposée** : sans séance du jour, la séance d'hier ou d'avant-hier si elle n'a pas été démarrée sur ce téléphone (`sportSessionStarted`, ids notés au Démarrer), avec le message « PAVEL du 25/11/26 pas encore faite : la voici. » ; sinon la prochaine. Un choix manuel reste valable la journée.
+- **Contraste des boutons orange** : texte blanc sur `#ff6b00` ≈ 2,9:1 → fond `#cc4e00` → `#b93d0a` (≥ 4,5:1, WCAG AA). L'orange vif reste l'accent (icônes, bordures).
+- Accents : « Prêt », « Démarrer », « Appuie sur Démarrer ».
+- Logo rapatrié dans le repo (`img/logo-0to100.png`) : plus de dépendance au site gs-paths.fr.
+
+### Supprimé
+- Code mort de la version École de Trail (dépôt supprimé le 26/10) : `brands/ecole-de-trail/`, `tools/build-edt.cjs`, `ASSET_BASE` / `window.PLAYER_ASSET_BASE`, sections du README.
+
+### Appli iPhone (player-ios)
+- `overrides.js` : `nowMs()` = horloge native (`performance.now()`), l'appli tournant en arrière-plan ; garde la simulation `jsc-sim.cjs` déterministe. Les voix y sont natives : Démarrer n'attend rien. Le Reset de l'appli appelle toujours `resetTimer()` directement (pas de double appui côté SwiftUI).
+
 ## [1.36.0] - 2026-11-24
 
 ### Modifié

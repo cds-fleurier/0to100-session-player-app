@@ -9,6 +9,9 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 ## Fonctionnalités
 
 - **Séances intégrées** (sélecteur « Séance ») : des séances 0 to 100 décrites dans `sessions-library.js`, disponibles pour tous sans rien coller. Voir § Séances intégrées. Le sélecteur range les séances en « Aujourd'hui » / « À venir » / « Archives » et propose d'office la séance du jour (un choix manuel ne vaut que pour la journée).
+- **Séance d'hier pas faite** (v1.37.0) : sans séance du jour, le sélecteur propose la séance d'hier ou d'avant-hier si elle n'a pas été démarrée sur ce téléphone (`sportSessionStarted`, liste d'ids notée au Démarrer), sinon la prochaine.
+- **Reprise après rechargement** (v1.37.0) : la position (étape, temps restant, options) est notée à chaque étape et à chaque pause (`sportSessionProgress`) ; au rechargement, si une séance du jour était en cours depuis moins de 3 h, le player propose « Reprendre au bloc N ? ».
+- **Sur téléphone**, dès qu'une séance est chargée, la carte Player passe en tête de page, avec le nom de la séance et un lien « Changer de séance ».
 - **Export Apple Watch** : bouton qui télécharge la séance en `.workout` pour l'app Exercice. Voir § Export Apple Watch.
 - Collage d'une séance en texte libre
 - Bouton `Coller ma séance depuis Nolio` (lecture du presse-papiers)
@@ -31,6 +34,9 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
   - micro-latence "Top départ" avant le 1er exercice
   - annonce "prépare-toi" + nom du prochain exercice (à T-11)
   - countdown vocal sur les 5 dernières secondes (`5,4,3,2,1`)
+  - séance de la bibliothèque : **Démarrer attend les voix enregistrées** (« Voix… 60 % », 15 s au plus), 2 nouvelles tentatives par clip ; un clip manquant ne passe en synthèse vocale que pour sa phrase
+  - **chrono sur l'heure réelle** : après une mise en veille, le temps écoulé est rattrapé en silence (étapes écoulées sautées, seule l'étape en cours est annoncée) et une ligne discrète l'indique sous les boutons
+  - **Reset protégé** : premier appui = « Recommencer ? » pendant 3 s, second appui = reset
 - Alertes sonores + vocales
 - **Métronome** (180 BPM) : Off / Passages cadence (steps « en cadence » des séances intégrées) / Toute la course (tous les steps de course)
 - Option de voix `Femme` / `Homme` (préférence sauvegardée)
@@ -62,12 +68,6 @@ Puis ouvrir: `http://localhost:8000`
 App publique:
 
 - https://cds-fleurier.github.io/0to100-session-player-app/
-
-### Version École de Trail
-
-- https://cds-fleurier.github.io/ecole-de-trail-session-player/ (repo `ecole-de-trail-session-player`)
-- Même player, ISO : la page EDT charge `script.js`, les séances, la musique et les voix **depuis ce repo** (URL absolues, `window.PLAYER_ASSET_BASE` pour les voix). Seule la page d'accueil diffère : habillage École de Trail (`brands/ecole-de-trail/` : `edt.css`, logo, favicon) et **pas de barre du hub 0 to 100** (pas d'accès à la carte des participants, dates de naissance, photos…).
-- Générée par `node tools/build-edt.cjs` (écrit dans `../ecole-de-trail-session-player`) à partir de `index.html` ; le script échoue s'il reste une trace du hub ou de la marque 0 to 100.
 
 ## Séances intégrées
 
@@ -178,6 +178,7 @@ et détecte aussi le nombre de tours (`X TOURS`).
 - Web Speech API (voix navigateur)
 - Web Audio API (bips)
 - AudioSession API (catégorie audio `ambient` ou `playback` sur iOS)
+- `localStorage` via un petit helper `store` (try/catch : navigation privée ou stockage bloqué ne cassent rien)
 - `@bibixx/workoutkit` (encodeur `.workout`, copié dans `vendor/`, pour l'export Apple Watch)
 
 ## Son sur iPhone
@@ -208,6 +209,8 @@ réglage Voix Femme / Homme choisit Audrey ou Daniel.
 - Séances collées depuis Nolio : toujours `speechSynthesis` (et donc musique coupée sur iPhone).
 - Avec la case « Sonner en mode silencieux », la voix enregistrée sonne aussi malgré l'interrupteur.
 - Pas d'amorçage `speechSynthesis` quand la voix enregistrée est prête : cet énoncé vide suffisait à couper la musique.
+- Décodage à 22 050 Hz (la fréquence des enregistrements) : deux fois moins de mémoire qu'à 44,1 kHz (v1.37.0).
+- Changer de voix en pleine séance garde l'ancienne voix jusqu'à ce que la nouvelle soit chargée, puis bascule d'un coup (v1.37.0).
 
 ### Synthèse vocale sur iPhone (v1.23.0, séances collées)
 
@@ -257,14 +260,14 @@ fixes n'auraient plus besoin du réseau).
 - Historique des changements dans `CHANGELOG.md`.
 - À chaque modification livrée, incrémenter `APP_VERSION` dans `script.js` (SemVer: `major.minor.patch`).
 - Et reporter le même numéro dans les `?v=` de `index.html` (styles + scripts) : sans ça, les navigateurs gardent jusqu’à 10 min l’ancien JS en cache (GitHub Pages sert `max-age=600`).
-- Puis relancer `node tools/build-edt.cjs` et pousser aussi `ecole-de-trail-session-player` (son `?v=` suit celui d'ici). Prévisualisation locale : `EDT_BASE=http://localhost:8766/ node tools/build-edt.cjs <dossier>` (serveur du player avec en-tête CORS).
+- L'appli iPhone (`../player-ios`, git local) exécute `script.js` dans JavaScriptCore sur un faux DOM : pas de `confirm()`, `sessionStorage`, `createTextNode` ni `innerHTML` porteur de texte. Après un changement, `cd ../player-ios && ./sync-web.sh && node tools/jsc-sim.cjs .` (0 phrase en synthèse attendue).
 
 ## Roadmap
 
 - Ajouter les prochaines séances run + renfo (C1S2, …) dans `sessions-library.js`
 - Parser plus tolérant sur des formats coach variés
 - Sauvegarde locale de séances favorites
-- Historique simple des séances réalisées
+- Historique des séances réalisées (aujourd'hui seulement la liste des séances démarrées, pour proposer celle d'hier)
 - Paramètres personnalisables (durée du pré-départ, timing d'annonce)
 
 ## Licence

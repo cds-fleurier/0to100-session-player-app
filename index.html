@@ -4,14 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Coach Session Player</title>
-    <link rel="stylesheet" href="styles.css?v=1.36.0" />
+    <link rel="stylesheet" href="styles.css?v=1.37.0" />
   </head>
   <body>
     <main class="app">
       <section class="hero">
         <img
           class="brand-logo"
-          src="https://0-to-100.gs-paths.fr/wp-content/uploads/2025/02/0-to-100-Logo-Bleu-RVB.png"
+          src="img/logo-0to100.png"
+          width="506"
+          height="452"
           alt="Logo 0 to 100"
         />
       </section>
@@ -112,18 +114,30 @@
 
       <section class="card player-card">
         <h2>Player</h2>
-        <div class="phase" id="phaseLabel">Pret</div>
+        <p id="playerSession" class="player-session" hidden>
+          <span class="player-session-name"></span>
+          <button id="changeSessionBtn" class="link-btn" type="button">Changer de séance</button>
+        </p>
+        <div id="resumeBanner" class="resume-banner" role="status" hidden>
+          <span id="resumeText"></span>
+          <span class="resume-actions">
+            <button id="resumeBtn" type="button">Reprendre</button>
+            <button id="resumeDismissBtn" class="secondary-btn" type="button">Non merci</button>
+          </span>
+        </div>
+        <div class="phase" id="phaseLabel">Prêt</div>
         <div class="countdown" id="countdown">00</div>
         <div class="now" id="currentLabel">Charge une séance</div>
         <div class="next" id="nextLabel"></div>
 
         <div class="controls">
-          <button id="startBtn" class="action-btn" disabled><span class="btn-icon">&#9654;</span>Demarrer</button>
-          <button id="pauseBtn" class="action-btn" disabled><span class="btn-icon">&#9208;</span>Pause</button>
-          <button id="resetBtn" class="action-btn" disabled><span class="btn-icon">&#9209;</span>Reset</button>
-          <button id="rewindBtn" class="action-btn"><span class="btn-icon">&#9194;</span>RWD</button>
-          <button id="skipBlockBtn" class="action-btn"><span class="btn-icon">&#9193;</span>FWD</button>
+          <button id="startBtn" class="action-btn" disabled><span class="btn-icon">&#9654;</span><span class="btn-label">Démarrer</span></button>
+          <button id="pauseBtn" class="action-btn" disabled><span class="btn-icon">&#9208;</span><span class="btn-label">Pause</span></button>
+          <button id="resetBtn" class="action-btn" disabled><span class="btn-icon">&#9209;</span><span class="btn-label">Reset</span></button>
+          <button id="rewindBtn" class="action-btn"><span class="btn-icon">&#9194;</span><span class="btn-label">RWD</span></button>
+          <button id="skipBlockBtn" class="action-btn"><span class="btn-icon">&#9193;</span><span class="btn-label">FWD</span></button>
         </div>
+        <p id="catchUpNote" class="catch-up-note" hidden></p>
         <!-- Sous les contrôles : quand ils apparaissent, les boutons au-dessus ne bougent pas. -->
         <button id="videoBtn" class="secondary-btn video-btn" hidden></button>
         <a id="checkpointMusic" class="music-btn checkpoint-music" target="_blank" rel="noopener" hidden></a>
@@ -132,7 +146,7 @@
           <button id="wakeLockBtn" class="secondary-btn">Écran actif: off</button>
         </div>
         <p id="wakeLockHint" class="setting-hint" hidden></p>
-        <div id="appVersion" class="app-version">v1.5.0</div>
+        <div id="appVersion" class="app-version">v1.37.0</div>
       </section>
     </main>
 
@@ -151,11 +165,11 @@
       </div>
     </div>
 
-    <script src="sessions-library.js?v=1.36.0"></script>
-    <script src="videos.js?v=1.36.0"></script>
-    <script src="voice/manifest.js?v=1.36.0"></script>
-    <script src="watch-export.js?v=1.36.0"></script>
-    <script src="script.js?v=1.36.0"></script>
+    <script src="sessions-library.js?v=1.37.0"></script>
+    <script src="videos.js?v=1.37.0"></script>
+    <script src="voice/manifest.js?v=1.37.0"></script>
+    <script src="watch-export.js?v=1.37.0"></script>
+    <script src="script.js?v=1.37.0"></script>
     <!-- Barre d'onglets partagée de la team (hub) -->
     <script src="https://cds-fleurier.github.io/0to100-hub/nav.js" defer></script>
   </body>

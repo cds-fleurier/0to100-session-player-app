@@ -39,10 +39,49 @@ const els = {
   videoExternal: document.getElementById("videoExternal"),
   watchExport: document.getElementById("watchExport"),
   watchBtn: document.getElementById("watchBtn"),
+  catchUpNote: document.getElementById("catchUpNote"),
+  resumeBanner: document.getElementById("resumeBanner"),
+  resumeText: document.getElementById("resumeText"),
+  resumeBtn: document.getElementById("resumeBtn"),
+  resumeDismissBtn: document.getElementById("resumeDismissBtn"),
+  playerSession: document.getElementById("playerSession"),
+  changeSessionBtn: document.getElementById("changeSessionBtn"),
 };
-const APP_VERSION = "v1.36.0";
-// Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
-const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
+const APP_VERSION = "v1.37.0";
+
+// localStorage peut lever une exception (navigation privée, stockage plein ou bloqué) :
+// le player doit marcher quand même, sans mémoriser les réglages.
+const store = {
+  get(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (err) {
+      return null;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (err) {
+      // tant pis : le réglage ne survivra pas au rechargement
+    }
+  },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (err) {
+      // idem
+    }
+  },
+  getJSON(key, fallback) {
+    try {
+      const raw = this.get(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (err) {
+      return fallback;
+    }
+  },
+};
 
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
 const LIBRARY_PREF_DAY_KEY = "sportSessionLibraryPickDay";
@@ -50,6 +89,10 @@ const LIBRARY_OPT_PREFIX = "sportSessionLibraryOpt_";
 const METRONOME_PREF_KEY = "sportSessionMetronome";
 const SILENT_SWITCH_PREF_KEY = "sportSessionSilentSwitch";
 const PLATFORM_PREF_KEY  = "sportSessionMusicPlatform";
+// Séances démarrées (ids), pour proposer celle d'hier si elle n'a pas été faite.
+const STARTED_KEY = "sportSessionStarted";
+// Séance en cours, pour la reprendre après un rechargement de la page.
+const PROGRESS_KEY = "sportSessionProgress";
 
 const PLATFORM_LABELS = { spotify: "Spotify", apple: "Apple Music", youtube: "YouTube", deezer: "Deezer" };
 
@@ -805,43 +848,130 @@ function buildUtterance(text) {
 // enregistrées sur Mac (tools/collect-phrases.cjs + tools/generate-voice.cjs,
 // voix Audrey / Daniel) et jouées en Web Audio comme les bips. speechSynthesis
 // ne sert plus qu'aux séances collées depuis Nolio et aux phrases manquantes.
-const voiceBuffers = new Map(); // id de clip -> AudioBuffer, pour la séance et la voix courantes
+let voiceBuffers = new Map(); // id de clip -> AudioBuffer, pour la séance et la voix courantes
 let voiceLoadKey = null;
 let voiceClipsReady = false;
+// Chargement en cours (v1.37.0) : Démarrer attend les voix, sinon les premières
+// annonces partent en synthèse vocale, qui coupe Apple Music sur iPhone.
+let voiceLoading = false;
+let voiceGateTimeoutId = null;
 let clipSources = [];
 let clipQueueEnd = 0;
 
+const VOICE_RETRIES = 2; // nouvelles tentatives par clip
+const VOICE_FETCH_TIMEOUT_MS = 8000;
+// Au-delà, Démarrer se débloque quand même : le chargement continue en fond et
+// les phrases déjà prêtes passent en voix enregistrée dès qu'elles arrivent.
+const VOICE_GATE_MAX_MS = 15000;
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Téléchargement + décodage d'un clip, avec VOICE_RETRIES nouvelles tentatives.
+async function loadClip(url, decoder) {
+  for (let attempt = 0; ; attempt += 1) {
+    const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), VOICE_FETCH_TIMEOUT_MS) : null;
+    try {
+      const res = await fetch(url, ctrl ? { signal: ctrl.signal } : undefined);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return await decoder.decodeAudioData(await res.arrayBuffer());
+    } catch (err) {
+      if (attempt >= VOICE_RETRIES) throw err;
+      await wait(600 * (attempt + 1));
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+}
+
+// Libellé du bouton Démarrer (span .btn-label, l'icône reste à côté).
+function setStartLabel(text) {
+  const label = els.start && els.start.querySelector ? els.start.querySelector(".btn-label") : null;
+  if (label) label.textContent = text;
+}
+
+// Démarrer n'est cliquable que si on le demande ET que les voix ne chargent plus.
+function setStartEnabled(enabled) {
+  els.start.disabled = !enabled || voiceLoading;
+}
+
+function endVoiceGate() {
+  if (voiceGateTimeoutId) {
+    clearTimeout(voiceGateTimeoutId);
+    voiceGateTimeoutId = null;
+  }
+  if (!voiceLoading) return;
+  voiceLoading = false;
+  setStartLabel("Démarrer");
+  // Rien ne tourne et la séance n'est pas finie : Démarrer redevient possible.
+  if (sessionData && !timerId && currentStep()) setStartEnabled(true);
+}
+
 async function loadSessionVoice() {
-  voiceClipsReady = false;
-  voiceBuffers.clear();
   const manifest = window.VOICE_MANIFEST;
   const id = sessionData && sessionData.libraryId;
   const dir = manifest && manifest.voices[els.voiceMode?.value || "female"];
-  if (!manifest || !id || !dir || !manifest.sessions[id]) {
+  const Offline = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!manifest || !id || !dir || !manifest.sessions[id] || !Offline) {
     voiceLoadKey = null;
+    voiceBuffers = new Map();
+    voiceClipsReady = false;
+    endVoiceGate();
     return;
   }
   const key = `${id}:${dir}`;
+  // Déjà chargées (ou en cours) pour cette séance et cette voix.
+  if (key === voiceLoadKey && (voiceLoading || voiceClipsReady)) return;
   voiceLoadKey = key;
-  // Décodage hors ligne : pas de contexte audio « live » avant le geste
-  // Démarrer. Un AudioBuffer se rejoue ensuite dans n'importe quel contexte.
-  const Offline = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  if (!Offline) return;
-  const decoder = new Offline(1, 1, 44100);
-  try {
-    const decoded = await Promise.all(
-      manifest.sessions[id].map(async (clip) => {
-        const res = await fetch(`${ASSET_BASE}voice/${dir}/${clip}.m4a`);
-        if (!res.ok) throw new Error(`clip ${clip} : ${res.status}`);
-        return [clip, await decoder.decodeAudioData(await res.arrayBuffer())];
-      })
-    );
-    if (voiceLoadKey !== key) return; // séance ou voix changée entre-temps
-    decoded.forEach(([clip, buffer]) => voiceBuffers.set(clip, buffer));
-    voiceClipsReady = true;
-  } catch (err) {
-    console.warn("[voix] enregistrements indisponibles, synthèse vocale en secours :", err);
+  // Changement de voix en pleine séance : on garde l'ancienne voix jusqu'à ce que
+  // la nouvelle soit prête, puis on bascule d'un coup. Sinon (nouvelle séance),
+  // les anciens clips ne servent plus.
+  const midSession = Boolean(timerId || paused);
+  if (!midSession) {
+    voiceBuffers = new Map();
+    voiceClipsReady = false;
+    voiceLoading = true;
+    setStartEnabled(false);
+    setStartLabel("Voix… 0 %");
+    if (voiceGateTimeoutId) clearTimeout(voiceGateTimeoutId);
+    voiceGateTimeoutId = setTimeout(endVoiceGate, VOICE_GATE_MAX_MS);
   }
+  // Décodage hors ligne : pas de contexte audio « live » avant le geste Démarrer.
+  // Un AudioBuffer se rejoue ensuite dans n'importe quel contexte. 22 050 Hz =
+  // la fréquence des enregistrements : pas de suréchantillonnage, deux fois moins
+  // de mémoire qu'à 44,1 kHz.
+  let decoder;
+  try {
+    decoder = new Offline(1, 1, 22050);
+  } catch (err) {
+    decoder = new Offline(1, 1, 44100); // vieux Safari : 22 050 Hz refusé
+  }
+  const clips = manifest.sessions[id];
+  const fresh = new Map();
+  let settled = 0;
+  const results = await Promise.allSettled(
+    clips.map(async (clip) => {
+      try {
+        fresh.set(clip, await loadClip(`voice/${dir}/${clip}.m4a`, decoder));
+      } finally {
+        settled += 1;
+        if (voiceLoadKey === key && voiceLoading) {
+          setStartLabel(`Voix… ${Math.round((settled / clips.length) * 100)} %`);
+        }
+      }
+    })
+  );
+  if (voiceLoadKey !== key) return; // séance ou voix changée entre-temps
+  const failed = results.filter((r) => r.status === "rejected").length;
+  if (failed) {
+    console.warn(`[voix] ${failed}/${clips.length} enregistrements indisponibles : synthèse vocale pour ces phrases-là.`);
+  }
+  // Un clip manquant ne fait basculer en synthèse que sa propre phrase (speak()).
+  voiceBuffers = fresh;
+  voiceClipsReady = fresh.size > 0;
+  endVoiceGate();
 }
 
 function stopClips() {
@@ -1155,12 +1285,24 @@ function renderPlan(data) {
   const transitionNote = hasActiveRest
     ? ` · ${TRANSITION_SECONDS}s de transition autour des récups actives`
     : "";
-  els.meta.innerHTML = `
-    <strong>${data.title}</strong><br>
-    ${data.advice ? `Conseils: ${data.advice}<br>` : ""}
-    ${data.subtitle ? `${data.subtitle}<br>` : ""}
-    ${data.blocks ? `${data.blocks.length} blocs · ${formatDurationForPlan(calcSessionDuration(data))}` : `${data.exercises.length} exercices · ${data.rounds} tour${data.rounds > 1 ? "s" : ""}${data.interRoundRest ? ` · ${formatDurationForPlan(data.interRoundRest)} entre les tours` : ""}${transitionNote}`}
-  `;
+  // Texte collé depuis Nolio : jamais en innerHTML (une balise dans le titre s'exécuterait).
+  const summary = data.blocks
+    ? `${data.blocks.length} blocs · ${formatDurationForPlan(calcSessionDuration(data))}`
+    : `${data.exercises.length} exercices · ${data.rounds} tour${data.rounds > 1 ? "s" : ""}${data.interRoundRest ? ` · ${formatDurationForPlan(data.interRoundRest)} entre les tours` : ""}${transitionNote}`;
+  const lines = [
+    ["strong", data.title],
+    ["div", data.advice ? `Conseils : ${data.advice}` : ""],
+    ["div", data.subtitle || ""],
+    ["div", summary],
+  ];
+  els.meta.replaceChildren();
+  lines.forEach(([tag, text]) => {
+    if (!text) return;
+    const line = document.createElement(tag);
+    line.className = "meta-line";
+    line.textContent = text;
+    els.meta.appendChild(line);
+  });
 
   els.list.innerHTML = "";
   if (data.blocks && data.blocks.length) {
@@ -1516,7 +1658,7 @@ function rewindStep() {
   if (ended) {
     // Séance finie : le timer est arrêté, on repart en pause sur l'exercice.
     paused = true;
-    els.start.disabled = false;
+    setStartEnabled(true);
     els.pause.disabled = true;
   }
   renderPlayer();
@@ -1665,6 +1807,7 @@ function announceStepStart(step) {
   }
   beep();
   syncMetronome();
+  saveProgress();
 }
 
 function tick() {
@@ -1789,6 +1932,7 @@ function tick() {
     const nextStep = currentStep();
     if (!nextStep) {
       stopTimer();
+      clearProgress();
       renderPlayer();
       speak("Séance terminée. Bravo.");
       return;
@@ -1813,18 +1957,116 @@ function tick() {
 // Horloge : setInterval(tick, 1000) dérivait et, quand un tick partait en
 // retard (fil principal bloqué), le suivant arrivait collé derrière — les bips
 // « 4 » et « 3 » trop proches. On sonde toutes les 200 ms et on déclenche
-// tick() sur l'horloge murale ; un retard est rattrapé par petites touches
-// (jamais moins de 700 ms entre deux ticks), une longue absence (page gelée)
-// est abandonnée comme avant.
+// tick() sur l'horloge murale ; un petit retard est rattrapé par petites
+// touches (jamais moins de 700 ms entre deux ticks).
+// Longue absence (écran verrouillé, onglet gelé, v1.37.0) : avant, le temps
+// écoulé était jeté et la séance reprenait là où elle s'était figée. Désormais
+// on rattrape en silence (catchUp) : les étapes écoulées sont sautées sans être
+// annoncées, seule l'étape où l'on retombe est annoncée.
 const TICK_MS = 1000;
+const CATCH_UP_AFTER_MS = 2500;
 let nextTickAt = 0;
+let catchUpNoteTimeoutId = null;
+
+// Horloge murale : Date.now() continue d'avancer téléphone en veille, alors que
+// performance.now() peut s'y arrêter (Safari iOS). L'appli iPhone la remplace
+// (overrides.js) par son horloge native.
+function nowMs() {
+  return Date.now();
+}
 
 function clockLoop() {
-  const now = performance.now();
+  const now = nowMs();
   if (now < nextTickAt) return;
-  if (now - nextTickAt > 2000) nextTickAt = now;
+  const late = now - nextTickAt;
+  if (late > CATCH_UP_AFTER_MS) {
+    // Le tick attendu + une seconde par seconde de retard.
+    nextTickAt = now + TICK_MS;
+    catchUp(1 + Math.floor(late / TICK_MS));
+    return;
+  }
   nextTickAt = Math.max(nextTickAt + TICK_MS, now + 700);
   tick();
+}
+
+// Avance de `ticks` secondes sans rien dire, avec la même mécanique que tick() :
+// chaque seconde décompte `remaining`, une seconde à 0 passe à l'étape suivante.
+function catchUp(ticks) {
+  if (!timeline.length || !currentStep()) return;
+  const startIdx = idx;
+  let finishedPreStart = false;
+  let left = ticks;
+  // Décompte de départ (5…1, puis « Top départ ») pas encore fini.
+  if (idx === 0 && (preStartRemaining >= 0 || preStartLaunching)) {
+    const preLeft = Math.max(preStartRemaining, 0) + 1;
+    if (left < preLeft) {
+      preStartRemaining -= left;
+      lastCountdownCall = null;
+      renderPlayer();
+      return;
+    }
+    left -= preLeft;
+    if (preStartLaunchTimeoutId) {
+      clearTimeout(preStartLaunchTimeoutId);
+      preStartLaunchTimeoutId = null;
+    }
+    preStartRemaining = -1;
+    preStartLaunching = false;
+    finishedPreStart = true;
+  }
+  let reached = null; // checkpoint ou fin de séance atteints pendant l'absence
+  while (left > 0) {
+    if (remaining > 0) {
+      const d = Math.min(left, remaining);
+      remaining -= d;
+      left -= d;
+      continue;
+    }
+    idx += 1;
+    left -= 1;
+    const step = currentStep();
+    if (!step) {
+      reached = "end";
+      break;
+    }
+    remaining = step.seconds;
+    if (step.type === "checkpoint") {
+      reached = "checkpoint";
+      break;
+    }
+  }
+  const caught = ticks - left;
+  prepareAnnounced = false;
+  lastCountdownCall = null;
+  endTransitionArmed = false;
+  endTransitionDelay = false;
+  showCatchUpNote(caught);
+  if (reached === "end") {
+    stopTimer();
+    clearProgress();
+    renderPlayer();
+    speak("Séance terminée. Bravo.");
+    return;
+  }
+  if (reached === "checkpoint") {
+    enterCheckpoint(currentStep());
+    return;
+  }
+  // Une seule annonce, celle de l'étape où l'on retombe (rien si c'est la même).
+  if (idx !== startIdx || finishedPreStart) announceStepStart(currentStep());
+  renderPlayer();
+}
+
+// Ligne discrète sous les contrôles : « 3 min 20 rattrapées (écran en veille) ».
+function showCatchUpNote(seconds) {
+  if (!els.catchUpNote || seconds < 3) return;
+  els.catchUpNote.textContent = `⏱ ${formatDurationForPlan(seconds)} rattrapées pendant la mise en veille`;
+  els.catchUpNote.hidden = false;
+  if (catchUpNoteTimeoutId) clearTimeout(catchUpNoteTimeoutId);
+  catchUpNoteTimeoutId = setTimeout(() => {
+    els.catchUpNote.hidden = true;
+    catchUpNoteTimeoutId = null;
+  }, 30000);
 }
 
 function startTimer() {
@@ -1843,10 +2085,17 @@ function startTimer() {
   }
 
   if (timerId) return;
+  const freshStart = idx === 0 && preStartRemaining === 5 && !paused;
+  if (freshStart) {
+    clearProgress();
+    hideResumeBanner();
+    if (sessionData.libraryId) markSessionStarted(sessionData.libraryId);
+  }
+  disarmReset();
   paused = false;
   els.start.disabled = true;
   els.pause.disabled = false;
-  nextTickAt = performance.now() + TICK_MS;
+  nextTickAt = nowMs() + TICK_MS;
   timerId = setInterval(clockLoop, 200);
 
   // Reprise depuis un checkpoint : on passe au step suivant et on l'annonce.
@@ -1863,6 +2112,13 @@ function startTimer() {
     prepareAnnounced = false;
     lastCountdownCall = null;
     announceStepStart(nextStep);
+    renderPlayer();
+    return;
+  }
+  // Reprise après rechargement : on redit l'étape où l'on reprend.
+  if (announceOnStart && step) {
+    announceOnStart = false;
+    announceStepStart(step);
     renderPlayer();
     return;
   }
@@ -1892,13 +2148,17 @@ function pauseTimer() {
   if (!timerId) return;
   stopTimer();
   paused = true;
-  els.start.disabled = false;
+  setStartEnabled(true);
   els.pause.disabled = true;
+  saveProgress();
 }
 
 function resetTimer() {
+  disarmReset();
   stopTimer();
   stopClips();
+  clearProgress();
+  announceOnStart = false;
   paused = false;
   timeline = sessionData ? buildTimeline(sessionData) : [];
   idx = 0;
@@ -1908,11 +2168,11 @@ function resetTimer() {
   preStartRemaining = 5;
   preStartLaunching = false;
 
-  els.start.disabled = !sessionData;
+  setStartEnabled(Boolean(sessionData));
   els.pause.disabled = true;
   els.reset.disabled = !sessionData;
 
-  els.phase.textContent = "Pret";
+  els.phase.textContent = "Prêt";
   els.phase.className = "phase";
   els.countdown.textContent = timeline[0] ? formatSeconds(preStartRemaining) : "00";
   els.current.textContent = timeline[0]
@@ -1920,6 +2180,145 @@ function resetTimer() {
     : "Charge une séance";
   els.next.textContent = timeline[0] ? `Premier exercice: ${timeline[0].name}` : "";
   renderVideoButton();
+}
+
+// --- Reset protégé (v1.37.0) -------------------------------------------------
+// Un appui involontaire (téléphone sorti de la poche) effaçait toute la séance.
+// Pas de confirm() (absent de l'appli iPhone) : premier appui = « Recommencer ? »
+// pendant 3 s, second appui = reset.
+const RESET_CONFIRM_MS = 3000;
+let resetArmedTimeoutId = null;
+
+function setResetLabel(text) {
+  const label = els.reset && els.reset.querySelector ? els.reset.querySelector(".btn-label") : null;
+  if (label) label.textContent = text;
+}
+
+function disarmReset() {
+  if (resetArmedTimeoutId) clearTimeout(resetArmedTimeoutId);
+  resetArmedTimeoutId = null;
+  if (els.reset.classList) els.reset.classList.remove("confirm");
+  setResetLabel("Reset");
+}
+
+function sessionInProgress() {
+  return Boolean(timerId || paused || idx > 0 || preStartRemaining < 5);
+}
+
+function onResetClick() {
+  if (resetArmedTimeoutId || !sessionInProgress()) {
+    resetTimer();
+    return;
+  }
+  els.reset.classList.add("confirm");
+  setResetLabel("Recommencer ?");
+  resetArmedTimeoutId = setTimeout(disarmReset, RESET_CONFIRM_MS);
+}
+
+// --- Séances démarrées et reprise après rechargement (v1.37.0) ---------------
+const RESUME_MAX_MS = 3 * 3600 * 1000;
+let announceOnStart = false;
+
+function markSessionStarted(id) {
+  const list = store.getJSON(STARTED_KEY, []);
+  const ids = (Array.isArray(list) ? list : []).filter((x) => x !== id);
+  ids.push(id);
+  store.set(STARTED_KEY, JSON.stringify(ids.slice(-60)));
+}
+
+function startedSessionIds() {
+  const list = store.getJSON(STARTED_KEY, []);
+  return new Set(Array.isArray(list) ? list : []);
+}
+
+// Où en est la séance, à chaque étape et à chaque pause : si la page est
+// rechargée (onglet tué en arrière-plan, mauvaise manip), on propose de reprendre.
+function saveProgress() {
+  if (!sessionData || !sessionData.libraryId || !timeline.length) return;
+  if (idx === 0 && (preStartRemaining >= 0 || preStartLaunching)) return; // pas encore parti
+  if (idx >= timeline.length) return;
+  const def = librarySessionById(sessionData.libraryId);
+  store.set(
+    PROGRESS_KEY,
+    JSON.stringify({
+      id: sessionData.libraryId,
+      idx,
+      remaining,
+      date: todaySessionKey(),
+      savedAt: Date.now(),
+      options: def ? libraryOptionOverrides(def) : {},
+    })
+  );
+}
+
+function clearProgress() {
+  store.remove(PROGRESS_KEY);
+}
+
+function pendingProgress() {
+  const p = store.getJSON(PROGRESS_KEY, null);
+  if (!p || typeof p !== "object" || !librarySessionById(p.id)) return null;
+  if (p.date !== todaySessionKey() || !(Date.now() - p.savedAt < RESUME_MAX_MS)) return null;
+  if (!Number.isInteger(p.idx) || p.idx < 0) return null;
+  return p;
+}
+
+function hideResumeBanner() {
+  if (els.resumeBanner) els.resumeBanner.hidden = true;
+}
+
+function offerResume() {
+  const p = pendingProgress();
+  if (!p || !els.resumeBanner) return;
+  const def = librarySessionById(p.id);
+  let block = null;
+  try {
+    const data = compileLibrarySession(def, { ...libraryOptionOverrides(def), ...(p.options || {}) });
+    const step = buildTimeline(data)[p.idx];
+    if (!step) return;
+    block = step.blockId || null;
+  } catch (err) {
+    return;
+  }
+  const code = def.title.split(" — ")[0];
+  els.resumeText.textContent = block
+    ? `${code} commencée tout à l'heure. Reprendre au bloc ${block} ?`
+    : `${code} commencée tout à l'heure. Reprendre où tu en étais ?`;
+  els.resumeBanner.hidden = false;
+}
+
+function resumeSession() {
+  const p = pendingProgress();
+  hideResumeBanner();
+  if (!p) return;
+  Object.entries(p.options || {}).forEach(([key, value]) =>
+    store.set(`${LIBRARY_OPT_PREFIX}${p.id}_${key}`, String(value))
+  );
+  els.sessionPicker.value = p.id;
+  rememberSessionChoice(p.id);
+  stopTimer();
+  paused = false;
+  applySessionMode();
+  parseAndLoad();
+  if (!sessionData || p.idx >= timeline.length) return;
+  idx = p.idx;
+  const step = currentStep();
+  remaining = Math.min(Math.max(Number(p.remaining) || 0, 0), step.seconds);
+  preStartRemaining = -1;
+  preStartLaunching = false;
+  prepareAnnounced = false;
+  lastCountdownCall = null;
+  paused = true;
+  announceOnStart = step.type !== "checkpoint";
+  setStartEnabled(true);
+  els.pause.disabled = true;
+  renderPlayer();
+  setStatus("Séance reprise : appuie sur Démarrer pour continuer.");
+}
+
+function dismissResume() {
+  hideResumeBanner();
+  clearProgress();
 }
 
 // --- Export Apple Watch (watch-export.js) ------------------------------------
@@ -1933,7 +2332,7 @@ async function exportForAppleWatch() {
   els.watchBtn.disabled = true;
   try {
     // import() veut une URL complète (« vendor/… » seul n'est pas résolu).
-    const moduleUrl = new URL(`${ASSET_BASE}vendor/workoutkit/encode.js?v=${APP_VERSION.slice(1)}`, document.baseURI);
+    const moduleUrl = new URL(`vendor/workoutkit/encode.js?v=${APP_VERSION.slice(1)}`, document.baseURI);
     const { toBlob } = await import(moduleUrl.href);
     const url = URL.createObjectURL(toBlob(buildWatchPlan(sessionData, timeline)));
     const a = Object.assign(document.createElement("a"), { href: url, download: watchFileName(sessionData) });
@@ -1957,7 +2356,7 @@ function selectedLibrarySession() {
 function libraryOptionOverrides(def) {
   const overrides = {};
   (def.options || []).forEach((opt) => {
-    const stored = localStorage.getItem(`${LIBRARY_OPT_PREFIX}${def.id}_${opt.key}`);
+    const stored = store.get(`${LIBRARY_OPT_PREFIX}${def.id}_${opt.key}`);
     if (stored != null) overrides[opt.key] = stored;
   });
   return overrides;
@@ -1985,7 +2384,7 @@ function renderSessionOptions(def) {
       select.appendChild(o);
     });
     select.addEventListener("change", () => {
-      localStorage.setItem(`${LIBRARY_OPT_PREFIX}${def.id}_${opt.key}`, select.value);
+      store.set(`${LIBRARY_OPT_PREFIX}${def.id}_${opt.key}`, select.value);
       stopTimer();
       paused = false;
       parseAndLoad();
@@ -1996,9 +2395,11 @@ function renderSessionOptions(def) {
   });
 }
 
-// Date du jour au format des séances (aammjj), heure locale.
-function todaySessionKey() {
+// Date au format des séances (aammjj), heure locale. Par défaut aujourd'hui,
+// `daysAgo` = 1 pour hier, 2 pour avant-hier.
+function todaySessionKey(daysAgo = 0) {
   const d = new Date();
+  if (daysAgo) d.setDate(d.getDate() - daysAgo);
   return String(d.getFullYear() % 100).padStart(2, "0") +
     String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
 }
@@ -2006,8 +2407,8 @@ function todaySessionKey() {
 // Mémorise le choix de séance, avec le jour où il a été fait : un choix manuel ne vaut
 // que pour la journée, le lendemain le sélecteur repart sur la séance du jour.
 function rememberSessionChoice(id) {
-  localStorage.setItem(LIBRARY_PREF_KEY, id);
-  localStorage.setItem(LIBRARY_PREF_DAY_KEY, todaySessionKey());
+  store.set(LIBRARY_PREF_KEY, id);
+  store.set(LIBRARY_PREF_DAY_KEY, todaySessionKey());
 }
 
 function populateSessionPicker() {
@@ -2041,17 +2442,27 @@ function populateSessionPicker() {
     els.sessionPicker.appendChild(og);
   });
   // Séance proposée : le choix fait aujourd'hui s'il y en a un, sinon la séance du jour,
-  // sinon la prochaine séance datée, sinon le dernier choix.
-  const stored = localStorage.getItem(LIBRARY_PREF_KEY);
-  const storedToday = localStorage.getItem(LIBRARY_PREF_DAY_KEY) === today;
+  // sinon celle d'hier ou d'avant-hier si elle n'a pas été démarrée (v1.37.0), sinon
+  // la prochaine séance datée, sinon le dernier choix.
+  const stored = store.get(LIBRARY_PREF_KEY);
+  const storedToday = store.get(LIBRARY_PREF_DAY_KEY) === today;
   const nextDated = groups[1].items.find((d) => d.date);
+  const started = startedSessionIds();
+  const missed = [1, 2]
+    .map((n) => sorted.find((d) => dateKey(d) === todaySessionKey(n) && !started.has(d.id)))
+    .find(Boolean);
   let pick = null;
+  missedSessionId = null;
   if (stored !== null && storedToday && (stored === "" || librarySessionById(stored))) pick = stored;
   else if (groups[0].items.length) pick = groups[0].items[0].id;
+  else if (missed) pick = missedSessionId = missed.id;
   else if (nextDated) pick = nextDated.id;
   else if (stored && librarySessionById(stored)) pick = stored;
   if (pick !== null) els.sessionPicker.value = pick;
 }
+
+// Séance d'hier (ou d'avant-hier) proposée parce qu'elle n'a pas été démarrée.
+let missedSessionId = null;
 
 // Le textarea et ses boutons ne servent qu'au mode Nolio.
 function applySessionMode() {
@@ -2060,7 +2471,24 @@ function applySessionMode() {
   renderSessionOptions(def);
 }
 
+// Séance chargée : sur téléphone, la carte Player passe en tête de page (styles.css,
+// body.has-session) avec le nom de la séance et un lien vers le sélecteur.
+function renderPlayerSession() {
+  document.body.classList.toggle("has-session", Boolean(sessionData));
+  if (!els.playerSession) return;
+  const title = sessionData ? String(sessionData.title || "") : "";
+  els.playerSession.hidden = !title;
+  const name = els.playerSession.querySelector ? els.playerSession.querySelector(".player-session-name") : null;
+  if (name) name.textContent = title;
+}
+
 function parseAndLoad() {
+  disarmReset();
+  loadSession();
+  renderPlayerSession();
+}
+
+function loadSession() {
   const libraryDef = selectedLibrarySession();
   const rawText = libraryDef ? "" : (els.input.value || "").trim();
   if (!rawText && !libraryDef) {
@@ -2075,7 +2503,7 @@ function parseAndLoad() {
     els.reset.disabled = true;
     renderVideoButton();
     renderWatchExport();
-    els.phase.textContent = "Pret";
+    els.phase.textContent = "Prêt";
     els.phase.className = "phase";
     els.countdown.textContent = "00";
     els.current.textContent = "Charge une séance";
@@ -2097,11 +2525,11 @@ function parseAndLoad() {
     preStartRemaining = 5;
     preStartLaunching = false;
 
-    els.start.disabled = false;
+    setStartEnabled(true);
     els.pause.disabled = true;
     els.reset.disabled = false;
 
-    els.phase.textContent = "Pret";
+    els.phase.textContent = "Prêt";
     els.phase.className = "phase";
     els.countdown.textContent = formatSeconds(preStartRemaining);
     els.current.textContent = "Démarrage imminent";
@@ -2109,7 +2537,11 @@ function parseAndLoad() {
     renderVideoButton();
     renderWatchExport();
 
-    setStatus(libraryDef ? `Séance ${libraryDef.id} chargée. Appuie sur Demarrer.` : "Séance chargée. Appuie sur Demarrer.");
+    const missedNote =
+      libraryDef && libraryDef.id === missedSessionId
+        ? `${libraryDef.title.split(" — ")[0]} du ${libraryDef.date} pas encore faite : la voici. Appuie sur Démarrer.`
+        : null;
+    setStatus(missedNote || (libraryDef ? `Séance ${libraryDef.id} chargée. Appuie sur Démarrer.` : "Séance chargée. Appuie sur Démarrer."));
     updateMetronomeHint();
     loadSessionVoice();
   } catch (err) {
@@ -2123,7 +2555,7 @@ function parseAndLoad() {
     els.reset.disabled = true;
     renderVideoButton();
     renderWatchExport();
-    els.phase.textContent = "Pret";
+    els.phase.textContent = "Prêt";
     els.countdown.textContent = "00";
     els.current.textContent = "Charge une séance";
     els.next.textContent = "";
@@ -2138,7 +2570,15 @@ els.parseBtn.addEventListener("click", () => {
 els.pasteNolioBtn.addEventListener("click", pasteFromClipboard);
 els.start.addEventListener("click", startTimer);
 els.pause.addEventListener("click", pauseTimer);
-els.reset.addEventListener("click", resetTimer);
+els.reset.addEventListener("click", onResetClick);
+if (els.resumeBtn) els.resumeBtn.addEventListener("click", resumeSession);
+if (els.resumeDismissBtn) els.resumeDismissBtn.addEventListener("click", dismissResume);
+if (els.changeSessionBtn) {
+  els.changeSessionBtn.addEventListener("click", () => {
+    const card = document.querySelector(".input-card");
+    if (card && card.scrollIntoView) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
 els.focusModeBtn.addEventListener("click", toggleFocusMode);
 els.wakeLockBtn.addEventListener("click", toggleWakeLock);
 els.skipBlockBtn.addEventListener("click", skipToNextBlock);
@@ -2159,11 +2599,11 @@ if (els.videoBtn) {
 }
 els.voiceToggle.addEventListener("change", updateVoiceControlsState);
 els.voiceMode.addEventListener("change", () => {
-  localStorage.setItem(VOICE_PREF_KEY, els.voiceMode.value);
+  store.set(VOICE_PREF_KEY, els.voiceMode.value);
   loadSessionVoice();
 });
 els.musicPlatform.addEventListener("change", () => {
-  localStorage.setItem(PLATFORM_PREF_KEY, els.musicPlatform.value);
+  store.set(PLATFORM_PREF_KEY, els.musicPlatform.value);
   renderCheckpointMusic(currentStep());
   renderPlanMusic(sessionData);
 });
@@ -2185,21 +2625,27 @@ if (els.sessionPicker) {
 }
 if (els.metronomeMode) {
   els.metronomeMode.addEventListener("change", () => {
-    localStorage.setItem(METRONOME_PREF_KEY, els.metronomeMode.value);
+    store.set(METRONOME_PREF_KEY, els.metronomeMode.value);
     updateMetronomeHint();
     syncMetronome();
   });
 }
 if (els.silentSwitchToggle) {
   els.silentSwitchToggle.addEventListener("change", () => {
-    localStorage.setItem(SILENT_SWITCH_PREF_KEY, els.silentSwitchToggle.checked ? "1" : "0");
+    store.set(SILENT_SWITCH_PREF_KEY, els.silentSwitchToggle.checked ? "1" : "0");
     // Geste utilisateur : on peut basculer la session audio tout de suite.
     if (timerId || paused) resumeAudioEngines();
   });
 }
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState !== "visible") return;
+  if (document.visibilityState !== "visible") {
+    // La page peut être tuée en arrière-plan : on note où on en est.
+    if (timerId) saveProgress();
+    return;
+  }
+  // Retour de veille : rattraper tout de suite, sans attendre la prochaine sonde.
+  if (timerId) clockLoop();
   // iOS annonce « visible » avant que la page soit vraiment active : une
   // demande immédiate d'écran actif est refusée. On laisse la page se poser.
   if (wakeLockWanted && !wakeLockSentinel && (timerId || paused)) setTimeout(requestWakeLock, 600);
@@ -2212,11 +2658,11 @@ document.addEventListener("pointerdown", () => {
   if (wakeLockWanted && !wakeLockSentinel && (timerId || paused)) requestWakeLock();
 });
 
-const storedVoicePreference = localStorage.getItem(VOICE_PREF_KEY);
+const storedVoicePreference = store.get(VOICE_PREF_KEY);
 if (storedVoicePreference === "male" || storedVoicePreference === "female") {
   els.voiceMode.value = storedVoicePreference;
 }
-const storedPlatformPref = localStorage.getItem(PLATFORM_PREF_KEY);
+const storedPlatformPref = store.get(PLATFORM_PREF_KEY);
 if (storedPlatformPref && els.musicPlatform) els.musicPlatform.value = storedPlatformPref;
 renderVideoList(sessionData);
 updateVoiceControlsState();
@@ -2227,12 +2673,13 @@ refreshWakeLockButton();
 if (els.appVersion) els.appVersion.textContent = APP_VERSION;
 if (els.metronomeMode) {
   // Ancien réglage (case à cocher, « 1 ») = passages cadence.
-  const storedMetronome = localStorage.getItem(METRONOME_PREF_KEY);
+  const storedMetronome = store.get(METRONOME_PREF_KEY);
   els.metronomeMode.value =
     storedMetronome === "1" ? "cadence" : ["cadence", "run"].includes(storedMetronome) ? storedMetronome : "off";
 }
-if (els.silentSwitchToggle) els.silentSwitchToggle.checked = localStorage.getItem(SILENT_SWITCH_PREF_KEY) === "1";
+if (els.silentSwitchToggle) els.silentSwitchToggle.checked = store.get(SILENT_SWITCH_PREF_KEY) === "1";
 populateSessionPicker();
 applySessionMode();
 
 parseAndLoad();
+offerResume();

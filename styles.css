@@ -8,6 +8,10 @@
   --accent: #ff6b00;
   --accent-strong: #e95a00;
   --accent-soft: #ffe6d1;
+  /* Fond des boutons : orange plus sombre que l'accent, pour un texte blanc lisible
+     (blanc sur #ff6b00 = 2,9:1 ; sur #cc4e00 → #b93d0a ≥ 4,5:1, norme WCAG AA). */
+  --btn: #cc4e00;
+  --btn-strong: #b93d0a;
   --dark-chip: #1e242b;
   --rest: #2b6cb0;
   --warn: #d9480f;
@@ -113,7 +117,7 @@ button {
   font-family: "Trebuchet MS", "Gill Sans", sans-serif;
   letter-spacing: 0.3px;
   cursor: pointer;
-  background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+  background: linear-gradient(160deg, var(--btn), var(--btn-strong));
   color: #fff;
   transition: transform 0.14s ease, filter 0.14s ease;
 }
@@ -141,6 +145,83 @@ button:disabled {
 .btn-icon {
   font-size: 14px;
   line-height: 1;
+}
+
+/* Reset armé : second appui dans les 3 s pour confirmer. */
+.action-btn.confirm {
+  background: #7f1d1d;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.35);
+}
+
+/* Séance chargée, en tête de la carte Player. */
+.player-session {
+  width: 100%;
+  margin: -4px 0 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px 10px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.player-session[hidden],
+.resume-banner[hidden],
+.catch-up-note[hidden] {
+  display: none;
+}
+
+.link-btn {
+  padding: 4px 2px;
+  background: none;
+  color: var(--btn-strong);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Le lien vers le sélecteur ne sert que quand la carte Player passe en tête (téléphone). */
+@media (min-width: 681px) {
+  .link-btn#changeSessionBtn {
+    display: none;
+  }
+}
+
+.resume-banner {
+  width: 100%;
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff0e3;
+  border: 1px solid #ffd0a8;
+  color: #5f2600;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  display: grid;
+  gap: 8px;
+}
+
+.resume-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.resume-actions button {
+  min-height: 44px;
+}
+
+/* Temps rattrapé après une mise en veille : discret, sous les contrôles. */
+.catch-up-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
 }
 
 /* Champ pleine largeur : libellé en petites capitales au-dessus, select en dessous.
@@ -252,6 +333,10 @@ button:disabled {
   margin-top: 10px;
   min-height: 20px;
   font-weight: 700;
+}
+
+.meta-line {
+  display: block;
 }
 
 .meta {
@@ -415,6 +500,7 @@ body.library-mode .nolio-input {
   filter: saturate(1.06);
 }
 
+body.focus-mode .player-session,
 body.focus-mode .hero,
 body.focus-mode .input-card,
 body.focus-mode .plan-card,
@@ -452,6 +538,61 @@ body.focus-mode .player-card {
     width: min(220px, 78%);
   }
 
+}
+
+/* Téléphone (une colonne) : dès qu'une séance est chargée, la carte Player passe
+   juste sous le logo. Avant, elle était tout en bas, après les réglages, le plan
+   et la liste des vidéos. */
+@media (max-width: 680px) {
+  .hero {
+    order: -2;
+  }
+
+  body.has-session .player-card {
+    order: -1;
+  }
+
+  /* Logo réduit pour que les boutons tiennent dans l'écran d'un petit iPhone. */
+  body.has-session .brand-logo {
+    width: min(120px, 36%);
+  }
+
+  body.has-session .hero {
+    padding: 0;
+  }
+
+  /* Boutons du player : grandes cibles pour un téléphone sorti de la poche en plein
+     effort. Démarrer / Pause / Reset sur une ligne, RWD / FWD dessous. */
+  .player-card .controls:not(.utility-controls) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+
+  .player-card .controls:not(.utility-controls) .action-btn {
+    grid-column: span 2;
+    justify-content: center;
+    min-height: 56px;
+    padding: 8px 6px;
+    font-size: 15px;
+  }
+
+  /* « Recommencer ? » doit tenir dans le tiers de largeur : sans icône, un peu plus petit. */
+  .player-card .controls .action-btn.confirm {
+    font-size: clamp(12px, 3.5vw, 13px);
+    letter-spacing: 0;
+    padding: 8px 4px;
+  }
+
+  .player-card .controls .action-btn.confirm .btn-icon {
+    display: none;
+  }
+
+  .player-card .controls:not(.utility-controls) #rewindBtn,
+  .player-card .controls:not(.utility-controls) #skipBlockBtn {
+    grid-column: span 3;
+  }
 }
 
 /* Pause « tabata en musique » : bouton vers le morceau sous la consigne. */
