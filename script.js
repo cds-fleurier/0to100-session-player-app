@@ -40,11 +40,12 @@ const els = {
   watchExport: document.getElementById("watchExport"),
   watchBtn: document.getElementById("watchBtn"),
 };
-const APP_VERSION = "v1.34.2";
+const APP_VERSION = "v1.36.0";
 // Page servie depuis un autre dossier (version École de Trail) : les voix restent ici.
 const ASSET_BASE = window.PLAYER_ASSET_BASE || "";
 
 const LIBRARY_PREF_KEY   = "sportSessionLibraryPick";
+const LIBRARY_PREF_DAY_KEY = "sportSessionLibraryPickDay";
 const LIBRARY_OPT_PREFIX = "sportSessionLibraryOpt_";
 const METRONOME_PREF_KEY = "sportSessionMetronome";
 const SILENT_SWITCH_PREF_KEY = "sportSessionSilentSwitch";
@@ -1995,23 +1996,61 @@ function renderSessionOptions(def) {
   });
 }
 
+// Date du jour au format des séances (aammjj), heure locale.
+function todaySessionKey() {
+  const d = new Date();
+  return String(d.getFullYear() % 100).padStart(2, "0") +
+    String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
+}
+
+// Mémorise le choix de séance, avec le jour où il a été fait : un choix manuel ne vaut
+// que pour la journée, le lendemain le sélecteur repart sur la séance du jour.
+function rememberSessionChoice(id) {
+  localStorage.setItem(LIBRARY_PREF_KEY, id);
+  localStorage.setItem(LIBRARY_PREF_DAY_KEY, todaySessionKey());
+}
+
 function populateSessionPicker() {
   if (!els.sessionPicker || typeof SESSION_LIBRARY === "undefined") return;
-  // Tri par date du plan (jj/mm/aa), l'ordre du fichier n'a pas d'importance.
-  // Séance pas encore datée (pas encore dans Nolio) : en fin de liste, dans l'ordre du fichier.
+  // Trois groupes (v1.36.0) : « Aujourd'hui », « À venir » (par date, puis les séances pas
+  // encore datées dans l'ordre du fichier), « Archives » (séances passées, la plus récente
+  // d'abord). Date du plan au format jj/mm/aa.
   const dateKey = (d) => (d.date ? d.date.split("/").reverse().join("") : "999999");
-  [...SESSION_LIBRARY].sort((a, b) => dateKey(a).localeCompare(dateKey(b))).forEach((def) => {
-    const o = document.createElement("option");
-    o.value = def.id;
-    // "C1S1 du 15/09/26 — Run + renfo isométrique (≈ 60 min)"
-    const [code, ...rest] = def.title.split(" — ");
-    const name = rest.join(" — ");
-    const datePart = def.date ? ` du ${def.date}` : "";
-    o.textContent = `${code}${datePart} — ${name} (${def.subtitle.split("·")[0].trim()})`;
-    els.sessionPicker.appendChild(o);
+  const today = todaySessionKey();
+  const sorted = [...SESSION_LIBRARY].sort((a, b) => dateKey(a).localeCompare(dateKey(b)));
+  const groups = [
+    { label: "Aujourd'hui", items: sorted.filter((d) => dateKey(d) === today) },
+    { label: "À venir",     items: sorted.filter((d) => dateKey(d) > today) },
+    { label: "Archives",    items: sorted.filter((d) => dateKey(d) < today).reverse() },
+  ];
+  groups.forEach((g) => {
+    if (!g.items.length) return;
+    const og = document.createElement("optgroup");
+    og.label = g.label;
+    g.items.forEach((def) => {
+      const o = document.createElement("option");
+      o.value = def.id;
+      o.group = g.label; // lu par l'appli iPhone (sections du sélecteur)
+      // "C1S1 du 15/09/26 — Run + renfo isométrique (≈ 60 min)"
+      const [code, ...rest] = def.title.split(" — ");
+      const name = rest.join(" — ");
+      const datePart = def.date ? ` du ${def.date}` : "";
+      o.textContent = `${code}${datePart} — ${name} (${def.subtitle.split("·")[0].trim()})`;
+      og.appendChild(o);
+    });
+    els.sessionPicker.appendChild(og);
   });
+  // Séance proposée : le choix fait aujourd'hui s'il y en a un, sinon la séance du jour,
+  // sinon la prochaine séance datée, sinon le dernier choix.
   const stored = localStorage.getItem(LIBRARY_PREF_KEY);
-  if (stored && librarySessionById(stored)) els.sessionPicker.value = stored;
+  const storedToday = localStorage.getItem(LIBRARY_PREF_DAY_KEY) === today;
+  const nextDated = groups[1].items.find((d) => d.date);
+  let pick = null;
+  if (stored !== null && storedToday && (stored === "" || librarySessionById(stored))) pick = stored;
+  else if (groups[0].items.length) pick = groups[0].items[0].id;
+  else if (nextDated) pick = nextDated.id;
+  else if (stored && librarySessionById(stored)) pick = stored;
+  if (pick !== null) els.sessionPicker.value = pick;
 }
 
 // Le textarea et ses boutons ne servent qu'au mode Nolio.
@@ -2137,7 +2176,7 @@ document.querySelectorAll('input[name="videoScope"]').forEach((radio) => {
 });
 if (els.sessionPicker) {
   els.sessionPicker.addEventListener("change", () => {
-    localStorage.setItem(LIBRARY_PREF_KEY, els.sessionPicker.value);
+    rememberSessionChoice(els.sessionPicker.value);
     stopTimer();
     paused = false;
     applySessionMode();

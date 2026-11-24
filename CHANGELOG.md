@@ -2,6 +2,13 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.36.0] - 2026-11-24
+
+### Modifié
+- **Sélecteur de séances en trois groupes** : « Aujourd'hui », « À venir » (par date, puis les séances pas encore datées), « Archives » (séances passées, la plus récente en premier). Idée de Charles.
+- **La séance du jour est proposée d'office** à l'ouverture. Un choix manuel ne vaut que pour la journée (`sportSessionLibraryPickDay`) : le lendemain, le sélecteur repart sur la séance du jour. Sans séance ce jour-là : la prochaine séance datée.
+- (1.35.0 reste réservée à la branche `zones-fc`.)
+
 ## [1.34.2] - 2026-11-15
 
 ### Ajouté

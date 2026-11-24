@@ -8,7 +8,7 @@ Coller une séance fournie par un coach et lancer immédiatement une session gui
 
 ## Fonctionnalités
 
-- **Séances intégrées** (sélecteur « Séance ») : des séances 0 to 100 décrites dans `sessions-library.js`, disponibles pour tous sans rien coller. Voir § Séances intégrées.
+- **Séances intégrées** (sélecteur « Séance ») : des séances 0 to 100 décrites dans `sessions-library.js`, disponibles pour tous sans rien coller. Voir § Séances intégrées. Le sélecteur range les séances en « Aujourd'hui » / « À venir » / « Archives » et propose d'office la séance du jour (un choix manuel ne vaut que pour la journée).
 - **Export Apple Watch** : bouton qui télécharge la séance en `.workout` pour l'app Exercice. Voir § Export Apple Watch.
 - Collage d'une séance en texte libre
 - Bouton `Coller ma séance depuis Nolio` (lecture du presse-papiers)
