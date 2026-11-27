@@ -129,6 +129,8 @@ Toute modification d'un texte parlé (`spoken`, `intro`, `instruction`, libellé
 ### Mi-séance (v1.38.0)
 Sur les séances de course, la voix annonce « Tu es à 50 % de ta séance » à la moitié de la **sortie** (préparation à la maison exclue : on compte à partir du dernier checkpoint « Sors… »), pour savoir où faire demi-tour en aller-retour. Les séances de renfo (PAVEL, CORE, WOD…) ne disent rien. Code : `outingPlan()` / `maybeAnnounceHalfway()` dans `script.js`.
 
+En fin de séance, une félicitation est tirée au sort dans `END_PHRASES` (jamais deux fois la même d'affilée). Ajouter une phrase = une ligne dans `END_PHRASES`, puis régénérer la voix.
+
 ## Vidéos des exercices
 
 `videos.js` (chargé après `sessions-library.js`) :

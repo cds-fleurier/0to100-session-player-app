@@ -1810,6 +1810,32 @@ function announceStepStart(step) {
   saveProgress();
 }
 
+// Fin de séance (v1.38.0, idées de Charles) : une félicitation tirée au sort,
+// jamais deux fois la même d'affilée (`sportSessionLastCongrats`). Toutes sont
+// pré-enregistrées : collect-phrases.cjs les ajoute à chaque séance.
+// Accords à l'oral : « assuré » se prononce pareil au féminin.
+const END_PHRASES = [
+  "Séance terminée. Bravo.",
+  "Séance terminée. Le plus dur, c'est souvent dans la tête. Et là, tu as assuré.",
+  "Séance terminée. Félicitations, tu as survécu !",
+  "Séance terminée. Après un effort pareil, tu as le droit de t'affaler sur le canapé.",
+  "Séance terminée. Trop facile ! Allez, on refait un tour ?",
+  "Séance terminée. Bravo, t'es un monstre.",
+  "Séance terminée. Bravo le sang ! T'as tout déchiré.",
+  "Séance terminée. Un pas de plus vers Chamonix. Bravo.",
+  "Séance terminée. Tes jambes te détestent, ton cœur te remercie.",
+  "Séance terminée. AntoninGPT est fier de toi. Le vrai Antonin aussi, sûrement.",
+];
+
+function endPhrase() {
+  const raw = store.get("sportSessionLastCongrats");
+  const last = raw == null ? -1 : Number(raw);
+  let i = Math.floor(Math.random() * END_PHRASES.length);
+  if (i === last) i = (i + 1) % END_PHRASES.length;
+  store.set("sportSessionLastCongrats", String(i));
+  return END_PHRASES[i];
+}
+
 // Mi-séance (v1.38.0, demande de Charles) : sur une séance de course, la voix
 // dit « tu es à 50 % » pour ceux qui font un aller-retour et veulent savoir où
 // faire demi-tour. On ne compte que la sortie : tout ce qui suit le dernier
@@ -1985,7 +2011,7 @@ function tick() {
       stopTimer();
       clearProgress();
       renderPlayer();
-      speak("Séance terminée. Bravo.");
+      speak(endPhrase());
       return;
     }
 
@@ -2096,7 +2122,7 @@ function catchUp(ticks) {
     stopTimer();
     clearProgress();
     renderPlayer();
-    speak("Séance terminée. Bravo.");
+    speak(endPhrase());
     return;
   }
   if (reached === "checkpoint") {

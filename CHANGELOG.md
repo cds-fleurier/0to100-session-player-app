@@ -9,7 +9,8 @@ Toutes les évolutions notables du projet sont documentées ici.
   - Ne compte **que la sortie** : tout ce qui suit le dernier checkpoint (« Sors… »), la préparation à la maison est exclue. Sans checkpoint, toute la séance compte.
   - Séance de course = au moins 50 % du temps de sortie en steps de course (I1-I5, course, trot, EPIC, côtes…) et 10 min de sortie. Les 26 séances C1/C2 l'ont ; PAVEL, CORE, WOD et circuit élastique non.
   - Placement : 2 s après le début d'un step, en file derrière son annonce, avant le « Prépare-toi » et le décompte, jamais juste avant l'intro d'un bloc ; fenêtre de 2 à 4 s sur les 15-15. Une seule fois ; abandonnée si la moitié est dépassée de plus de 2 min (retour de veille).
-  - Phrase enregistrée avec les deux voix (`collect-phrases` : 609 phrases, +1).
+  - Phrase enregistrée avec les deux voix (`collect-phrases` : phrase ajoutée).
+- **Félicitations de fin variées** (idées de Charles) : 10 phrases tirées au sort au lieu de « Séance terminée. Bravo. » toujours identique (« Félicitations, tu as survécu ! », « Trop facile ! Allez, on refait un tour ? », « Bravo, t'es un monstre. », « Tes jambes te détestent, ton cœur te remercie. »…), jamais deux fois la même d'affilée (`sportSessionLastCongrats`). Toutes pré-enregistrées : `collect-phrases.cjs` ajoute `END_PHRASES` à chaque séance (618 phrases, +10 avec la mi-séance).
 
 ## [1.37.0] - 2026-11-24
 

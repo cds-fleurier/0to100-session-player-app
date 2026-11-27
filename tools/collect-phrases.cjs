@@ -140,6 +140,8 @@ function playSession(def, overrides) {
      if (guard >= 100000) throw new Error("boucle infinie : ${def.id}");
      // FWD depuis n'importe où : l'annonce dépend du step précédent, déjà couvert,
      // mais on rejoue chaque annonce pour ne rien rater.
+     // Félicitations de fin tirées au sort : on les enregistre toutes.
+     END_PHRASES.forEach((p) => speak(p));
      timeline = buildTimeline(sessionData);
      for (let i = 0; i < timeline.length; i += 1) {
        idx = i;
