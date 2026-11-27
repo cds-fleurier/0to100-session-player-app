@@ -126,6 +126,9 @@ node tools/generate-voice.cjs    # enregistre les phrases nouvelles (say, Audrey
 
 Toute modification d'un texte parlé (`spoken`, `intro`, `instruction`, libellés de `script.js`) impose la même regénération ; sinon la phrase repasse par la synthèse vocale du navigateur (et coupe la musique sur iPhone). Le générateur est incrémental et supprime les fichiers orphelins.
 
+### Mi-séance (v1.38.0)
+Sur les séances de course, la voix annonce « Tu es à 50 % de ta séance » à la moitié de la **sortie** (préparation à la maison exclue : on compte à partir du dernier checkpoint « Sors… »), pour savoir où faire demi-tour en aller-retour. Les séances de renfo (PAVEL, CORE, WOD…) ne disent rien. Code : `outingPlan()` / `maybeAnnounceHalfway()` dans `script.js`.
+
 ## Vidéos des exercices
 
 `videos.js` (chargé après `sessions-library.js`) :

@@ -47,7 +47,7 @@ const els = {
   playerSession: document.getElementById("playerSession"),
   changeSessionBtn: document.getElementById("changeSessionBtn"),
 };
-const APP_VERSION = "v1.37.0";
+const APP_VERSION = "v1.38.0";
 
 // localStorage peut lever une exception (navigation privée, stockage plein ou bloqué) :
 // le player doit marcher quand même, sans mémoriser les réglages.
@@ -1810,6 +1810,55 @@ function announceStepStart(step) {
   saveProgress();
 }
 
+// Mi-séance (v1.38.0, demande de Charles) : sur une séance de course, la voix
+// dit « tu es à 50 % » pour ceux qui font un aller-retour et veulent savoir où
+// faire demi-tour. On ne compte que la sortie : tout ce qui suit le dernier
+// checkpoint (« Sors… ») — la préparation à la maison est exclue. Séance de
+// course = au moins la moitié du temps de sortie en steps de course (I1-I5,
+// course, trot, footing…) et 10 min de sortie : les renfos PAVEL / CORE / WOD
+// restent muets. Le drapeau vit sur la timeline : il repart à zéro avec elle.
+const HALFWAY_PHRASE = "Tu es à 50 % de ta séance. Aller-retour : c'est l'heure du demi-tour."; // 5,3 s enregistrée
+// Côtes comprises (« Remontée facile », « Descente rapide », C2S3).
+const OUTING_RUN_RE = /\b(I[1-5]|course|trot|footing|run|EPIC|marche rapide|remont|mont[ée]e|descente|côte)/i;
+const HALFWAY_LATE_S = 120; // au-delà (retour de veille), on ne dit plus rien
+
+function outingPlan() {
+  if (timeline._outing !== undefined) return timeline._outing;
+  let start = 0;
+  timeline.forEach((s, i) => {
+    if (s.type === "checkpoint") start = i + 1;
+  });
+  const out = timeline.slice(start);
+  const total = out.reduce((a, s) => a + (s.seconds || 0), 0);
+  const run = out
+    .filter((s) => s.type === "work" && OUTING_RUN_RE.test(s.name || ""))
+    .reduce((a, s) => a + (s.seconds || 0), 0);
+  timeline._outing = total >= 600 && run / total >= 0.5 ? { start, half: total / 2 } : null;
+  return timeline._outing;
+}
+
+function maybeAnnounceHalfway(step) {
+  const plan = outingPlan();
+  if (!plan || timeline._halfSaid || idx < plan.start) return;
+  let elapsed = step.seconds - remaining;
+  for (let i = plan.start; i < idx; i += 1) elapsed += timeline[i].seconds || 0;
+  if (elapsed < plan.half) return;
+  if (elapsed >= plan.half + HALFWAY_LATE_S) {
+    timeline._halfSaid = true;
+    return;
+  }
+  // Placement : 2 s après le début du step (la phrase se met en file derrière
+  // son annonce, sans la couper), et assez tôt pour finir avant le décompte
+  // de fin (T-5) et le « Prépare-toi » de T-11. Steps courts (15-15) : fenêtre
+  // de 2 à 4 s. Jamais juste avant l'intro du bloc suivant (dite à T-28).
+  const inStep = step.seconds - remaining;
+  const roomy = remaining >= 18 || (step.seconds < 20 && remaining >= 11);
+  const nearIntro = remaining > INTRO_LEAD - 2 && remaining <= INTRO_LEAD + 7;
+  if (step.type === "transition" || inStep < 2 || !roomy || nearIntro) return;
+  timeline._halfSaid = true;
+  speak(HALFWAY_PHRASE, false);
+}
+
 function tick() {
   const step = currentStep();
   if (!step) return;
@@ -1849,6 +1898,8 @@ function tick() {
     }
     return;
   }
+
+  maybeAnnounceHalfway(step);
 
   // T-11 et décompte de lancement : uniquement quand un exercice suit immédiatement.
   // Si une récup inter-tours s'intercale, on ne déclenche rien.

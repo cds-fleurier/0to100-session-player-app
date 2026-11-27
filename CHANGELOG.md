@@ -2,6 +2,15 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## [1.38.0] - 2026-11-27
+
+### Ajouté
+- **Annonce de mi-séance** sur les séances de course : « Tu es à 50 % de ta séance. Aller-retour : c'est l'heure du demi-tour. » (demande de Charles, pour ceux qui partent en aller-retour).
+  - Ne compte **que la sortie** : tout ce qui suit le dernier checkpoint (« Sors… »), la préparation à la maison est exclue. Sans checkpoint, toute la séance compte.
+  - Séance de course = au moins 50 % du temps de sortie en steps de course (I1-I5, course, trot, EPIC, côtes…) et 10 min de sortie. Les 26 séances C1/C2 l'ont ; PAVEL, CORE, WOD et circuit élastique non.
+  - Placement : 2 s après le début d'un step, en file derrière son annonce, avant le « Prépare-toi » et le décompte, jamais juste avant l'intro d'un bloc ; fenêtre de 2 à 4 s sur les 15-15. Une seule fois ; abandonnée si la moitié est dépassée de plus de 2 min (retour de veille).
+  - Phrase enregistrée avec les deux voix (`collect-phrases` : 609 phrases, +1).
+
 ## [1.37.0] - 2026-11-24
 
 Corrections de la revue du 24/11 (sécurité, fiabilité, mobile). Aucune phrase prononcée modifiée ni ajoutée (`tools/collect-phrases.cjs` : 608 phrases, inchangé).
